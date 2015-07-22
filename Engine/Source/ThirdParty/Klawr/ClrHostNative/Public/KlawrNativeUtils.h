@@ -101,6 +101,7 @@ struct ArrayUtilsProxy
 	const TCHAR* (*GetString)(FArrayHelper* arrayHelper, int32 index);
 	FScriptName (*GetName)(FArrayHelper* arrayHelper, int32 index);
 	class UObject* (*GetObject)(FArrayHelper* arrayHelper, int32 index);
+	void (*SetFloatAt)(FArrayHelper* arrayHelper, int32 index, float item);
 	void (*SetUInt8At)(FArrayHelper* arrayHelper, int32 index, uint8 item);
 	void (*SetInt16At)(FArrayHelper* arrayHelper, int32 index, int16 item);
 	void (*SetInt32At)(FArrayHelper* arrayHelper, int32 index, int32 item);
@@ -111,6 +112,7 @@ struct ArrayUtilsProxy
 	int32 (*Add)(FArrayHelper* arrayHelper);
 	void (*Reset)(FArrayHelper* arrayHelper, int32 newCapacity);
 	int32 (*Find)(FArrayHelper* arrayHelper, void* itemPtr);
+	int32 (*FindFloat)(FArrayHelper* arrayHelper, float item);
 	int32 (*FindUInt8)(FArrayHelper* arrayHelper, uint8 item);
 	int32 (*FindInt16)(FArrayHelper* arrayHelper, int16 item);
 	int32 (*FindInt32)(FArrayHelper* arrayHelper, int32 item);

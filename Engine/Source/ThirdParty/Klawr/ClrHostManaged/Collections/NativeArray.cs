@@ -196,6 +196,32 @@ namespace Klawr.ClrHost.Managed.Collections
             return ArrayUtils.FindUInt8(NativeArrayHandle, item);
         }
     }
+    /// <summary>
+    /// A wrapper for a native UE <![CDATA[ TArray<float> ]]> that is a member of a native UObject 
+    /// derived class.
+    /// </summary>
+    public class FloatArrayProperty : NativeArrayPropertyBase<float>
+    {
+        public FloatArrayProperty(UObjectHandle objectHandle, ArrayHandle arrayHandle)
+            : base(objectHandle, arrayHandle)
+        {
+        }
+
+        protected override float GetValue(int index)
+        {
+            return Marshal.ReadByte(ArrayUtils.GetRawPtr(NativeArrayHandle, index));
+        }
+
+        protected override void SetValue(int index, float item)
+        {
+            ArrayUtils.SetFloatAt(NativeArrayHandle, index, item);
+        }
+
+        public override int Find(float item)
+        {
+            return ArrayUtils.FindFloat(NativeArrayHandle, item);
+        }
+    }
 
     /// <summary>
     /// A wrapper for a native UE <![CDATA[ TArray<int16> ]]> that is a member of a native UObject 

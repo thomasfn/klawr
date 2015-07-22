@@ -62,6 +62,11 @@ namespace Klawr.ClrHost.Managed
             return _proxy.GetObject(arrayHandle, index);
         }
 
+        public static void SetFloatAt(ArrayHandle arrayHandle, Int32 index, float item)
+        {
+            _proxy.SetFloatAt(arrayHandle, index, item);
+        }
+
         public static void SetUInt8At(ArrayHandle arrayHandle, Int32 index, byte item)
         {
             _proxy.SetUInt8At(arrayHandle, index, item);
@@ -110,6 +115,11 @@ namespace Klawr.ClrHost.Managed
         public static Int32 Find(ArrayHandle arrayHandle, IntPtr itemPtr)
         {
             return _proxy.Find(arrayHandle, itemPtr);
+        }
+
+        public static Int32 FindFloat(ArrayHandle arrayHandle, float item)
+        {
+            return _proxy.FindFloat(arrayHandle, item);
         }
 
         public static Int32 FindUInt8(ArrayHandle arrayHandle, byte item)

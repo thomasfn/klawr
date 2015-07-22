@@ -736,6 +736,10 @@ FString FCSharpWrapperGenerator::GetArrayPropertyWrapperType(const UArrayPropert
 	{
 		return TEXT("BoolArrayProperty");
 	}
+	else if (elementProperty->IsA<UFloatProperty>())
+	{
+		return TEXT("FloatArrayProperty");
+	}
 	else
 	{
 		return FString::Printf(TEXT("%sArrayProperty"), *elementProperty->GetCPPType());
