@@ -55,9 +55,6 @@ namespace Klawr.ClrHost.Managed
         public delegate UObjectHandle GetObjectFunc(ArrayHandle arrayHandle, Int32 index);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void SetFloatAtAction(ArrayHandle arrayHandle, Int32 index, float item);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void SetUInt8AtAction(ArrayHandle arrayHandle, Int32 index, byte item);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -88,9 +85,6 @@ namespace Klawr.ClrHost.Managed
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate Int32 FindFunc(ArrayHandle arrayHandle, IntPtr itemPtr);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate Int32 FindFloatFunc(ArrayHandle arrayHandle, float item);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate Int32 FindUInt8Func(ArrayHandle arrayHandle, byte item);
@@ -138,9 +132,6 @@ namespace Klawr.ClrHost.Managed
         public GetObjectFunc GetObject;
 
         [MarshalAs(UnmanagedType.FunctionPtr)]
-        public SetFloatAtAction SetFloatAt;
-
-        [MarshalAs(UnmanagedType.FunctionPtr)]
         public SetUInt8AtAction SetUInt8At;
 
         [MarshalAs(UnmanagedType.FunctionPtr)]
@@ -169,9 +160,6 @@ namespace Klawr.ClrHost.Managed
 
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public FindFunc Find;
-
-        [MarshalAs(UnmanagedType.FunctionPtr)]
-        public FindFloatFunc FindFloat;
 
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public FindUInt8Func FindUInt8;
