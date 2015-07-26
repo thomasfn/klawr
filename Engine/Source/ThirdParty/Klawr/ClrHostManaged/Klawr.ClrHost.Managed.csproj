@@ -28,6 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -39,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\UPROPERTYAttribute.cs" />
     <Compile Include="SafeHandles\ArrayHandle.cs" />
     <Compile Include="SafeHandles\ObjectHandle.cs" />
     <Compile Include="Collections\NativeArray.cs" />
@@ -66,7 +68,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>call "$(DevEnvDir)..\..\VC\vcvarsall.bat" x86_amd64
-tlbexp $(TargetFileName) /asmpath:$(TargetDir)</PostBuildEvent>
+tlbexp "$(TargetPath)" /asmpath:$(TargetDir)
+copy "$(TargetDir)*.*" "$(SolutionDir)..\..\..\Binaries\Win64" /Y
+copy "$(TargetDir)*.*" "$(SolutionDir)..\..\..\Binaries\Win64\Klawr\Assemblies" /Y
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

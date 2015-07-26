@@ -64,6 +64,23 @@ public: // IClrHost interface
 
 	virtual void GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const override;
 
+	virtual void GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const override;
+
+	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const override;
+
+
+	virtual void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const override;
+	virtual void SetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName, int value) const override;
+	virtual void SetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName, bool value) const override;
+	virtual void SetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const override;
+	virtual void SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const override;
+
+	virtual float GetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const override;
+	virtual int GetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const override;
+	virtual bool GetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const override;
+	virtual const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const override;
+	virtual UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const override;
+
 public:
 	ClrHost() : _hostControl(nullptr) {}
 

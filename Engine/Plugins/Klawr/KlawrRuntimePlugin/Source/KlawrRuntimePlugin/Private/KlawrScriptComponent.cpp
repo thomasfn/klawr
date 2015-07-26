@@ -49,7 +49,7 @@ void UKlawrScriptComponent::CreateScriptComponentProxy()
 		bool bCreated = Klawr::IClrHost::Get()->CreateScriptComponent(
 			IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this),
 			*GeneratedClass->ScriptDefinedType, this, *Proxy
-		);
+			);
 
 		if (!bCreated)
 		{
@@ -71,7 +71,7 @@ void UKlawrScriptComponent::DestroyScriptComponentProxy()
 	{
 		Klawr::IClrHost::Get()->DestroyScriptComponent(
 			IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this), Proxy->InstanceID
-		);
+			);
 	}
 
 	delete Proxy;
@@ -111,7 +111,7 @@ void UKlawrScriptComponent::OnUnregister()
 		{
 			Proxy->OnUnregister();
 		}
-	
+
 		DestroyScriptComponentProxy();
 	}
 
@@ -130,12 +130,20 @@ void UKlawrScriptComponent::InitializeComponent()
 
 void UKlawrScriptComponent::TickComponent(
 	float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction
-)
+	)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	int appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this);
+	long long InstanceID = Proxy->InstanceID;
+	//UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("TestTick: %d - %d"), appDomainId, InstanceID);
+	const TCHAR* propName = TEXT("IntPropertyTest");
+	Klawr::IClrHost::Get()->SetInt(appDomainId, InstanceID, propName, 6);
 	if (Proxy && Proxy->TickComponent)
 	{
 		Proxy->TickComponent(DeltaTime);
 	}
+	
+	UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Testproperty: '%d'"), Klawr::IClrHost::Get()->GetInt(appDomainId, InstanceID, propName));
+
 }

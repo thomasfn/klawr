@@ -32,293 +32,426 @@
 
 namespace {
 
-SAFEARRAY* CreateSafeArrayOfWrapperFunctions(void** wrapperFunctions, int numFunctions)
-{
-	SAFEARRAY* safeArray = SafeArrayCreateVector(VT_I8, 0, numFunctions);
-	if (safeArray)
+	SAFEARRAY* CreateSafeArrayOfWrapperFunctions(void** wrapperFunctions, int numFunctions)
 	{
-		LONGLONG* safeArrayData = nullptr;
-		HRESULT hr = SafeArrayAccessData(safeArray, (void**)&safeArrayData);
+		SAFEARRAY* safeArray = SafeArrayCreateVector(VT_I8, 0, numFunctions);
+		if (safeArray)
+		{
+			LONGLONG* safeArrayData = nullptr;
+			HRESULT hr = SafeArrayAccessData(safeArray, (void**)&safeArrayData);
+			if (SUCCEEDED(hr))
+			{
+				for (auto i = 0; i < numFunctions; ++i)
+				{
+					safeArrayData[i] = reinterpret_cast<LONGLONG>(wrapperFunctions[i]);
+				}
+				hr = SafeArrayUnaccessData(safeArray);
+				assert(SUCCEEDED(hr));
+			}
+		}
+		return safeArray;
+	}
+
+	/**
+	 * @brief Convert a one-dimensional COM SAFEARRAY to a std::vector.
+	 * This only works if TSafeArrayElement can be implicitly converted to TVectorElement.
+	 */
+	template<typename TSafeArrayElement, typename TVectorElement>
+	void SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
+	{
+		LONG lowerBound, upperBound;
+		HRESULT hr = SafeArrayGetLBound(input, 1, &lowerBound);
+		if (FAILED(hr))
+		{
+			return;
+		}
+		hr = SafeArrayGetUBound(input, 1, &upperBound);
+		if (FAILED(hr))
+		{
+			return;
+		}
+		LONG numElements = upperBound - lowerBound + 1;
+
+		output.reserve(numElements);
+		TSafeArrayElement* safeArrayData = nullptr;
+		hr = SafeArrayAccessData(input, (void**)&safeArrayData);
 		if (SUCCEEDED(hr))
 		{
-			for (auto i = 0; i < numFunctions; ++i)
+			for (auto i = 0; i < numElements; ++i)
 			{
-				safeArrayData[i] = reinterpret_cast<LONGLONG>(wrapperFunctions[i]);
+				output.push_back(safeArrayData[i]);
 			}
-			hr = SafeArrayUnaccessData(safeArray);
+			hr = SafeArrayUnaccessData(input);
 			assert(SUCCEEDED(hr));
 		}
 	}
-	return safeArray;
-}
-
-/** 
- * @brief Convert a one-dimensional COM SAFEARRAY to a std::vector.
- * This only works if TSafeArrayElement can be implicitly converted to TVectorElement.
- */
-template<typename TSafeArrayElement, typename TVectorElement>
-void SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
-{
-	LONG lowerBound, upperBound;
-	HRESULT hr = SafeArrayGetLBound(input, 1, &lowerBound);
-	if (FAILED(hr))
-	{
-		return;
-	}
-	hr = SafeArrayGetUBound(input, 1, &upperBound);
-	if (FAILED(hr))
-	{
-		return;
-	}
-	LONG numElements = upperBound - lowerBound + 1;
-
-	output.reserve(numElements);
-	TSafeArrayElement* safeArrayData = nullptr;
-	hr = SafeArrayAccessData(input, (void**)&safeArrayData);
-	if (SUCCEEDED(hr))
-	{
-		for (auto i = 0; i < numElements; ++i)
-		{
-			output.push_back(safeArrayData[i]);
-		}
-		hr = SafeArrayUnaccessData(input);
-		assert(SUCCEEDED(hr));
-	}
-}
 
 } // unnamed namespace
 
 namespace Klawr {
 
-struct ProxySizeChecks
-{
-	static_assert(
-		sizeof(Klawr::Managed::ObjectUtilsProxy) == sizeof(ObjectUtilsProxy),
-		"ObjectUtilsProxy doesn't have the same size in native and managed code!"
-	);
-
-	static_assert(
-		sizeof(Klawr::Managed::LogUtilsProxy) == sizeof(LogUtilsProxy),
-		"LogUtilsProxy doesn't have the same size in native and managed code!"
-	);
-
-	static_assert(
-		sizeof(Klawr::Managed::ArrayUtilsProxy) == sizeof(ArrayUtilsProxy),
-		"ArrayUtilsProxy doesn't have the same size in native and managed code!"
-	);
-
-	static_assert(
-		sizeof(Klawr::Managed::ScriptComponentProxy) == sizeof(ScriptComponentProxy),
-		"ScriptComponentProxy doesn't have the same size in native and managed code!"
-	);
-
-};
-
-bool ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScriptsAssemblyName)
-{
-	_COM_SMARTPTR_TYPEDEF(ICLRMetaHost, IID_ICLRMetaHost);
-	_COM_SMARTPTR_TYPEDEF(ICLRRuntimeInfo, IID_ICLRRuntimeInfo);
-	_COM_SMARTPTR_TYPEDEF(ICLRControl, IID_ICLRControl);
-
-	_engineAppDomainAppBase = engineAppDomainAppBase;
-	_gameScriptsAssemblyName = gameScriptsAssemblyName;
-
-	// bootstrap the CLR
-	
-	ICLRMetaHostPtr metaHost;
-	HRESULT hr = CLRCreateInstance(CLSID_CLRMetaHost, IID_PPV_ARGS(&metaHost));
-	if (!verify(SUCCEEDED(hr)))
+	struct ProxySizeChecks
 	{
-		return false;
-	}
-
-	// specify which version of the CLR should be used
-	ICLRRuntimeInfoPtr runtimeInfo;
-	hr = metaHost->GetRuntime(L"v4.0.30319", IID_PPV_ARGS(&runtimeInfo));
-	if (!verify(SUCCEEDED(hr)))
-	{
-		return false;
-	}
-
-	// load the CLR (it won't be initialized just yet)
-	hr = runtimeInfo->GetInterface(CLSID_CLRRuntimeHost, IID_PPV_ARGS(&_runtimeHost));
-	if (!verify(SUCCEEDED(hr)))
-	{
-		return false;
-	}
-
-	// hook up our unmanaged host to the runtime host
-	assert(!_hostControl);
-	_hostControl = new ClrHostControl();
-	hr = _runtimeHost->SetHostControl(_hostControl);
-	if (!verify(SUCCEEDED(hr)))
-	{
-		return false;
-	}
-
-	ICLRControlPtr clrControl;
-	hr = _runtimeHost->GetCLRControl(&clrControl);
-	if (!verify(SUCCEEDED(hr)))
-	{
-		return false;
-	}
-
-	// by default the CLR runtime will look for the app domain manager assembly in the same 
-	// directory as the application, which in this case will be 
-	// C:\Program Files\Unreal Engine\4.X\Engine\Binaries\Win64 (or Win32)
-	hr = clrControl->SetAppDomainManagerType(
-		L"Klawr.ClrHost.Managed", L"Klawr.ClrHost.Managed.DefaultAppDomainManager"
-	);
-
-	if (!verify(SUCCEEDED(hr)))
-	{
-		return false;
-	}
-
-	// initialize the CLR (not strictly necessary because the runtime can initialize itself)
-	hr = _runtimeHost->Start();
-	return SUCCEEDED(hr);
-}
-
-void ClrHost::Shutdown()
-{
-	_hostControl->Shutdown();
-	
-	// NOTE: There's a crash here while debugging with the Mixed mode debugger, but everything works
-	// fine when using the Auto mode debugger (which probably ends up using the Native debugger 
-	// since this project is native). Everything also works fine if you detach the Mixed debugger 
-	// before getting here.
-	HRESULT hr = _runtimeHost->Stop();
-	assert(SUCCEEDED(hr));
-
-	if (_hostControl)
-	{
-		_hostControl->Release();
-		_hostControl = nullptr;
-	}
-}
-
-bool ClrHost::CreateEngineAppDomain(int& outAppDomainID)
-{
-	outAppDomainID = _hostControl->GetDefaultAppDomainManager()->CreateEngineAppDomain(
-		_engineAppDomainAppBase.c_str()
-	);
-	return _hostControl->GetEngineAppDomainManager(outAppDomainID) != nullptr;
-}
-
-bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtils)
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		// pass all the native wrapper functions to the managed side of the CLR host so that they 
-		// can be hooked up to properties and methods of the generated C# wrapper classes (though 
-		// that will happen a bit later)
-		for (const auto& classWrapper : _classWrappers)
-		{
-			auto className = classWrapper.first.c_str();
-			auto& wrapperInfo = classWrapper.second;
-			auto safeArray = CreateSafeArrayOfWrapperFunctions(
-				wrapperInfo.functionPointers, wrapperInfo.numFunctions
+		static_assert(
+			sizeof(Klawr::Managed::ObjectUtilsProxy) == sizeof(ObjectUtilsProxy),
+			"ObjectUtilsProxy doesn't have the same size in native and managed code!"
 			);
-			HRESULT hr = appDomainManager->SetNativeFunctionPointers(className, safeArray);
-			assert(SUCCEEDED(hr));
-		}
 
-		// pass a few utility functions to the managed side
-		appDomainManager->BindUtils(
-			reinterpret_cast<Klawr::Managed::ObjectUtilsProxy*>(
-				const_cast<ObjectUtilsProxy*>(&nativeUtils.Object)
-			),
-			reinterpret_cast<Klawr::Managed::LogUtilsProxy*>(
-				const_cast<LogUtilsProxy*>(&nativeUtils.Log)
-			),
-			reinterpret_cast<Klawr::Managed::ArrayUtilsProxy*>(
-				const_cast<ArrayUtilsProxy*>(&nativeUtils.Array)
-			)
-		);
+		static_assert(
+			sizeof(Klawr::Managed::LogUtilsProxy) == sizeof(LogUtilsProxy),
+			"LogUtilsProxy doesn't have the same size in native and managed code!"
+			);
 
-		// now that everything the engine wrapper assembly needs is in place it can be loaded
-		appDomainManager->LoadUnrealEngineWrapperAssembly();
-		appDomainManager->LoadAssembly(_gameScriptsAssemblyName.c_str());
-	}
-	return appDomainManager != nullptr;
-}
+		static_assert(
+			sizeof(Klawr::Managed::ArrayUtilsProxy) == sizeof(ArrayUtilsProxy),
+			"ArrayUtilsProxy doesn't have the same size in native and managed code!"
+			);
 
-bool ClrHost::DestroyEngineAppDomain(int appDomainID)
-{
-	return _hostControl->DestroyEngineAppDomain(appDomainID);
-}
+		static_assert(
+			sizeof(Klawr::Managed::ScriptComponentProxy) == sizeof(ScriptComponentProxy),
+			"ScriptComponentProxy doesn't have the same size in native and managed code!"
+			);
 
-bool ClrHost::CreateScriptObject(
-	int appDomainID, const TCHAR* className, class UObject* owner, ScriptObjectInstanceInfo& info
-)
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (!appDomainManager)
+	};
+
+	bool ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScriptsAssemblyName)
 	{
-		return false;
-	}
+		_COM_SMARTPTR_TYPEDEF(ICLRMetaHost, IID_ICLRMetaHost);
+		_COM_SMARTPTR_TYPEDEF(ICLRRuntimeInfo, IID_ICLRRuntimeInfo);
+		_COM_SMARTPTR_TYPEDEF(ICLRControl, IID_ICLRControl);
 
-	Klawr::Managed::ScriptObjectInstanceInfo srcInfo;
-	bool created = !!appDomainManager->CreateScriptObject(
-		className, reinterpret_cast<INT_PTR>(owner), &srcInfo
-	);
-	if (created)
-	{
-		info.InstanceID = srcInfo.InstanceID;
-		info.BeginPlay = reinterpret_cast<ScriptObjectInstanceInfo::BeginPlayAction>(srcInfo.BeginPlay);
-		info.Tick = reinterpret_cast<ScriptObjectInstanceInfo::TickAction>(srcInfo.Tick);
-		info.Destroy = reinterpret_cast<ScriptObjectInstanceInfo::DestroyAction>(srcInfo.Destroy);
-	}
-	return created;
-}
+		_engineAppDomainAppBase = engineAppDomainAppBase;
+		_gameScriptsAssemblyName = gameScriptsAssemblyName;
 
-void ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		appDomainManager->DestroyScriptObject(instanceID);
-	}
-}
+		// bootstrap the CLR
 
-bool ClrHost::CreateScriptComponent(
-	int appDomainID, const TCHAR* className, class UObject* nativeComponent, ScriptComponentProxy& proxy
-)
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (!appDomainManager)
-	{
-		return false;
-	}
-
-	return !!appDomainManager->CreateScriptComponent(
-		className, reinterpret_cast<INT_PTR>(nativeComponent),
-		reinterpret_cast<Klawr::Managed::ScriptComponentProxy*>(&proxy)
-	);
-}
-
-void ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		appDomainManager->DestroyScriptComponent(instanceID);
-	}
-}
-
-void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentTypes();
-		if (safeArray)
+		ICLRMetaHostPtr metaHost;
+		HRESULT hr = CLRCreateInstance(CLSID_CLRMetaHost, IID_PPV_ARGS(&metaHost));
+		if (!verify(SUCCEEDED(hr)))
 		{
-			SafeArrayToVector<BSTR>(safeArray, types);
+			return false;
+		}
+
+		// specify which version of the CLR should be used
+		ICLRRuntimeInfoPtr runtimeInfo;
+		hr = metaHost->GetRuntime(L"v4.0.30319", IID_PPV_ARGS(&runtimeInfo));
+		if (!verify(SUCCEEDED(hr)))
+		{
+			return false;
+		}
+
+		// load the CLR (it won't be initialized just yet)
+		hr = runtimeInfo->GetInterface(CLSID_CLRRuntimeHost, IID_PPV_ARGS(&_runtimeHost));
+		if (!verify(SUCCEEDED(hr)))
+		{
+			return false;
+		}
+
+		// hook up our unmanaged host to the runtime host
+		assert(!_hostControl);
+		_hostControl = new ClrHostControl();
+		hr = _runtimeHost->SetHostControl(_hostControl);
+		if (!verify(SUCCEEDED(hr)))
+		{
+			return false;
+		}
+
+		ICLRControlPtr clrControl;
+		hr = _runtimeHost->GetCLRControl(&clrControl);
+		if (!verify(SUCCEEDED(hr)))
+		{
+			return false;
+		}
+
+		// by default the CLR runtime will look for the app domain manager assembly in the same 
+		// directory as the application, which in this case will be 
+		// C:\Program Files\Unreal Engine\4.X\Engine\Binaries\Win64 (or Win32)
+		hr = clrControl->SetAppDomainManagerType(
+			L"Klawr.ClrHost.Managed", L"Klawr.ClrHost.Managed.DefaultAppDomainManager"
+			);
+
+		if (!verify(SUCCEEDED(hr)))
+		{
+			return false;
+		}
+
+		// initialize the CLR (not strictly necessary because the runtime can initialize itself)
+		hr = _runtimeHost->Start();
+		return SUCCEEDED(hr);
+	}
+
+	void ClrHost::Shutdown()
+	{
+		_hostControl->Shutdown();
+
+		// NOTE: There's a crash here while debugging with the Mixed mode debugger, but everything works
+		// fine when using the Auto mode debugger (which probably ends up using the Native debugger 
+		// since this project is native). Everything also works fine if you detach the Mixed debugger 
+		// before getting here.
+		HRESULT hr = _runtimeHost->Stop();
+		assert(SUCCEEDED(hr));
+
+		if (_hostControl)
+		{
+			_hostControl->Release();
+			_hostControl = nullptr;
 		}
 	}
-}
+
+	bool ClrHost::CreateEngineAppDomain(int& outAppDomainID)
+	{
+		outAppDomainID = _hostControl->GetDefaultAppDomainManager()->CreateEngineAppDomain(
+			_engineAppDomainAppBase.c_str()
+			);
+		return _hostControl->GetEngineAppDomainManager(outAppDomainID) != nullptr;
+	}
+
+	bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtils)
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			// pass all the native wrapper functions to the managed side of the CLR host so that they 
+			// can be hooked up to properties and methods of the generated C# wrapper classes (though 
+			// that will happen a bit later)
+			for (const auto& classWrapper : _classWrappers)
+			{
+				auto className = classWrapper.first.c_str();
+				auto& wrapperInfo = classWrapper.second;
+				auto safeArray = CreateSafeArrayOfWrapperFunctions(
+					wrapperInfo.functionPointers, wrapperInfo.numFunctions
+					);
+				HRESULT hr = appDomainManager->SetNativeFunctionPointers(className, safeArray);
+				assert(SUCCEEDED(hr));
+			}
+
+			// pass a few utility functions to the managed side
+			appDomainManager->BindUtils(
+				reinterpret_cast<Klawr::Managed::ObjectUtilsProxy*>(
+				const_cast<ObjectUtilsProxy*>(&nativeUtils.Object)
+				),
+				reinterpret_cast<Klawr::Managed::LogUtilsProxy*>(
+				const_cast<LogUtilsProxy*>(&nativeUtils.Log)
+				),
+				reinterpret_cast<Klawr::Managed::ArrayUtilsProxy*>(
+				const_cast<ArrayUtilsProxy*>(&nativeUtils.Array)
+				)
+				);
+
+			// now that everything the engine wrapper assembly needs is in place it can be loaded
+			appDomainManager->LoadUnrealEngineWrapperAssembly();
+			appDomainManager->LoadAssembly(_gameScriptsAssemblyName.c_str());
+		}
+		return appDomainManager != nullptr;
+	}
+
+	bool ClrHost::DestroyEngineAppDomain(int appDomainID)
+	{
+		return _hostControl->DestroyEngineAppDomain(appDomainID);
+	}
+
+	bool ClrHost::CreateScriptObject(
+		int appDomainID, const TCHAR* className, class UObject* owner, ScriptObjectInstanceInfo& info
+		)
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (!appDomainManager)
+		{
+			return false;
+		}
+
+		Klawr::Managed::ScriptObjectInstanceInfo srcInfo;
+		bool created = !!appDomainManager->CreateScriptObject(
+			className, reinterpret_cast<INT_PTR>(owner), &srcInfo
+			);
+		if (created)
+		{
+			info.InstanceID = srcInfo.instanceID;
+			info.BeginPlay = reinterpret_cast<ScriptObjectInstanceInfo::BeginPlayAction>(srcInfo.BeginPlay);
+			info.Tick = reinterpret_cast<ScriptObjectInstanceInfo::TickAction>(srcInfo.Tick);
+			info.Destroy = reinterpret_cast<ScriptObjectInstanceInfo::DestroyAction>(srcInfo.Destroy);
+		}
+		return created;
+	}
+
+	void ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->DestroyScriptObject(instanceID);
+		}
+	}
+
+	bool ClrHost::CreateScriptComponent(
+		int appDomainID, const TCHAR* className, class UObject* nativeComponent, ScriptComponentProxy& proxy
+		)
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (!appDomainManager)
+		{
+			return false;
+		}
+
+		return !!appDomainManager->CreateScriptComponent(
+			className, reinterpret_cast<INT_PTR>(nativeComponent),
+			reinterpret_cast<Klawr::Managed::ScriptComponentProxy*>(&proxy));
+	}
+
+	void ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->DestroyScriptComponent(instanceID);
+		}
+	}
+
+	void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			SAFEARRAY* safeArray = appDomainManager->GetScriptComponentTypes();
+			if (safeArray)
+			{
+				SafeArrayToVector<BSTR>(safeArray, types);
+			}
+		}
+	}
+
+	void ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			SAFEARRAY* safeArray = appDomainManager->GetScriptComponentPropertyNames(typeName);
+			if (safeArray)
+			{
+				SafeArrayToVector<BSTR>(safeArray, properties);
+			}
+		}
+	}
+
+	int ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			return appDomainManager->GetScriptComponentPropertyType(typeName, propertyName);
+		}
+		return -1;
+	}
+
+	float ClrHost::GetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			return appDomainManager->GetFloat(instanceID, propertyName);
+		}
+		return 0.0f;
+	}
+
+	int ClrHost::GetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			return appDomainManager->GetInt(instanceID, propertyName);
+		}
+		return 0;
+	}
+
+	bool ClrHost::GetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			return appDomainManager->GetBool(instanceID, propertyName) == 1;
+		}
+		return false;
+	}
+
+	const TCHAR* ClrHost::GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			return appDomainManager->GetStr(instanceID, propertyName);
+		}
+		return TEXT("");
+	}
+
+	UObject* ClrHost::GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return NULL;
+		/*
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			return appDomainManager->GetFloat(instanceID, propertyName);
+		}
+		return 0;
+		No Clue yet ...
+		*/
+	}
+
+	void ClrHost::SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->SetFloat(instanceID, propertyName, value);
+		}
+	}
+
+	void ClrHost::SetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName, int32 value) const
+	{
+		try
+		{
+			auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+			if (appDomainManager)
+			{
+				appDomainManager->SetInt(instanceID, propertyName, value);
+			}
+		} 
+		catch (int e)
+		{
+			int f = e - 33;
+			f = f + e;
+		}
+	}
+
+	void ClrHost::SetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName, bool value) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->SetBool(instanceID, propertyName, value);
+		}
+	}
+
+	void ClrHost::SetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const
+	{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->SetStr(instanceID, propertyName, value);
+		}
+	}
+
+	void ClrHost::SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const
+	{/*
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->SetFloat(instanceID, propertyName, value);
+		}
+		No Clue yet
+		*/
+	}
+
+
 
 } // namespace Klawr
