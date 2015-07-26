@@ -197,6 +197,17 @@ public:
 
 	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 
+	virtual void SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const = 0;
+	virtual void SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int value) const = 0;
+	virtual void SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const = 0;
+	virtual void SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const = 0;
+	virtual void SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const = 0;
+
+	virtual float GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual int GetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual bool GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual const TCHAR* GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual UObject* GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
 public:
 	/** Get the singleton instance. */
 	static IClrHost* Get();

@@ -43,6 +43,7 @@ public class KlawrClrHostNative : ModuleRules
         {
             PublicIncludePaths.Add(Path.Combine(basePath, "Public"));
             var libName = "Klawr.ClrHost.Native-" + architecture + "-" + configuration + ".lib";
+            Console.WriteLine("Klawr libnamakesme: " + libName);
             PublicLibraryPaths.Add(Path.Combine(basePath, "..", "Build"));
             PublicAdditionalLibraries.Add(libName);
         }

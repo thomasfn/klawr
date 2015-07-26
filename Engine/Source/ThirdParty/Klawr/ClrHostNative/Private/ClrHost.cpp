@@ -266,7 +266,7 @@ bool ClrHost::CreateScriptObject(
 	);
 	if (created)
 	{
-		info.InstanceID = srcInfo.InstanceID;
+		info.InstanceID = srcInfo.instanceID;
 		info.BeginPlay = reinterpret_cast<ScriptObjectInstanceInfo::BeginPlayAction>(srcInfo.BeginPlay);
 		info.Tick = reinterpret_cast<ScriptObjectInstanceInfo::TickAction>(srcInfo.Tick);
 		info.Destroy = reinterpret_cast<ScriptObjectInstanceInfo::DestroyAction>(srcInfo.Destroy);
@@ -344,5 +344,105 @@ int ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeNa
 	return -1;
 }
 
+float ClrHost::GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetFloat(instanceID, propertyName);
+	}
+	return 0.0f;
+}
+
+int __cdecl ClrHost::GetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetInt(instanceID, propertyName);
+	}
+	return 0;
+}
+
+bool ClrHost::GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetBool(instanceID, propertyName) == 1;
+	}
+	return false;
+}
+
+const TCHAR* ClrHost::GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetStr(instanceID, propertyName);
+	}
+	return TEXT("");
+}
+
+UObject* ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	return NULL;
+	/*
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+	return appDomainManager->GetFloat(instanceID, propertyName);
+	}
+	return 0;
+	No Clue yet ...
+	*/
+}
+
+void ClrHost::SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetFloat(instanceID, propertyName, value);
+	}
+}
+
+void __cdecl ClrHost::SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int32 value) const
+{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->SetInt(instanceID, propertyName, value);
+		}
+}
+
+void ClrHost::SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetBool(instanceID, propertyName, value);
+	}
+}
+
+void ClrHost::SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetStr(instanceID, propertyName, value);
+	}
+}
+
+void ClrHost::SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const
+{/*
+ auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+ if (appDomainManager)
+ {
+ appDomainManager->SetFloat(instanceID, propertyName, value);
+ }
+ No Clue yet
+ */
+}
 
 } // namespace Klawr

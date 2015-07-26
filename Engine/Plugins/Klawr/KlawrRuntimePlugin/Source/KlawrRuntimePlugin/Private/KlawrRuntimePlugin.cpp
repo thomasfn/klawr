@@ -93,6 +93,10 @@ public:
 			{
 				DestroyAppDomain(NewAppDomainID);
 			}
+			TArray<FString> types;
+
+			// DEBUG //
+			GetScriptComponentTypes(types);
 		}
 		else
 		{
@@ -262,6 +266,58 @@ public: // IModuleInterface interface
 		// so this module cannot be reloaded
 		return false;
 	}
+
+
+	void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const override
+	{
+		IClrHost::Get()->SetFloat(appDomainID, instanceID, propertyName, value);
+	}
+
+	void SetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName, int value) const override
+	{
+		IClrHost::Get()->SetInt(appDomainID, instanceID, propertyName, value);
+	}
+
+	void SetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName, bool value) const override
+	{
+		IClrHost::Get()->SetBool(appDomainID, instanceID, propertyName, value);
+	}
+
+	void SetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const override
+	{
+		IClrHost::Get()->SetStr(appDomainID, instanceID, propertyName, value);
+	}
+
+	virtual void SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const override
+	{
+		IClrHost::Get()->SetObj(appDomainID, instanceID, propertyName, value);
+	}
+
+
+	float GetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const 
+	{
+		return IClrHost::Get()->GetFloat(appDomainID, instanceID, propertyName);
+	}
+	int GetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return IClrHost::Get()->GetInt(appDomainID, instanceID, propertyName);
+	}
+
+	bool GetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return IClrHost::Get()->GetBool(appDomainID, instanceID, propertyName);
+	}
+
+	const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return IClrHost::Get()->GetStr(appDomainID, instanceID, propertyName);
+	}
+
+	UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const 
+	{
+		return IClrHost::Get()->GetObj(appDomainID, instanceID, propertyName);
+	}
+
 };
 
 } // namespace Klawr

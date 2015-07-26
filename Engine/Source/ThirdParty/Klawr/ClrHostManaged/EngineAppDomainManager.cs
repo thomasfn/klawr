@@ -509,5 +509,71 @@ namespace Klawr.ClrHost.Managed
             return -1;
         }
 
+
+        public void SetFloat(long instanceID, string propertyName, float value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetInt(long instanceID, string propertyName, int value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetBool(long instanceID, string propertyName, bool value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetStr(long instanceID, string propertyName, string value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetObj(long instanceID, string propertyName, IntPtr value)
+        {
+            /* Have to figure out some things first....
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+             */
+        }
+
+        public float GetFloat(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (float)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public int GetInt(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (int)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public bool GetBool(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (bool)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public string GetStr(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (string)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public IntPtr GetObj(long instanceID, string propertyName)
+        {
+            /* like above, have to figure it out first
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (IntPtr)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            */
+            return default(IntPtr);
+        }
+
     }
 }

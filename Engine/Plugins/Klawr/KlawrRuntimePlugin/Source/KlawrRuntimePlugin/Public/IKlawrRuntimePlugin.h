@@ -63,6 +63,18 @@ public:
 	virtual void GetScriptComponentTypes(TArray<FString>& Types) = 0;
 #endif // WITH_EDITOR
 
+	virtual void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const = 0;
+	virtual void SetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName, int value) const = 0;
+	virtual void SetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName, bool value) const = 0;
+	virtual void SetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const = 0;
+	virtual void SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const = 0;
+
+	virtual float GetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual int GetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual bool GetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
+
 	/**
 	 * Get the ID of the app domain in which the given object is referenced.
 	 */
