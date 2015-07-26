@@ -30,6 +30,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using Klawr.ClrHost.Managed.Attributes;
 
 namespace Klawr.ClrHost.Managed
 {
@@ -175,7 +176,10 @@ namespace Klawr.ClrHost.Managed
         public void DestroyScriptObject(long scriptObjectInstanceID)
         {
             var instance = UnregisterScriptObject(scriptObjectInstanceID);
-            instance.Dispose();
+            if (instance != null)
+            {
+                instance.Dispose();
+            }
         }
         
         /// <summary>
@@ -216,9 +220,13 @@ namespace Klawr.ClrHost.Managed
         /// <returns>The script object matching the given ID.</returns>
         public IScriptObject UnregisterScriptObject(long scriptObjectInstanceID)
         {
-            var instance = _scriptObjects[scriptObjectInstanceID].Instance;
-            _scriptObjects.Remove(scriptObjectInstanceID);
-            return instance;
+            if (_scriptObjects.ContainsKey(scriptObjectInstanceID))
+            {
+                var instance = _scriptObjects[scriptObjectInstanceID].Instance;
+                _scriptObjects.Remove(scriptObjectInstanceID);
+                return instance;
+            }
+            return null;
         }
 
         /// <summary>
@@ -316,7 +324,10 @@ namespace Klawr.ClrHost.Managed
         public void DestroyScriptComponent(long instanceID)
         {
             var instance = UnregisterScriptComponent(instanceID);
-            instance.Dispose();
+            if (instance != null)
+            {
+                instance.Dispose();
+            }
         }
 
         private void RegisterScriptComponent(
@@ -331,9 +342,13 @@ namespace Klawr.ClrHost.Managed
 
         private IDisposable UnregisterScriptComponent(long instanceID)
         {
-            var instance = _scriptComponents[instanceID].Instance;
-            _scriptComponents.Remove(instanceID);
-            return instance;
+            if (_scriptComponents.ContainsKey(instanceID))
+            {
+                var instance = _scriptComponents[instanceID].Instance;
+                _scriptComponents.Remove(instanceID);
+                return instance;
+            }
+            return null;
         }
 
         /// <summary>
@@ -471,5 +486,28 @@ namespace Klawr.ClrHost.Managed
                 .Select(t => t.FullName)
                 .ToArray();
         }
+
+        public string[] GetScriptComponentPropertyNames(string componentName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            return scriptComponentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()).Select(x => x.Name).ToArray();
+        }
+
+        public int GetScriptComponentPropertyType(string componentName, string propertyName)
+        {
+            PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
+            if (pi.PropertyType == typeof(float))
+            { return 0; }
+            else if (pi.PropertyType == typeof(int))
+            { return 1; }
+            else if (pi.PropertyType == typeof(bool))
+            { return 2; }
+            else if (pi.PropertyType == typeof(string))
+            { return 3; }
+
+            // Unknown type??
+            return -1;
+        }
+
     }
 }

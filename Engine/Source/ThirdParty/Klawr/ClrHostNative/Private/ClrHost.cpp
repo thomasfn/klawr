@@ -321,4 +321,28 @@ void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& typ
 	}
 }
 
+void ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentPropertyNames(typeName);
+		if (safeArray)
+		{
+			SafeArrayToVector<BSTR>(safeArray, properties);
+		}
+	}
+}
+
+int ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetScriptComponentPropertyType(typeName, propertyName);
+	}
+	return -1;
+}
+
+
 } // namespace Klawr

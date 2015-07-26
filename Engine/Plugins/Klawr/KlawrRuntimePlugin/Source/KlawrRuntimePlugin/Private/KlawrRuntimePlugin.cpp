@@ -111,7 +111,17 @@ public:
 		Types.Reserve(scriptTypes.size());
 		for (const auto& scriptType : scriptTypes)
 		{
+			const TCHAR* type = *(FString(scriptType.c_str()));
 			Types.Add(FString(scriptType.c_str()));
+
+			UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found class %s"), type);
+			std::vector<tstring> propertyNames;
+			IClrHost::Get()->GetScriptComponentProperties(PrimaryEngineAppDomainID, type, propertyNames);
+
+			for (const auto& propertyName : propertyNames)
+			{
+				UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found property %s in class %s"), *(FString(propertyName.c_str())), type);
+			}
 		}
 	}
 #endif // WITH_EDITOR
