@@ -490,6 +490,11 @@ namespace Klawr.ClrHost.Managed
         public string[] GetScriptComponentPropertyNames(string componentName)
         {
             var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component "+componentName+" NOT FOUND! Why?");
+                return new string[0];
+            }
             return scriptComponentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()).Select(x => x.Name).ToArray();
         }
 
