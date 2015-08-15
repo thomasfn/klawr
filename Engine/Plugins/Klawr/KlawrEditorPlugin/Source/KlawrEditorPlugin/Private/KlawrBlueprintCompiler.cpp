@@ -27,28 +27,29 @@
 #include "KlawrBlueprintGeneratedClass.h"
 #include "KismetReinstanceUtilities.h"
 #include "KlawrScriptComponent.h"
+#include "IKlawrRuntimePlugin.h"
 
 namespace Klawr {
 
-FBlueprintCompiler::FBlueprintCompiler(
+FKlawrBlueprintCompiler::FKlawrBlueprintCompiler(
 	UKlawrBlueprint* Source, FCompilerResultsLog& OutResultsLog,
 	const FKismetCompilerOptions& CompilerOptions, TArray<UObject*>* ObjLoaded
 )	: Super(Source, OutResultsLog, CompilerOptions, ObjLoaded)
 {
 }
 
-FBlueprintCompiler::~FBlueprintCompiler()
+FKlawrBlueprintCompiler::~FKlawrBlueprintCompiler()
 {
 }
 
-void FBlueprintCompiler::Compile()
+void FKlawrBlueprintCompiler::Compile()
 {
 	// TODO: figure out which properties and methods the script defined type exports to Blueprints
 
 	Super::Compile();
 }
 
-void FBlueprintCompiler::SpawnNewClass(const FString& NewClassName)
+void FKlawrBlueprintCompiler::SpawnNewClass(const FString& NewClassName)
 {
 	Super::NewClass = FindObject<UKlawrBlueprintGeneratedClass>(
 		Super::Blueprint->GetOutermost(), *NewClassName
@@ -66,7 +67,7 @@ void FBlueprintCompiler::SpawnNewClass(const FString& NewClassName)
 	}
 }
 
-void FBlueprintCompiler::EnsureProperGeneratedClass(UClass*& GeneratedClass)
+void FKlawrBlueprintCompiler::EnsureProperGeneratedClass(UClass*& GeneratedClass)
 {
 	auto ClassObject = Cast<UObject>(GeneratedClass);
 	if (GeneratedClass && !ClassObject->IsA<UKlawrBlueprintGeneratedClass>())
@@ -78,14 +79,14 @@ void FBlueprintCompiler::EnsureProperGeneratedClass(UClass*& GeneratedClass)
 	}
 }
 
-void FBlueprintCompiler::CleanAndSanitizeClass(UBlueprintGeneratedClass* ClassToClean, UObject*& OldCDO)
+void FKlawrBlueprintCompiler::CleanAndSanitizeClass(UBlueprintGeneratedClass* ClassToClean, UObject*& OldCDO)
 {
 	Super::CleanAndSanitizeClass(ClassToClean, OldCDO);
 
 	check(ClassToClean == Super::NewClass);
 }
 
-void FBlueprintCompiler::FinishCompilingClass(UClass* InGeneratedClass)
+void FKlawrBlueprintCompiler::FinishCompilingClass(UClass* InGeneratedClass)
 {
 	auto Blueprint = CastChecked<UKlawrBlueprint>(Super::Blueprint);
 	auto GeneratedClass = CastChecked<UKlawrBlueprintGeneratedClass>(InGeneratedClass);
@@ -105,7 +106,7 @@ void FBlueprintCompiler::FinishCompilingClass(UClass* InGeneratedClass)
 	Super::FinishCompilingClass(InGeneratedClass);
 }
 
-bool FBlueprintCompiler::ValidateGeneratedClass(UBlueprintGeneratedClass* GeneratedClass)
+bool FKlawrBlueprintCompiler::ValidateGeneratedClass(UBlueprintGeneratedClass* GeneratedClass)
 {
 	return Super::ValidateGeneratedClass(GeneratedClass)
 		&& UKlawrBlueprint::ValidateGeneratedClass(GeneratedClass);

@@ -31,15 +31,15 @@ namespace Klawr {
 /**
  * Compiles Klawr Blueprints.
  */
-class FBlueprintCompiler : public FKismetCompilerContext
+class FKlawrBlueprintCompiler : public FKismetCompilerContext
 {
 public:
-	FBlueprintCompiler(
+	FKlawrBlueprintCompiler(
 		UKlawrBlueprint* Source, FCompilerResultsLog& OutResultsLog, 
 		const FKismetCompilerOptions& CompilerOptions, TArray<UObject*>* ObjLoaded
 	);
 
-	virtual ~FBlueprintCompiler();
+	virtual ~FKlawrBlueprintCompiler();
 
 public: // FKismetCompilerContext interface
 	virtual void Compile() override;
