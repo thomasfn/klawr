@@ -25,6 +25,7 @@
 
 #include "KismetCompiler.h"
 #include "KlawrBlueprint.h"
+#include "KlawrBlueprintGeneratedClass.h"
 
 namespace Klawr {
 
@@ -43,6 +44,9 @@ public:
 
 public: // FKismetCompilerContext interface
 	virtual void Compile() override;
+	virtual void KlawrCreateClassVariablesFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void CreateClassVariablesFromBlueprint() override;
+	UKlawrBlueprint* KlawrBlueprint() const { return Cast<UKlawrBlueprint>(Blueprint); }
 
 protected: // FKismetCompilerContext interface
 	virtual void SpawnNewClass(const FString& NewClassName) override;
@@ -66,6 +70,9 @@ protected: // FKismetCompilerContext interface
 
 private:
 	typedef FKismetCompilerContext Super;
+	void CreateScriptContextProperty();
+	TArray<FScriptField> ScriptDefinedFields;
+	UObjectProperty* ContextProperty;
 };
 
 } // namespace Klawr

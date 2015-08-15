@@ -28,10 +28,11 @@
 
 void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>& OutFields)
 {
-	if (!ScriptDefinedType.IsEmpty())
+	if (ScriptDefinedType.IsEmpty())
 	{
 		return;
 	}
+
 	// Read properties from generated class
 	std::vector<Klawr::tstring> propertyNames;
 	// We are most certainly in the editor atm

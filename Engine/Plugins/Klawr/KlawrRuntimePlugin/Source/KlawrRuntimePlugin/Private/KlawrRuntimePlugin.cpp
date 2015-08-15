@@ -25,6 +25,13 @@
 #include "KlawrClrHost.h"
 #include "KlawrNativeUtils.h"
 #include "KlawrObjectReferencer.h"
+#if WITH_EDITOR
+#include "BlueprintEditorUtils.h"
+#include "AssetRegistryModule.h"
+#include "KismetEditorUtilities.h"
+#include "CompilerResultsLog.h"
+#include "KlawrBlueprint.h"
+#endif
 
 DEFINE_LOG_CATEGORY(LogKlawrRuntimePlugin);
 
@@ -88,15 +95,31 @@ public:
 			{
 				PrimaryEngineAppDomainID = NewAppDomainID;
 				bReloaded = true;
+
 			}
 			else
 			{
 				DestroyAppDomain(NewAppDomainID);
 			}
-			TArray<FString> types;
+#if WITH_EDITOR
+			UObject* ClassPackage = ANY_PACKAGE;
 
-			// DEBUG //
-			GetScriptComponentTypes(types);
+			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+			TArray<FAssetData> AssetData;
+			const UClass* Class = UBlueprint::StaticClass();
+			AssetRegistryModule.Get().GetAssetsByClass(UKlawrBlueprint::StaticClass()->GetFName(), AssetData);
+
+			for (const auto& iter : AssetData)
+			{
+				UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Recreating Graph for class %s"), *(iter.AssetName.ToString()));
+				UKlawrBlueprint* temp = CastChecked<UKlawrBlueprint>(iter.GetAsset());
+
+				FCompilerResultsLog LogResults;
+				LogResults.bLogDetailedResults = true;
+				LogResults.EventDisplayThresholdMs = 500;
+				FKismetEditorUtilities::CompileBlueprint(temp, false, false, false, &LogResults);
+			}
+#endif
 		}
 		else
 		{
@@ -117,15 +140,6 @@ public:
 		{
 			const TCHAR* type = *(FString(scriptType.c_str()));
 			Types.Add(FString(scriptType.c_str()));
-
-			UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found class %s"), type);
-			std::vector<tstring> propertyNames;
-			IClrHost::Get()->GetScriptComponentProperties(PrimaryEngineAppDomainID, type, propertyNames);
-
-			for (const auto& propertyName : propertyNames)
-			{
-				UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found property %s in class %s"), *(FString(propertyName.c_str())), type);
-			}
 		}
 	}
 #endif // WITH_EDITOR
