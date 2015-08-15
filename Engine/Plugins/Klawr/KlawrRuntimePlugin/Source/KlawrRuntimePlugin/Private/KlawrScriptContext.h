@@ -28,11 +28,11 @@
 
 namespace Klawr {
 
-class FScriptContext : public IKlawrScriptContext
+class FKlawrScriptContext : public IKlawrScriptContext
 {
 public:
-	FScriptContext();
-	virtual ~FScriptContext();
+	FKlawrScriptContext();
+	virtual ~FKlawrScriptContext();
 
 	virtual bool Initialize(const FString& Code, UObject* Owner) override;
 	virtual void BeginPlay() override;
