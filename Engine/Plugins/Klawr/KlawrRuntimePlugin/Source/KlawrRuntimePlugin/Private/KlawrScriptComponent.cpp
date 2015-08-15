@@ -134,15 +134,9 @@ void UKlawrScriptComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	int appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this);
-	long long InstanceID = Proxy->InstanceID;
-	UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("TestTick: %d - %d"), appDomainId, InstanceID);
-	const TCHAR* propName = TEXT("IntPropertyTest");
-	IKlawrRuntimePlugin::Get().SetInt(appDomainId, InstanceID, propName, 66);
 	if (Proxy && Proxy->TickComponent)
 	{
 		Proxy->TickComponent(DeltaTime);
 	}
 
-	UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Testproperty: '%d'"), IKlawrRuntimePlugin::Get().GetInt(appDomainId, InstanceID, propName));
 }
