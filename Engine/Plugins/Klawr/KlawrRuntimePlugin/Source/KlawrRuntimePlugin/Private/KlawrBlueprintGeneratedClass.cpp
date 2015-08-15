@@ -24,3 +24,45 @@
 
 #include "KlawrRuntimePluginPrivatePCH.h"
 #include "KlawrBlueprintGeneratedClass.h"
+
+
+void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>& OutFields)
+{
+	if (!ScriptDefinedType.IsEmpty())
+	{
+		return;
+	}
+	// Read properties from generated class
+	std::vector<Klawr::tstring> propertyNames;
+	// We are most certainly in the editor atm
+	Klawr::IClrHost::Get()->GetScriptComponentProperties(appDomainId, *ScriptDefinedType, propertyNames);
+	OutFields.Empty();
+	for (auto& propertyName : propertyNames)
+	{
+		int propertyType = Klawr::IClrHost::Get()->GetScriptComponentPropertyType(appDomainId, *ScriptDefinedType, propertyName.c_str());
+		FScriptField propertyInfo;
+		switch (propertyType)
+		{
+		case 0:
+			propertyInfo.Class = UFloatProperty::StaticClass();
+			break;
+		case 1:
+			propertyInfo.Class = UIntProperty::StaticClass();
+			break;
+		case 2:
+			propertyInfo.Class = UBoolProperty::StaticClass();
+			break;
+		case 3:
+			propertyInfo.Class = UStrProperty::StaticClass();
+			break;
+		}
+
+		// TODO: Add Objects
+
+		if (propertyInfo.Class)
+		{
+			propertyInfo.Name = FName(propertyName.c_str());
+			OutFields.Add(propertyInfo);
+		}
+	}
+}

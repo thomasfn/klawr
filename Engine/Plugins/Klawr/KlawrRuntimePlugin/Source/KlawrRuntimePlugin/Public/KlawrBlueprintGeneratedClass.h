@@ -26,6 +26,29 @@
 #include "Engine/BlueprintGeneratedClass.h"
 #include "KlawrBlueprintGeneratedClass.generated.h"
 
+
+/**
+* Script-defined field (variable or function)
+*/
+struct KLAWRRUNTIMEPLUGIN_API FScriptField
+{
+	/** Field name */
+	FName Name;
+	/** Field type */
+	UClass* Class;
+
+	FScriptField()
+		: Class(NULL)
+	{
+	}
+	FScriptField(FName InName, UClass* InClass)
+		: Name(InName)
+		, Class(InClass)
+	{
+	}
+};
+
+
 UCLASS()
 class KLAWRRUNTIMEPLUGIN_API UKlawrBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
@@ -39,7 +62,14 @@ public:
 	UPROPERTY()
 	FString ScriptDefinedType;
 
+	UPROPERTY()
+		TArray<UProperty*> ScriptProperties;
+
+	int appDomainId = 0;
+
 public:
+
+	void GetScriptDefinedFields(TArray<FScriptField>& OutFields);
 	/**
 	 * Get the UKlawrBlueprintGeneratedClass from the inheritance hierarchy of the given class.
 	 * @return UKlawrBlueprintGeneratedClass instance, or nullptr if the given class is not derived
