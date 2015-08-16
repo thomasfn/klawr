@@ -46,8 +46,9 @@ void UKlawrScriptComponent::CreateScriptComponentProxy()
 	if (GeneratedClass)
 	{
 		Proxy = new Klawr::ScriptComponentProxy();
+		appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this);
 		bool bCreated = Klawr::IClrHost::Get()->CreateScriptComponent(
-			IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this),
+			appDomainId,
 			*GeneratedClass->ScriptDefinedType, this, *Proxy
 		);
 
@@ -70,7 +71,7 @@ void UKlawrScriptComponent::DestroyScriptComponentProxy()
 	if (Proxy->InstanceID != 0)
 	{
 		Klawr::IClrHost::Get()->DestroyScriptComponent(
-			IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this), Proxy->InstanceID
+			appDomainId, Proxy->InstanceID
 		);
 	}
 
@@ -135,8 +136,11 @@ void UKlawrScriptComponent::TickComponent(
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (Proxy && Proxy->TickComponent)
-	{
+	{ 
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(GetClass());
+		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, bpClass);
 		Proxy->TickComponent(DeltaTime);
+		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, bpClass);
 	}
 
 }

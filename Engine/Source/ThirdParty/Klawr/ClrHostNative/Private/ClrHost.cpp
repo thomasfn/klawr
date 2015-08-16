@@ -31,7 +31,7 @@
 #pragma comment(lib, "mscoree.lib")
 
 namespace {
-
+	 
 SAFEARRAY* CreateSafeArrayOfWrapperFunctions(void** wrapperFunctions, int numFunctions)
 {
 	SAFEARRAY* safeArray = SafeArrayCreateVector(VT_I8, 0, numFunctions);
@@ -57,7 +57,7 @@ SAFEARRAY* CreateSafeArrayOfWrapperFunctions(void** wrapperFunctions, int numFun
  * This only works if TSafeArrayElement can be implicitly converted to TVectorElement.
  */
 template<typename TSafeArrayElement, typename TVectorElement>
-void SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
+void __cdecl SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
 {
 	LONG lowerBound, upperBound;
 	HRESULT hr = SafeArrayGetLBound(input, 1, &lowerBound);
@@ -114,7 +114,7 @@ struct ProxySizeChecks
 
 };
 
-bool ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScriptsAssemblyName)
+bool __cdecl ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScriptsAssemblyName)
 {
 	_COM_SMARTPTR_TYPEDEF(ICLRMetaHost, IID_ICLRMetaHost);
 	_COM_SMARTPTR_TYPEDEF(ICLRRuntimeInfo, IID_ICLRRuntimeInfo);
@@ -180,7 +180,7 @@ bool ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScri
 	return SUCCEEDED(hr);
 }
 
-void ClrHost::Shutdown()
+void __cdecl ClrHost::Shutdown()
 {
 	_hostControl->Shutdown();
 	
@@ -198,7 +198,7 @@ void ClrHost::Shutdown()
 	}
 }
 
-bool ClrHost::CreateEngineAppDomain(int& outAppDomainID)
+bool __cdecl ClrHost::CreateEngineAppDomain(int& outAppDomainID)
 {
 	outAppDomainID = _hostControl->GetDefaultAppDomainManager()->CreateEngineAppDomain(
 		_engineAppDomainAppBase.c_str()
@@ -206,7 +206,7 @@ bool ClrHost::CreateEngineAppDomain(int& outAppDomainID)
 	return _hostControl->GetEngineAppDomainManager(outAppDomainID) != nullptr;
 }
 
-bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtils)
+bool __cdecl ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtils)
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -245,12 +245,12 @@ bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtil
 	return appDomainManager != nullptr;
 }
 
-bool ClrHost::DestroyEngineAppDomain(int appDomainID)
+bool __cdecl ClrHost::DestroyEngineAppDomain(int appDomainID)
 {
 	return _hostControl->DestroyEngineAppDomain(appDomainID);
 }
 
-bool ClrHost::CreateScriptObject(
+bool __cdecl ClrHost::CreateScriptObject(
 	int appDomainID, const TCHAR* className, class UObject* owner, ScriptObjectInstanceInfo& info
 )
 {
@@ -274,7 +274,7 @@ bool ClrHost::CreateScriptObject(
 	return created;
 }
 
-void ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
+void __cdecl ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -283,7 +283,7 @@ void ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
 	}
 }
 
-bool ClrHost::CreateScriptComponent(
+bool __cdecl ClrHost::CreateScriptComponent(
 	int appDomainID, const TCHAR* className, class UObject* nativeComponent, ScriptComponentProxy& proxy
 )
 {
@@ -299,7 +299,7 @@ bool ClrHost::CreateScriptComponent(
 	);
 }
 
-void ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
+void __cdecl ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -308,7 +308,7 @@ void ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
 	}
 }
 
-void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const
+void __cdecl ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -321,7 +321,7 @@ void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& typ
 	}
 }
 
-void ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
+void __cdecl ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -334,7 +334,7 @@ void ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR* typeNam
 	}
 }
 
-int ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+int __cdecl ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -344,7 +344,7 @@ int ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeNa
 	return -1;
 }
 
-float ClrHost::GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+float __cdecl ClrHost::GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -364,7 +364,7 @@ int __cdecl ClrHost::GetInt(const int appDomainID, const __int64 instanceID, con
 	return 0;
 }
 
-bool ClrHost::GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+bool __cdecl ClrHost::GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -374,7 +374,7 @@ bool ClrHost::GetBool(const int appDomainID, const __int64 instanceID, const TCH
 	return false;
 }
 
-const TCHAR* ClrHost::GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+const TCHAR* __cdecl ClrHost::GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -384,7 +384,7 @@ const TCHAR* ClrHost::GetStr(const int appDomainID, const __int64 instanceID, co
 	return TEXT("");
 }
 
-UObject* ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+UObject* __cdecl ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
 	return NULL;
 	/*
@@ -398,7 +398,7 @@ UObject* ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const 
 	*/
 }
 
-void ClrHost::SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const
+void __cdecl ClrHost::SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -416,7 +416,7 @@ void __cdecl ClrHost::SetInt(const int appDomainID, const __int64 instanceID, co
 		}
 }
 
-void ClrHost::SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const
+void __cdecl ClrHost::SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -425,7 +425,7 @@ void ClrHost::SetBool(const int appDomainID, const __int64 instanceID, const TCH
 	}
 }
 
-void ClrHost::SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const
+void __cdecl ClrHost::SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -434,7 +434,7 @@ void ClrHost::SetStr(const int appDomainID, const __int64 instanceID, const TCHA
 	}
 }
 
-void ClrHost::SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const
+void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const
 {/*
  auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
  if (appDomainManager)

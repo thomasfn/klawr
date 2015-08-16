@@ -25,6 +25,7 @@
 #include "KlawrClrHost.h"
 #include "KlawrNativeUtils.h"
 #include "KlawrObjectReferencer.h"
+#include "KlawrBlueprintGeneratedClass.h"
 #if WITH_EDITOR
 #include "BlueprintEditorUtils.h"
 #include "AssetRegistryModule.h"
@@ -45,7 +46,7 @@ UProperty* FindScriptPropertyHelper(const UClass* Class, FName PropertyName)
 		UProperty* Property = *PropertyIt;
 		if (Property->GetFName() == PropertyName)
 		{
-			return Property;
+			return Property; 
 		}
 	}
 	return nullptr;
@@ -280,7 +281,73 @@ public: // IModuleInterface interface
 		// so this module cannot be reloaded
 		return false;
 	}
+	void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrBlueprintGeneratedClass* object) const override
+	{
+		for (auto prop : object->ScriptProperties)
+		{
+			FString dummy = prop->GetFName().ToString();
+			const TCHAR* propertyName = *(dummy);
+			if (prop->GetClass()->IsChildOf(UBoolProperty::StaticClass()))
+			{
+				UBoolProperty* propBool = Cast<UBoolProperty>(prop);
+				SetBool(appDomainID, instanceID, propertyName, propBool->GetPropertyValue_InContainer(object));
+			}
+			else if (prop->GetClass()->IsChildOf(UIntProperty::StaticClass()))
+			{
+				UIntProperty* propInt = Cast<UIntProperty>(prop);
+				SetInt(appDomainID, instanceID, propertyName, propInt->GetPropertyValue_InContainer(object));
+			}
+			else if (prop->GetClass()->IsChildOf(UStrProperty::StaticClass()))
+			{
+				UStrProperty* propStr = Cast<UStrProperty>(prop);
+				SetStr(appDomainID, instanceID, propertyName, *(propStr->GetPropertyValue_InContainer(object)));
+			}
+			else if (prop->GetClass()->IsChildOf(UFloatProperty::StaticClass()))
+			{
+				UFloatProperty* propFloat = Cast<UFloatProperty>(prop);
+				SetFloat(appDomainID, instanceID, propertyName, propFloat->GetPropertyValue_InContainer(object));
+			}
+			else if (prop->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
+			{
+				UObjectProperty* propObject = Cast<UObjectProperty>(prop);
+				SetObj(appDomainID, instanceID, propertyName, propObject->GetPropertyValue_InContainer(object));
+			}
+		}
+	}
 
+	void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrBlueprintGeneratedClass* object) const override
+	{
+		for (auto prop : object->ScriptProperties)
+		{
+			FString dummy = prop->GetFName().ToString();
+			const TCHAR* propertyName = *(dummy);
+			if (prop->GetClass()->IsChildOf(UBoolProperty::StaticClass()))
+			{
+				UBoolProperty* propBool = Cast<UBoolProperty>(prop);
+				propBool->SetPropertyValue_InContainer(object, GetBool(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UIntProperty::StaticClass()))
+			{
+				UIntProperty* propInt = Cast<UIntProperty>(prop);
+				propInt->SetPropertyValue_InContainer(object, GetInt(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UStrProperty::StaticClass()))
+			{
+				UStrProperty* propStr = Cast<UStrProperty>(prop);
+				propStr->SetPropertyValue_InContainer(object, GetStr(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UFloatProperty::StaticClass()))
+			{
+				UFloatProperty* propFloat = Cast<UFloatProperty>(prop);
+				propFloat->SetPropertyValue_InContainer(object, GetFloat(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
+			{
+				UObjectProperty* propObject = Cast<UObjectProperty>(prop);
+				propObject->SetPropertyValue_InContainer(object, GetObj(appDomainID, instanceID, propertyName));
+			}
+		}
+	}
 
 	void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const override
 	{

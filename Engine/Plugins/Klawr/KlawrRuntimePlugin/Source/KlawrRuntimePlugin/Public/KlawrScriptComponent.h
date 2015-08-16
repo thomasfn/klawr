@@ -67,6 +67,7 @@ private:
 	void CreateScriptComponentProxy();
 	void DestroyScriptComponentProxy();
 
+	int appDomainId = 0;
 private:
 	// a proxy that represents the managed counterpart of this script component
 	Klawr::ScriptComponentProxy* Proxy;

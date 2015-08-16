@@ -95,6 +95,7 @@ bool FKlawrScriptContext::CanTick()
 
 bool FKlawrScriptContext::CallFunction(const FString& FunctionName)
 {
+
 	// TODO:
 	return false;
 }
