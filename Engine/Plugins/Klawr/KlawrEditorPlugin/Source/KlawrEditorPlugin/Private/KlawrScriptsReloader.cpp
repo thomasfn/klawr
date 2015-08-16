@@ -262,7 +262,8 @@ void FScriptsReloader::Tick(float DeltaTime)
 	
 	if (NewScriptFiles.Num())
 	{
-		bProjectModified = FGameProjectBuilder::AddSourceFilesToProject(NewScriptFiles);
+		bProjectModified = true;
+		FGameProjectBuilder::AddSourceFilesToProject(NewScriptFiles);
 		NewScriptFiles.Reset();
 	}
 
