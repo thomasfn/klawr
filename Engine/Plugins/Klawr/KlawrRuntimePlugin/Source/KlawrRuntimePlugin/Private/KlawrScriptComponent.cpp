@@ -125,7 +125,10 @@ void UKlawrScriptComponent::InitializeComponent()
 
 	if (Proxy && Proxy->InitializeComponent)
 	{
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(GetClass());
+		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, bpClass);
 		Proxy->InitializeComponent();
+		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, bpClass);
 	}
 }
 
