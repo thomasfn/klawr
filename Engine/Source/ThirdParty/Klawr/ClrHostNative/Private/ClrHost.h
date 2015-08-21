@@ -65,8 +65,12 @@ public: // IClrHost interface
 	virtual void GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const override;
 
 	virtual void GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const override;
+	virtual void GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const override;
 
 	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const override;
+	virtual const TCHAR* GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const override;
+
+	virtual void GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const override;
 
 	virtual void SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const override;
 	virtual void SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int value) const override;

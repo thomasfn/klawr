@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\UFUNCTIONAttribute.cs" />
     <Compile Include="Attributes\UPROPERTYAttribute.cs" />
     <Compile Include="SafeHandles\ArrayHandle.cs" />
     <Compile Include="SafeHandles\ObjectHandle.cs" />

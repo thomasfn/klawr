@@ -56,14 +56,37 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 		case 3:
 			propertyInfo.Class = UStrProperty::StaticClass();
 			break;
-		}
+		case 4:
+			propertyInfo.Class = UObjectProperty::StaticClass();
 
-		// TODO: Add Objects
+			const TCHAR* propertyClassName = Klawr::IClrHost::Get()->GetScriptComponentPropertyClassType(appDomainId, *ScriptDefinedType, propertyName.c_str());
+			propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, propertyClassName);
+
+			break;
+		}
 
 		if (propertyInfo.Class)
 		{
 			propertyInfo.Name = FName(propertyName.c_str());
 			OutFields.Add(propertyInfo);
+		}
+	}
+
+	std::vector<Klawr::tstring> functionNames;
+	Klawr::IClrHost::Get()->GetScriptComponentFunctionNames(appDomainId, *ScriptDefinedType, functionNames);
+	for (auto& functionName : functionNames)
+	{
+		const TCHAR* dummy = functionName.c_str();
+		UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found Function %s"), dummy);
+		std::vector<Klawr::tstring> functionParameterNames;
+		Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterNames(appDomainId, *ScriptDefinedType, dummy, functionParameterNames);
+		int i = 0;
+		for (auto& functionParameterName : functionParameterNames)
+		{
+			const TCHAR* dummy2 = functionParameterName.c_str();
+
+			UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Function parameter #%d: %s"), i, dummy2);
+			i++;
 		}
 	}
 }

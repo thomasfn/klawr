@@ -37,6 +37,8 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptField
 	/** Field type */
 	UClass* Class;
 
+	UClass* innerClass;
+
 	FScriptField()
 		: Class(NULL)
 	{
@@ -75,7 +77,7 @@ public:
 	 * @return UKlawrBlueprintGeneratedClass instance, or nullptr if the given class is not derived
 	 *         from UKlawrBlueprintGeneratedClass
 	 */
-	static UKlawrBlueprintGeneratedClass* GetBlueprintGeneratedClass(UClass* Class)
+	FORCEINLINE static UKlawrBlueprintGeneratedClass* GetBlueprintGeneratedClass(UClass* Class)
 	{
 		UKlawrBlueprintGeneratedClass* GeneratedClass = nullptr;
 		for (auto CurrentClass = Class; CurrentClass; CurrentClass = CurrentClass->GetSuperClass())

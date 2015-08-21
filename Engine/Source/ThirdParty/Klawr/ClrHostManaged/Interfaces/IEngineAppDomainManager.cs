@@ -106,6 +106,12 @@ namespace Klawr.ClrHost.Interfaces
 
         int GetScriptComponentPropertyType(string componentName, string propertyName);
 
+        string GetScriptComponentPropertyClassType(string componentName, string propertyName);
+
+        string[] GetScriptComponentFunctionNames(string componentName);
+
+        string[] GetScriptComponentFunctionParameterNames(string componentName, string functionName);
+
         void SetFloat(long instanceID, string propertyName, float value);
         void SetInt(long instanceID, string propertyName, int value);
         void SetBool(long instanceID, string propertyName, bool value);

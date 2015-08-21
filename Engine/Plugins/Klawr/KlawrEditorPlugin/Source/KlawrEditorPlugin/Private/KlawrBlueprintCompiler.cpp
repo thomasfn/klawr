@@ -156,7 +156,8 @@ void FKlawrBlueprintCompiler::KlawrCreateClassVariablesFromBlueprint(UKlawrBluep
 			{
 				PinCategory = Schema->PC_Object;
 				// @todo: some scripting extensions (that are strongly typed) can handle this better
-				InnerType = UObject::StaticClass();
+				
+				InnerType = Field.innerClass;
 			}
 			if (!PinCategory.IsEmpty())
 			{

@@ -33,7 +33,7 @@ namespace Klawr
 /**
  * A component whose functionality is implemented in C# or any other CLI language.
  */
-UCLASS(BlueprintType)
+UCLASS(Blueprintable, hidecategories = (Object, ActorComponent), editinlinenew, meta = (BlueprintSpawnableComponent), ClassGroup = Script, Abstract)
 class KLAWRRUNTIMEPLUGIN_API UKlawrScriptComponent : public UActorComponent
 {
 	GENERATED_BODY()

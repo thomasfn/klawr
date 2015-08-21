@@ -31,6 +31,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using Klawr.ClrHost.Managed.Attributes;
+using Klawr.UnrealEngine;
 
 namespace Klawr.ClrHost.Managed
 {
@@ -492,10 +493,71 @@ namespace Klawr.ClrHost.Managed
             var scriptComponentType = FindTypeByName(componentName);
             if (scriptComponentType == null)
             {
-                LogUtils.LogError("Component "+componentName+" NOT FOUND! Why?");
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
                 return new string[0];
             }
             return scriptComponentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()).Select(x => x.Name).ToArray();
+        }
+
+        public string[] GetScriptComponentFunctionNames(string componentName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+            return scriptComponentType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(function => function.GetCustomAttributes<UFUNCTIONAttribute>(true).Any()).Select(x => x.Name).ToArray();
+        }
+
+        public int GetScriptComponentFunctionReturnType(string componentName, string functionName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return -2;
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            if (mi.ReturnType == typeof(float))
+            { return 0; }
+            else if (mi.ReturnType == typeof(int))
+            { return 1; }
+            else if (mi.ReturnType == typeof(bool))
+            { return 2; }
+            else if (mi.ReturnType == typeof(string))
+            { return 3; }
+
+            // Unknown type??
+            return -1;
+        }
+
+        public string[] GetScriptComponentFunctionParameterNames(string componentName, string functionName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            return mi.GetParameters().Select(x => x.Name).ToArray();
+        }
+
+        public int GetScriptComponentFunctionParameterType(string componentName, string functionName, string parameterName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return -2;
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            // TODO: the ifs
+            return -1;
         }
 
         public int GetScriptComponentPropertyType(string componentName, string propertyName)
@@ -509,11 +571,26 @@ namespace Klawr.ClrHost.Managed
             { return 2; }
             else if (pi.PropertyType == typeof(string))
             { return 3; }
+            else if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
+            { return 4; }
 
             // Unknown type??
             return -1;
         }
 
+        
+        public string GetScriptComponentPropertyClassType(string componentName, string propertyName)
+        {
+            PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
+            if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
+            {
+                Type tp = pi.PropertyType;
+                if (tp.Name.Substring(0, 1) == "U") // Forget the first U
+                { return tp.Name.Substring(1); }
+                return tp.Name; 
+            }
+            return "";
+        }
 
         public void SetFloat(long instanceID, string propertyName, float value)
         {

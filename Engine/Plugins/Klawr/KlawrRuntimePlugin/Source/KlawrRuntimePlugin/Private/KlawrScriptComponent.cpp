@@ -36,6 +36,7 @@ UKlawrScriptComponent::UKlawrScriptComponent(const FObjectInitializer& objectIni
 	bTickInEditor = false;
 	bAutoActivate = false;
 	bWantsInitializeComponent = false;
+	this->GetClass()->GetDefaultObject();
 }
 
 void UKlawrScriptComponent::CreateScriptComponentProxy()

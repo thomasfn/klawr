@@ -344,6 +344,32 @@ int __cdecl ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR
 	return -1;
 }
 
+void __cdecl ClrHost::GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& functionNames) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentFunctionNames(typeName);
+		if (safeArray)
+		{
+			SafeArrayToVector<BSTR>(safeArray, functionNames);
+		}
+	}
+}
+
+void __cdecl ClrHost::GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentFunctionParameterNames(typeName, functionName);
+		if (safeArray)
+		{
+			SafeArrayToVector<BSTR>(safeArray, functionNames);
+		}
+	}
+}
+
 float __cdecl ClrHost::GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
@@ -443,6 +469,16 @@ void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, co
  }
  No Clue yet
  */
+}
+
+const TCHAR* __cdecl ClrHost::GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetScriptComponentPropertyClassType(componentName, propertyName);
+	}
+	return TEXT("");
 }
 
 } // namespace Klawr
