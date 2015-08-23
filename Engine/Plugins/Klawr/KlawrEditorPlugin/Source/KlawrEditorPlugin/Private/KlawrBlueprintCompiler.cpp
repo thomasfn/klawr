@@ -106,7 +106,11 @@ namespace Klawr {
 
 		for (TFieldIterator<UStrProperty> Property(InGeneratedClass); Property; ++Property)
 		{
-			Property->SetPropertyValue(Property->ContainerPtrToValuePtr<void>(CDO), FString(TEXT("")));
+			if (Super::Blueprint->ParentClass->IsChildOf(UKlawrScriptComponent::StaticClass()) &&
+				(InGeneratedClass != Super::Blueprint->SkeletonGeneratedClass))
+			{
+				Property->SetPropertyValue(Property->ContainerPtrToValuePtr<void>(CDO), FString(TEXT("")));
+			}
 		}
 
 	}
@@ -173,11 +177,7 @@ namespace Klawr {
 					if (ScriptProperty != NULL)
 					{
 						ScriptProperty->SetMetaData(TEXT("Category"), *Blueprint->GetName());
-						ScriptProperty->SetPropertyFlags(CPF_BlueprintVisible | CPF_Edit | CPF_BlueprintAssignable);
-						if (PinCategory == Schema->PC_String)
-						{
-							ScriptProperty->ClearPropertyFlags(CPF_ZeroConstructor);
-						}
+						ScriptProperty->SetPropertyFlags(CPF_BlueprintVisible | CPF_Edit);
 						
 						NewScripClass->ScriptProperties.Add(ScriptProperty);
 					}
