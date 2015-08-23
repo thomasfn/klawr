@@ -26,6 +26,13 @@
 #include "KlawrBlueprintGeneratedClass.h"
 
 
+UKlawrBlueprintGeneratedClass::UKlawrBlueprintGeneratedClass(const FObjectInitializer& objectInitializer)
+	: Super(objectInitializer)
+{
+	// Create the CDO as soon as possible (needed for issue with Asset Registry)
+	auto dummy = this->StaticClass()->GetDefaultObject(true);
+}
+
 void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>& OutFields)
 {
 	if (ScriptDefinedType.IsEmpty())

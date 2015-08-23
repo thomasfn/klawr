@@ -57,6 +57,8 @@ class KLAWRRUNTIMEPLUGIN_API UKlawrBlueprintGeneratedClass : public UBlueprintGe
 	GENERATED_BODY()
 
 public:
+	
+	UKlawrBlueprintGeneratedClass(const FObjectInitializer& objectInitializer);
 	/** 
 	 * The fully qualified name of the type defined in the script associated with an instance of
 	 * this class.

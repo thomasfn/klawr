@@ -102,12 +102,8 @@ public:
 			{
 				DestroyAppDomain(NewAppDomainID);
 			}
-#if WITH_EDITOR
-			UObject* ClassPackage = ANY_PACKAGE;
-
 			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 			TArray<FAssetData> AssetData;
-			const UClass* Class = UBlueprint::StaticClass();
 			AssetRegistryModule.Get().GetAssetsByClass(UKlawrBlueprint::StaticClass()->GetFName(), AssetData);
 
 			for (const auto& iter : AssetData)
@@ -120,7 +116,6 @@ public:
 				LogResults.EventDisplayThresholdMs = 500;
 				FKismetEditorUtilities::CompileBlueprint(temp, false, false, false, &LogResults);
 			}
-#endif
 		}
 		else
 		{

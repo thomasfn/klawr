@@ -578,16 +578,19 @@ namespace Klawr.ClrHost.Managed
             return -1;
         }
 
-        
+
         public string GetScriptComponentPropertyClassType(string componentName, string propertyName)
         {
             PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
             if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
             {
                 Type tp = pi.PropertyType;
-                if (tp.Name.Substring(0, 1) == "U") // Forget the first U
-                { return tp.Name.Substring(1); }
-                return tp.Name; 
+                bool removeFirstChar = pi.PropertyType.GetCustomAttribute<ConvertClassNameAttribute>() != null;
+                if (removeFirstChar)
+                {
+                    return tp.Name.Substring(1);
+                }
+                return tp.Name;
             }
             return "";
         }

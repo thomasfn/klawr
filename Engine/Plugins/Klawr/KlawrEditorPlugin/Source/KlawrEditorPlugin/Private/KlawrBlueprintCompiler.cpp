@@ -31,171 +31,183 @@
 
 namespace Klawr {
 
-FKlawrBlueprintCompiler::FKlawrBlueprintCompiler(
-	UKlawrBlueprint* Source, FCompilerResultsLog& OutResultsLog,
-	const FKismetCompilerOptions& CompilerOptions, TArray<UObject*>* ObjLoaded
-)	: Super(Source, OutResultsLog, CompilerOptions, ObjLoaded)
-{
-}
-
-FKlawrBlueprintCompiler::~FKlawrBlueprintCompiler()
-{
-}
-
-void FKlawrBlueprintCompiler::Compile()
-{
-	Super::Compile();
-}
-
-void FKlawrBlueprintCompiler::SpawnNewClass(const FString& NewClassName)
-{
-	Super::NewClass = FindObject<UKlawrBlueprintGeneratedClass>(
-		Super::Blueprint->GetOutermost(), *NewClassName
-	);
-	
-	if (Super::NewClass)
+	FKlawrBlueprintCompiler::FKlawrBlueprintCompiler(
+		UKlawrBlueprint* Source, FCompilerResultsLog& OutResultsLog,
+		const FKismetCompilerOptions& CompilerOptions, TArray<UObject*>* ObjLoaded
+		) : Super(Source, OutResultsLog, CompilerOptions, ObjLoaded)
 	{
-		FBlueprintCompileReinstancer::Create(Super::NewClass);
-	}
-	else
-	{
-		Super::NewClass = NewObject<UKlawrBlueprintGeneratedClass>(
-			Super::Blueprint->GetOutermost(), FName(*NewClassName), RF_Public | RF_Transactional
-		);
-	}
-}
-
-void FKlawrBlueprintCompiler::EnsureProperGeneratedClass(UClass*& GeneratedClass)
-{
-	auto ClassObject = Cast<UObject>(GeneratedClass);
-	if (GeneratedClass && !ClassObject->IsA<UKlawrBlueprintGeneratedClass>())
-	{
-		FKismetCompilerUtilities::ConsignToOblivion(
-			GeneratedClass, Super::Blueprint->bIsRegeneratingOnLoad
-		);
-		GeneratedClass = nullptr;
-	}
-}
-
-void FKlawrBlueprintCompiler::CleanAndSanitizeClass(UBlueprintGeneratedClass* ClassToClean, UObject*& OldCDO)
-{
-	Super::CleanAndSanitizeClass(ClassToClean, OldCDO);
-
-	check(ClassToClean == Super::NewClass);
-}
-
-void FKlawrBlueprintCompiler::FinishCompilingClass(UClass* InGeneratedClass)
-{
-	auto Blueprint = CastChecked<UKlawrBlueprint>(Super::Blueprint);
-	auto GeneratedClass = CastChecked<UKlawrBlueprintGeneratedClass>(InGeneratedClass);
-	if (Blueprint && GeneratedClass)
-	{
-		GeneratedClass->ScriptDefinedType = Blueprint->ScriptDefinedType;
 	}
 
-	// allow classes generated from Blueprints of Klawr script components to be used in other 
-	// Blueprints
-	if (Super::Blueprint->ParentClass->IsChildOf(UKlawrScriptComponent::StaticClass()) && 
-		(InGeneratedClass != Super::Blueprint->SkeletonGeneratedClass))
+	FKlawrBlueprintCompiler::~FKlawrBlueprintCompiler()
 	{
-		InGeneratedClass->SetMetaData(TEXT("BlueprintSpawnableComponent"), TEXT("true"));
 	}
 
-	if (Blueprint && GeneratedClass)
+	void FKlawrBlueprintCompiler::Compile()
 	{
-		if (!Blueprint->ScriptDefinedType.IsEmpty())
+		Super::Compile();
+	}
+
+	void FKlawrBlueprintCompiler::SpawnNewClass(const FString& NewClassName)
+	{
+		Super::NewClass = FindObject<UKlawrBlueprintGeneratedClass>(
+			Super::Blueprint->GetOutermost(), *NewClassName
+			);
+
+		if (Super::NewClass)
 		{
-			GeneratedClass->appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(GeneratedClass);
-
-			KlawrCreateClassVariablesFromBlueprint(GeneratedClass);
+			FBlueprintCompileReinstancer::Create(Super::NewClass);
+		}
+		else
+		{
+			Super::NewClass = NewObject<UKlawrBlueprintGeneratedClass>(
+				Super::Blueprint->GetOutermost(), FName(*NewClassName), RF_Public | RF_Transactional
+				);
 		}
 	}
 
-	Super::FinishCompilingClass(InGeneratedClass);
-}
-
-bool FKlawrBlueprintCompiler::ValidateGeneratedClass(UBlueprintGeneratedClass* GeneratedClass)
-{
-	return Super::ValidateGeneratedClass(GeneratedClass)
-		&& UKlawrBlueprint::ValidateGeneratedClass(GeneratedClass);
-}
-
-void FKlawrBlueprintCompiler::CreateClassVariablesFromBlueprint()
-{
-	Super::CreateClassVariablesFromBlueprint();
-}
-
-void FKlawrBlueprintCompiler::KlawrCreateClassVariablesFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass)
-{
-	NewScripClass->ScriptProperties.Empty();
-	NewScripClass->GetScriptDefinedFields(ScriptDefinedFields);
-
-	for (auto& Field : ScriptDefinedFields)
+	void FKlawrBlueprintCompiler::EnsureProperGeneratedClass(UClass*& GeneratedClass)
 	{
-		UClass* InnerType = Field.Class;
-		if (Field.Class->IsChildOf(UProperty::StaticClass()))
+		auto ClassObject = Cast<UObject>(GeneratedClass);
+		if (GeneratedClass && !ClassObject->IsA<UKlawrBlueprintGeneratedClass>())
 		{
-			FString PinCategory;
-			if (Field.Class->IsChildOf(UStrProperty::StaticClass()))
+			FKismetCompilerUtilities::ConsignToOblivion(
+				GeneratedClass, true
+				);
+			GeneratedClass = nullptr;
+		}
+	}
+
+	void FKlawrBlueprintCompiler::CleanAndSanitizeClass(UBlueprintGeneratedClass* ClassToClean, UObject*& OldCDO)
+	{
+		Super::CleanAndSanitizeClass(ClassToClean, OldCDO);
+
+		check(ClassToClean == Super::NewClass);
+	}
+
+	void FKlawrBlueprintCompiler::FinishCompilingClass(UClass* InGeneratedClass)
+	{
+		auto Blueprint = CastChecked<UKlawrBlueprint>(Super::Blueprint);
+		auto GeneratedClass = CastChecked<UKlawrBlueprintGeneratedClass>(InGeneratedClass);
+		if (Blueprint && GeneratedClass)
+		{
+			GeneratedClass->ScriptDefinedType = Blueprint->ScriptDefinedType;
+		}
+
+		// allow classes generated from Blueprints of Klawr script components to be used in other 
+		// Blueprints
+		if (Super::Blueprint->ParentClass->IsChildOf(UKlawrScriptComponent::StaticClass()) &&
+			(InGeneratedClass != Super::Blueprint->SkeletonGeneratedClass))
+		{
+			InGeneratedClass->SetMetaData(TEXT("BlueprintSpawnableComponent"), TEXT("true"));
+		}
+
+		Super::FinishCompilingClass(InGeneratedClass);
+		UObject* CDO = InGeneratedClass->GetDefaultObject();
+
+		for (TFieldIterator<UStrProperty> Property(InGeneratedClass); Property; ++Property)
+		{
+			Property->SetPropertyValue(Property->ContainerPtrToValuePtr<void>(CDO), FString(TEXT("")));
+		}
+
+	}
+
+	bool FKlawrBlueprintCompiler::ValidateGeneratedClass(UBlueprintGeneratedClass* GeneratedClass)
+	{
+		return Super::ValidateGeneratedClass(GeneratedClass)
+			&& UKlawrBlueprint::ValidateGeneratedClass(GeneratedClass);
+	}
+
+	void FKlawrBlueprintCompiler::CreateClassVariablesFromBlueprint()
+	{
+		if (Super::Blueprint && Super::Blueprint->GeneratedClass)
+		{
+			UKlawrBlueprint* BP = CastChecked<UKlawrBlueprint>(Super::Blueprint);
+			if (!BP->ScriptDefinedType.IsEmpty())
 			{
-				PinCategory = Schema->PC_String;
+				UKlawrBlueprintGeneratedClass* generatedClass = CastChecked<UKlawrBlueprintGeneratedClass>(BP->GeneratedClass);
+				generatedClass->appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(generatedClass);
+				KlawrCreateClassVariablesFromBlueprint(generatedClass);
 			}
-			else if (Field.Class->IsChildOf(UFloatProperty::StaticClass()))
+		}
+		Super::CreateClassVariablesFromBlueprint();
+	}
+
+	void FKlawrBlueprintCompiler::KlawrCreateClassVariablesFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass)
+	{
+		NewScripClass->ScriptProperties.Empty();
+		NewScripClass->GetScriptDefinedFields(ScriptDefinedFields);
+
+		for (auto& Field : ScriptDefinedFields)
+		{
+			UClass* InnerType = Field.Class;
+			if (Field.Class->IsChildOf(UProperty::StaticClass()))
 			{
-				PinCategory = Schema->PC_Float;
-			}
-			else if (Field.Class->IsChildOf(UIntProperty::StaticClass()))
-			{
-				PinCategory = Schema->PC_Int;
-			}
-			else if (Field.Class->IsChildOf(UBoolProperty::StaticClass()))
-			{
-				PinCategory = Schema->PC_Boolean;
-			}
-			else if (Field.Class->IsChildOf(UObjectProperty::StaticClass()))
-			{
-				PinCategory = Schema->PC_Object;
-				// @todo: some scripting extensions (that are strongly typed) can handle this better
-				
-				InnerType = Field.innerClass;
-			}
-			if (!PinCategory.IsEmpty())
-			{
-				FEdGraphPinType ScriptPinType(PinCategory, TEXT(""), InnerType, false, false);
-				UProperty* ScriptProperty = CreateVariable(Field.Name, ScriptPinType);
-				if (ScriptProperty != NULL)
+				FString PinCategory;
+				if (Field.Class->IsChildOf(UStrProperty::StaticClass()))
 				{
-					ScriptProperty->SetMetaData(TEXT("Category"), *Blueprint->GetName());
-					ScriptProperty->SetPropertyFlags(CPF_BlueprintVisible | CPF_Edit);
-					NewScripClass->ScriptProperties.Add(ScriptProperty);
+					PinCategory = Schema->PC_String;
+				}
+				else if (Field.Class->IsChildOf(UFloatProperty::StaticClass()))
+				{
+					PinCategory = Schema->PC_Float;
+				}
+				else if (Field.Class->IsChildOf(UIntProperty::StaticClass()))
+				{
+					PinCategory = Schema->PC_Int;
+				}
+				else if (Field.Class->IsChildOf(UBoolProperty::StaticClass()))
+				{
+					PinCategory = Schema->PC_Boolean;
+				}
+				else if (Field.Class->IsChildOf(UObjectProperty::StaticClass()))
+				{
+					PinCategory = Schema->PC_Object;
+					// @todo: some scripting extensions (that are strongly typed) can handle this better
+
+					InnerType = Field.innerClass;
+				}
+				if (!PinCategory.IsEmpty())
+				{
+					FEdGraphPinType ScriptPinType(PinCategory, TEXT(""), InnerType, false, false);
+					UProperty* ScriptProperty = CreateVariable(Field.Name, ScriptPinType);
+					if (ScriptProperty != NULL)
+					{
+						ScriptProperty->SetMetaData(TEXT("Category"), *Blueprint->GetName());
+						ScriptProperty->SetPropertyFlags(CPF_BlueprintVisible | CPF_Edit | CPF_BlueprintAssignable);
+						if (PinCategory == Schema->PC_String)
+						{
+							ScriptProperty->ClearPropertyFlags(CPF_ZeroConstructor);
+						}
+						
+						NewScripClass->ScriptProperties.Add(ScriptProperty);
+					}
 				}
 			}
 		}
+
+		CreateScriptContextProperty();
 	}
 
-	CreateScriptContextProperty();
-}
+	void FKlawrBlueprintCompiler::CreateScriptContextProperty()
+	{
+		// The only case we don't need a script context is if the script class derives form UScriptPluginComponent
+		UClass* ContextClass = nullptr;
+		if (Blueprint->ParentClass->IsChildOf(AActor::StaticClass()))
+		{
+			ContextClass = UKlawrScriptComponent::StaticClass();
+		}
+		/*
+		else if (!Blueprint->ParentClass->IsChildOf(UKlawrPluginComponent::StaticClass()))
+		{
+		ContextClass = UScriptContext::StaticClass();
+		}
+		*/
 
-void FKlawrBlueprintCompiler::CreateScriptContextProperty()
-{
-	// The only case we don't need a script context is if the script class derives form UScriptPluginComponent
-	UClass* ContextClass = nullptr;
-	if (Blueprint->ParentClass->IsChildOf(AActor::StaticClass()))
-	{
-		ContextClass = UKlawrScriptComponent::StaticClass();
+		if (ContextClass)
+		{
+			FEdGraphPinType ScriptContextPinType(Schema->PC_Object, TEXT(""), ContextClass, false, false);
+			ContextProperty = CastChecked<UObjectProperty>(CreateVariable(TEXT("Generated_ScriptContext"), ScriptContextPinType));
+			ContextProperty->SetPropertyFlags(CPF_ContainsInstancedReference | CPF_InstancedReference);
+		}
 	}
-	/*
-	else if (!Blueprint->ParentClass->IsChildOf(UKlawrPluginComponent::StaticClass()))
-	{
-	ContextClass = UScriptContext::StaticClass();
-	}
-	*/
-
-	if (ContextClass)
-	{
-		FEdGraphPinType ScriptContextPinType(Schema->PC_Object, TEXT(""), ContextClass, false, false);
-		ContextProperty = CastChecked<UObjectProperty>(CreateVariable(TEXT("Generated_ScriptContext"), ScriptContextPinType));
-		ContextProperty->SetPropertyFlags(CPF_ContainsInstancedReference | CPF_InstancedReference);
-	}
-}
 } // namespace Klawr
