@@ -193,12 +193,16 @@ public:
 	 */
 	virtual void GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const = 0;
 
-	virtual void GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
+	virtual void GetScriptComponentPropertyNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
+	virtual void GetScriptComponentPropertyMetadata(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName, std::vector<tstring>& metaData) const = 0;
 
 	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 	virtual const TCHAR* GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const = 0;
 	virtual void GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
 	virtual void GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const = 0;
+
+	virtual bool GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
+	virtual bool GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 
 	virtual void SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const = 0;
 	virtual void SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int value) const = 0;

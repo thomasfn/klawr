@@ -321,7 +321,7 @@ void __cdecl ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstri
 	}
 }
 
-void __cdecl ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
+void __cdecl ClrHost::GetScriptComponentPropertyNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -334,6 +334,39 @@ void __cdecl ClrHost::GetScriptComponentProperties(int appDomainID, const TCHAR*
 	}
 }
 
+void __cdecl ClrHost::GetScriptComponentPropertyMetadata(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName, std::vector<tstring>& metaData) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentPropertyMetadata(typeName, propertyName);
+		if (safeArray)
+		{
+			SafeArrayToVector<BSTR>(safeArray, metaData);
+		}
+	}
+}
+
+bool __cdecl ClrHost::GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return (appDomainManager->GetScriptComponentPropertyIsAdvancedDisplay(typeName, propertyName) & 1) == 1;
+	}
+	return false;
+}
+
+bool __cdecl ClrHost::GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return (appDomainManager->GetScriptComponentPropertyIsSaveGame(typeName, propertyName) & 1) == 1;
+	}
+	return false;
+}
+
 int __cdecl ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
@@ -343,6 +376,7 @@ int __cdecl ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR
 	}
 	return -1;
 }
+
 
 void __cdecl ClrHost::GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& functionNames) const
 {

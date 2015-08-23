@@ -182,7 +182,7 @@ namespace Klawr.ClrHost.Managed
                 instance.Dispose();
             }
         }
-        
+
         /// <summary>
         /// Note that the identifier returned by this method is only unique amongst all ScriptObject 
         /// instances registered with this manager instance. The returned identifier can be used to 
@@ -245,7 +245,7 @@ namespace Klawr.ClrHost.Managed
                     .Where(assembly => !assembly.IsDynamic)
                     .SelectMany(assembly => assembly.GetTypes())
                     .FirstOrDefault(
-                        t => t.FullName.Equals(typeName) 
+                        t => t.FullName.Equals(typeName)
                             && t.GetInterfaces().Contains(typeof(IScriptObject))
                     );
 
@@ -499,6 +499,77 @@ namespace Klawr.ClrHost.Managed
             return scriptComponentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()).Select(x => x.Name).ToArray();
         }
 
+        public string[] GetScriptComponentPropertyMetadata(string componentName, string propertyName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+            PropertyInfo pi = scriptComponentType.GetProperty(propertyName);
+            if (pi == null)
+            {
+                LogUtils.LogError("Component " + componentName + " Property " + propertyName + " NOT FOUND!");
+                return new string[0];
+            }
+
+            // Don't inherit for Meta-Data
+            UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
+            if (upa!=null)
+            {
+                return upa.GetMetas();
+            }
+            return new string[0];
+        }
+
+        public bool GetScriptComponentPropertyIsAdvancedDisplay(string componentName, string propertyName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return false;
+            }
+            PropertyInfo pi = scriptComponentType.GetProperty(propertyName);
+            if (pi == null)
+            {
+                LogUtils.LogError("Component " + componentName + " Property " + propertyName + " NOT FOUND!");
+                return false;
+            }
+
+            // Don't inherit for Meta-Data
+            UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
+            if (upa != null)
+            {
+                return upa.AdvancedDisplay;
+            }
+            return false;
+        }
+
+        public bool GetScriptComponentPropertyIsSaveGame(string componentName, string propertyName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return false;
+            }
+            PropertyInfo pi = scriptComponentType.GetProperty(propertyName);
+            if (pi == null)
+            {
+                LogUtils.LogError("Component " + componentName + " Property " + propertyName + " NOT FOUND!");
+                return false;
+            }
+
+            // Don't inherit for Meta-Data
+            UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
+            if (upa != null)
+            {
+                return upa.SaveGame;
+            }
+            return false;
+        }
         public string[] GetScriptComponentFunctionNames(string componentName)
         {
             var scriptComponentType = FindTypeByName(componentName);

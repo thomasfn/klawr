@@ -174,11 +174,33 @@ namespace Klawr {
 				{
 					FEdGraphPinType ScriptPinType(PinCategory, TEXT(""), InnerType, false, false);
 					UProperty* ScriptProperty = CreateVariable(Field.Name, ScriptPinType);
+
+					bool hasCategoryMeta = false;
+					for (auto meta : Field.metas)
+					{
+						hasCategoryMeta |= meta.Key == TEXT("Category");
+						ScriptProperty->SetMetaData(*meta.Key, *meta.Value);
+					}
+
 					if (ScriptProperty != NULL)
 					{
-						ScriptProperty->SetMetaData(TEXT("Category"), *Blueprint->GetName());
+						// If no Category meta is provided in the UPROPERTY attribute, generate one out of the class name
+						if (!hasCategoryMeta)
+						{
+							ScriptProperty->SetMetaData(TEXT("Category"), *Blueprint->GetName());
+						}
 						ScriptProperty->SetPropertyFlags(CPF_BlueprintVisible | CPF_Edit);
 						
+						if (NewScripClass->GetAdvancedDisplay(*(Field.Name.ToString())))
+						{
+							ScriptProperty->SetPropertyFlags(CPF_AdvancedDisplay);
+						}
+
+						if (NewScripClass->GetSaveGame(*(Field.Name.ToString())))
+						{
+							ScriptProperty->SetPropertyFlags(CPF_SaveGame);
+						}
+
 						NewScripClass->ScriptProperties.Add(ScriptProperty);
 					}
 				}

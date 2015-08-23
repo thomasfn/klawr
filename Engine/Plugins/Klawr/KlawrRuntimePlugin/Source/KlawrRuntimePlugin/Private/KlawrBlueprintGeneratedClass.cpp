@@ -33,6 +33,24 @@ UKlawrBlueprintGeneratedClass::UKlawrBlueprintGeneratedClass(const FObjectInitia
 	auto dummy = this->StaticClass()->GetDefaultObject(true);
 }
 
+bool UKlawrBlueprintGeneratedClass::GetAdvancedDisplay(const TCHAR* propertyName)
+{
+	if (ScriptDefinedType.IsEmpty())
+	{
+		return false;
+	}
+	return Klawr::IClrHost::Get()->GetScriptComponentPropertyIsAdvancedDisplay(appDomainId, *ScriptDefinedType, propertyName);
+}
+
+bool UKlawrBlueprintGeneratedClass::GetSaveGame(const TCHAR* propertyName)
+{
+	if (ScriptDefinedType.IsEmpty())
+	{
+		return false;
+	}
+	return Klawr::IClrHost::Get()->GetScriptComponentPropertyIsSaveGame(appDomainId, *ScriptDefinedType, propertyName);
+}
+
 void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>& OutFields)
 {
 	if (ScriptDefinedType.IsEmpty())
@@ -43,7 +61,7 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 	// Read properties from generated class
 	std::vector<Klawr::tstring> propertyNames;
 	// We are most certainly in the editor atm
-	Klawr::IClrHost::Get()->GetScriptComponentProperties(appDomainId, *ScriptDefinedType, propertyNames);
+	Klawr::IClrHost::Get()->GetScriptComponentPropertyNames(appDomainId, *ScriptDefinedType, propertyNames);
 	OutFields.Empty();
 	for (auto& propertyName : propertyNames)
 	{
@@ -68,13 +86,20 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 
 			const TCHAR* propertyClassName = Klawr::IClrHost::Get()->GetScriptComponentPropertyClassType(appDomainId, *ScriptDefinedType, propertyName.c_str());
 			propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, propertyClassName);
-
 			break;
 		}
 
 		if (propertyInfo.Class)
 		{
 			propertyInfo.Name = FName(propertyName.c_str());
+			std::vector<Klawr::tstring> metaDatas;
+			Klawr::IClrHost::Get()->GetScriptComponentPropertyMetadata(appDomainId, *ScriptDefinedType, propertyName.c_str(), metaDatas);
+			bool keyValue = false;
+			for (int i = 0; i < metaDatas.size(); i += 2)
+			{
+				propertyInfo.metas.Add(FString(metaDatas[i].c_str()), FString(metaDatas[i + 1].c_str()));
+			}
+
 			OutFields.Add(propertyInfo);
 		}
 	}

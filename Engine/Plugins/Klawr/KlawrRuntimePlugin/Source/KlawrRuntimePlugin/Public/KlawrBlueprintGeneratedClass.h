@@ -39,6 +39,8 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptField
 
 	UClass* innerClass;
 
+	TMap<FString, FString> metas;
+
 	FScriptField()
 		: Class(NULL)
 	{
@@ -74,6 +76,9 @@ public:
 public:
 
 	void GetScriptDefinedFields(TArray<FScriptField>& OutFields);
+
+	bool GetAdvancedDisplay(const TCHAR* propertyName);
+	bool GetSaveGame(const TCHAR* propertyName);
 	/**
 	 * Get the UKlawrBlueprintGeneratedClass from the inheritance hierarchy of the given class.
 	 * @return UKlawrBlueprintGeneratedClass instance, or nullptr if the given class is not derived

@@ -104,6 +104,12 @@ namespace Klawr.ClrHost.Interfaces
     
         string[] GetScriptComponentPropertyNames(string componentName);
 
+        string[] GetScriptComponentPropertyMetadata(string componentName, string propertyName);
+
+        bool GetScriptComponentPropertyIsAdvancedDisplay(string componentName, string propertyName);
+
+        bool GetScriptComponentPropertyIsSaveGame(string componentName, string propertyName);
+
         int GetScriptComponentPropertyType(string componentName, string propertyName);
 
         string GetScriptComponentPropertyClassType(string componentName, string propertyName);
