@@ -30,9 +30,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using System.Runtime.InteropServices;
 using Klawr.ClrHost.Managed.Attributes;
 using Klawr.UnrealEngine;
-
+using System.IO;
 namespace Klawr.ClrHost.Managed
 {
     /// <summary>
@@ -516,7 +517,7 @@ namespace Klawr.ClrHost.Managed
 
             // Don't inherit for Meta-Data
             UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
-            if (upa!=null)
+            if (upa != null)
             {
                 return upa.GetMetas();
             }
@@ -692,10 +693,20 @@ namespace Klawr.ClrHost.Managed
 
         public void SetObj(long instanceID, string propertyName, IntPtr value)
         {
-            /* Have to figure out some things first....
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
-             */
+            var nativeObject = new UObjectHandle(value, false);
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            Type propType = pi.PropertyType;
+            var constructor = propType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+            var idisp = constructor.Invoke(new object[] { nativeObject });
+            pi.SetValue(_scriptComponents[instanceID].Instance, idisp);
+        }
+
+        private void XDebug(string ds)
+        {
+            TextWriter tw = new StreamWriter(@"R:\klawr.txt", true);
+            tw.WriteLine(ds);
+            tw.Close();
         }
 
         public float GetFloat(long instanceID, string propertyName)
@@ -724,11 +735,15 @@ namespace Klawr.ClrHost.Managed
 
         public IntPtr GetObj(long instanceID, string propertyName)
         {
-            /* like above, have to figure it out first
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            return (IntPtr)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
-            */
-            return default(IntPtr);
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            Type propType = pi.PropertyType;
+            UObject uobject = (UObject)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            if (uobject==null)
+            {
+                return IntPtr.Zero;
+            }
+            return uobject.NativeObject.Handle;
         }
 
     }

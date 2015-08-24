@@ -446,16 +446,12 @@ const TCHAR* __cdecl ClrHost::GetStr(const int appDomainID, const __int64 instan
 
 UObject* __cdecl ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
-	return NULL;
-	/*
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-	return appDomainManager->GetFloat(instanceID, propertyName);
+		return (UObject*)(appDomainManager->GetObj(instanceID, propertyName));
 	}
-	return 0;
-	No Clue yet ...
-	*/
+	return NULL;
 }
 
 void __cdecl ClrHost::SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const
@@ -495,14 +491,12 @@ void __cdecl ClrHost::SetStr(const int appDomainID, const __int64 instanceID, co
 }
 
 void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const
-{/*
- auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
- if (appDomainManager)
- {
- appDomainManager->SetFloat(instanceID, propertyName, value);
- }
- No Clue yet
- */
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetObj(instanceID, propertyName, (long long)value);
+	}
 }
 
 const TCHAR* __cdecl ClrHost::GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const

@@ -25,6 +25,7 @@
 
 #include "ModuleManager.h"
 #include "KlawrBlueprintGeneratedClass.h"
+#include "KlawrScriptComponent.h"
 
 /**
  * Hosts the MS CLR, which is used to execute managed code in UnrealEd and in-game.
@@ -76,8 +77,8 @@ public:
 	virtual const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
 	virtual UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
 
-	virtual void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrBlueprintGeneratedClass* object) const = 0;
-	virtual void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrBlueprintGeneratedClass* object) const = 0;
+	virtual void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const = 0;
+	virtual void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const = 0;
 	/**
 	 * Get the ID of the app domain in which the given object is referenced.
 	 */

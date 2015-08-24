@@ -127,9 +127,9 @@ void UKlawrScriptComponent::InitializeComponent()
 	if (Proxy && Proxy->InitializeComponent)
 	{
 		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(GetClass());
-		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, bpClass);
+		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, this);
 		Proxy->InitializeComponent();
-		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, bpClass);
+		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, this);
 	}
 }
 
@@ -142,9 +142,9 @@ void UKlawrScriptComponent::TickComponent(
 	if (Proxy && Proxy->TickComponent)
 	{ 
 		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(GetClass());
-		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, bpClass);
+		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, this);
 		Proxy->TickComponent(DeltaTime);
-		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, bpClass);
+		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, this);
 	}
 
 }

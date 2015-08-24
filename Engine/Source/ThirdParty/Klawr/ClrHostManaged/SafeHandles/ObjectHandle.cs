@@ -37,6 +37,7 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// </summary>
         public static readonly UObjectHandle Null = new UObjectHandle(IntPtr.Zero, false);
 
+        public IntPtr Handle { get; private set; }
         /// <summary>
         /// Construct a new handle.
         /// </summary>
@@ -58,6 +59,7 @@ namespace Klawr.ClrHost.Managed.SafeHandles
             : base(IntPtr.Zero, ownsHandle)
         {
             SetHandle(nativeObject);
+            this.Handle = nativeObject;
         }
 
         public override bool IsInvalid

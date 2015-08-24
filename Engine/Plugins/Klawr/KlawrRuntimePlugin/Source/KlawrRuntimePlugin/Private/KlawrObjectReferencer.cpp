@@ -74,6 +74,17 @@ void FObjectReferencer::RemoveObjectRef(const UObject* Object)
 	}
 }
 
+/* For debug reasons, so i always can check the ref count for a object */
+int32 FObjectReferencer::GetObjectReferenceCount(const UObject* Object)
+{
+	if (ensure(Singleton))
+	{
+		auto Annotation = Singleton->ObjectRefs.GetAnnotation(Object);
+		return Annotation.Count;
+	}
+	return -1;
+}
+
 #if WITH_EDITOR
 
 int32 FObjectReferencer::RemoveAllObjectRefsInAppDomain(int AppDomainID)

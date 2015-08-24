@@ -26,6 +26,7 @@
 #include "KlawrNativeUtils.h"
 #include "KlawrObjectReferencer.h"
 #include "KlawrBlueprintGeneratedClass.h"
+
 #if WITH_EDITOR
 #include "BlueprintEditorUtils.h"
 #include "AssetRegistryModule.h"
@@ -276,9 +277,10 @@ public: // IModuleInterface interface
 		// so this module cannot be reloaded
 		return false;
 	}
-	void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrBlueprintGeneratedClass* object) const override
+	void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const override
 	{
-		for (auto prop : object->ScriptProperties)
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(object->GetClass());
+		for (auto prop : bpClass->ScriptProperties)
 		{
 			FString dummy = prop->GetFName().ToString();
 			const TCHAR* propertyName = *(dummy);
@@ -305,14 +307,16 @@ public: // IModuleInterface interface
 			else if (prop->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
 			{
 				UObjectProperty* propObject = Cast<UObjectProperty>(prop);
-				SetObj(appDomainID, instanceID, propertyName, propObject->GetPropertyValue_InContainer(object));
+				UObject* temp = propObject->GetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object));
+				SetObj(appDomainID, instanceID, propertyName, propObject->GetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object)));
 			}
 		}
 	}
 
-	void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrBlueprintGeneratedClass* object) const override
+	void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const override 
 	{
-		for (auto prop : object->ScriptProperties)
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(object->GetClass());
+		for (auto prop : bpClass->ScriptProperties)
 		{
 			FString dummy = prop->GetFName().ToString();
 			const TCHAR* propertyName = *(dummy);
@@ -339,7 +343,11 @@ public: // IModuleInterface interface
 			else if (prop->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
 			{
 				UObjectProperty* propObject = Cast<UObjectProperty>(prop);
-				propObject->SetPropertyValue_InContainer(object, GetObj(appDomainID, instanceID, propertyName));
+				UObject* returnObject = GetObj(appDomainID, instanceID, propertyName);
+				if ((returnObject != NULL) && (returnObject != nullptr))
+				{
+					propObject->SetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object), returnObject);
+				}
 			}
 		}
 	}
@@ -366,7 +374,14 @@ public: // IModuleInterface interface
 
 	virtual void SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const override
 	{
-		IClrHost::Get()->SetObj(appDomainID, instanceID, propertyName, value);
+		if (value)
+		{
+			if (value != GetObj(appDomainID, instanceID, propertyName))
+			{
+				FObjectReferencer::AddObjectRef(value);
+			}
+			IClrHost::Get()->SetObj(appDomainID, instanceID, propertyName, value);
+		}
 	}
 
 
@@ -391,7 +406,9 @@ public: // IModuleInterface interface
 
 	UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const 
 	{
-		return IClrHost::Get()->GetObj(appDomainID, instanceID, propertyName);
+		
+		UObject* returnValue = IClrHost::Get()->GetObj(appDomainID, instanceID, propertyName);
+		return returnValue;
 	}
 
 };
