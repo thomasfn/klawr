@@ -53,6 +53,7 @@ bool UKlawrBlueprintGeneratedClass::GetSaveGame(const TCHAR* propertyName)
 
 void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>& OutFields)
 {
+	OutFields.Empty();
 	if (ScriptDefinedType.IsEmpty())
 	{
 		return;
@@ -62,7 +63,7 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 	std::vector<Klawr::tstring> propertyNames;
 	// We are most certainly in the editor atm
 	Klawr::IClrHost::Get()->GetScriptComponentPropertyNames(appDomainId, *ScriptDefinedType, propertyNames);
-	OutFields.Empty();
+	
 	for (auto& propertyName : propertyNames)
 	{
 		int propertyType = Klawr::IClrHost::Get()->GetScriptComponentPropertyType(appDomainId, *ScriptDefinedType, propertyName.c_str());
@@ -103,6 +104,15 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 			OutFields.Add(propertyInfo);
 		}
 	}
+}
+
+void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunction>& OutFunctions)
+{
+	OutFunctions.Empty();
+	if (ScriptDefinedType.IsEmpty())
+	{
+		return;
+	}
 
 	std::vector<Klawr::tstring> functionNames;
 	Klawr::IClrHost::Get()->GetScriptComponentFunctionNames(appDomainId, *ScriptDefinedType, functionNames);
@@ -112,13 +122,24 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 		UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found Function %s"), dummy);
 		std::vector<Klawr::tstring> functionParameterNames;
 		Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterNames(appDomainId, *ScriptDefinedType, dummy, functionParameterNames);
-		int i = 0;
+
+		FScriptFunction newFunction(dummy);
+		int paramCount = 0;
 		for (auto& functionParameterName : functionParameterNames)
 		{
 			const TCHAR* dummy2 = functionParameterName.c_str();
-
-			UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Function parameter #%d: %s"), i, dummy2);
-			i++;
+			int parameterType = Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterType(appDomainId, *ScriptDefinedType, dummy, paramCount);
+			newFunction.Parameters.Add(dummy2, parameterType);
+			if (parameterType == 4)
+			{
+				newFunction.parameterClasses.Add(FindObject<UClass>(ANY_PACKAGE, Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterTypeObjectClass(appDomainId, *ScriptDefinedType, dummy, paramCount)));
+			}
+			else
+			{
+				newFunction.parameterClasses.Add(NULL);
+			}
+			paramCount++;
 		}
+		OutFunctions.Add(newFunction);
 	}
 }

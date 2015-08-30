@@ -28,13 +28,16 @@
 #include "KismetReinstanceUtilities.h"
 #include "KlawrScriptComponent.h"
 #include "IKlawrRuntimePlugin.h"
+#include "Kismet2NameValidators.h"
+#include "BlueprintEditorUtils.h"
+#include "BPNode_KlawrFunctionCall.h"
 
 namespace Klawr {
 
 	FKlawrBlueprintCompiler::FKlawrBlueprintCompiler(
 		UKlawrBlueprint* Source, FCompilerResultsLog& OutResultsLog,
 		const FKismetCompilerOptions& CompilerOptions, TArray<UObject*>* ObjLoaded
-		) : Super(Source, OutResultsLog, CompilerOptions, ObjLoaded)
+		) : Super(Source, OutResultsLog, CompilerOptions, ObjLoaded) 
 	{
 	}
 
@@ -100,6 +103,8 @@ namespace Klawr {
 		{
 			InGeneratedClass->SetMetaData(TEXT("BlueprintSpawnableComponent"), TEXT("true"));
 		}
+		FString dummy = InGeneratedClass->GetClass()->GetName();
+		UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("InGeneratedClass: %s"), *dummy);
 
 		Super::FinishCompilingClass(InGeneratedClass);
 		UObject* CDO = InGeneratedClass->GetDefaultObject();
@@ -190,7 +195,7 @@ namespace Klawr {
 							ScriptProperty->SetMetaData(TEXT("Category"), *Blueprint->GetName());
 						}
 						ScriptProperty->SetPropertyFlags(CPF_BlueprintVisible | CPF_Edit);
-						
+
 						if (NewScripClass->GetAdvancedDisplay(*(Field.Name.ToString())))
 						{
 							ScriptProperty->SetPropertyFlags(CPF_AdvancedDisplay);
@@ -206,8 +211,6 @@ namespace Klawr {
 				}
 			}
 		}
-
-		CreateScriptContextProperty();
 	}
 
 	void FKlawrBlueprintCompiler::CreateScriptContextProperty()
@@ -218,12 +221,10 @@ namespace Klawr {
 		{
 			ContextClass = UKlawrScriptComponent::StaticClass();
 		}
-		/*
-		else if (!Blueprint->ParentClass->IsChildOf(UKlawrPluginComponent::StaticClass()))
+		else
 		{
-		ContextClass = UScriptContext::StaticClass();
+			ContextProperty = NULL;
 		}
-		*/
 
 		if (ContextClass)
 		{
@@ -231,5 +232,160 @@ namespace Klawr {
 			ContextProperty = CastChecked<UObjectProperty>(CreateVariable(TEXT("Generated_ScriptContext"), ScriptContextPinType));
 			ContextProperty->SetPropertyFlags(CPF_ContainsInstancedReference | CPF_InstancedReference);
 		}
+	}
+
+	void FKlawrBlueprintCompiler::CreateFunctionList()
+	{
+		Super::CreateFunctionList();
+
+		if (Super::Blueprint && Super::Blueprint->GeneratedClass)
+		{
+
+			UKlawrBlueprint* BP = CastChecked<UKlawrBlueprint>(Super::Blueprint);
+			if (BP->GeneratedClass != Super::Blueprint->SkeletonGeneratedClass)
+			{
+				if (!BP->ScriptDefinedType.IsEmpty())
+				{
+					UKlawrBlueprintGeneratedClass* generatedClass = CastChecked<UKlawrBlueprintGeneratedClass>(BP->GeneratedClass);
+					generatedClass->appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(generatedClass);
+					KlawrCreateFunctionListFromBlueprint(generatedClass);
+				}
+			}
+		}
+	}
+
+	void FKlawrBlueprintCompiler::KlawrCreateFunctionListFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass)
+	{
+		NewScripClass->GetScriptDefinedFunctions(ScriptDefinedFunctions);
+		NewScripClass->GetScriptDefinedFunctions(NewScripClass->ScriptDefinedFunctions);
+
+		for (auto function : ScriptDefinedFunctions)
+		{
+			KlawrCreateFunction(function, NewScripClass);
+		}
+	}
+
+	void FKlawrBlueprintCompiler::KlawrCreateFunction(FScriptFunction function, UKlawrBlueprintGeneratedClass* NewScripClass)
+	{
+		return;
+		/*
+		UKlawrBlueprint* ScriptBlueprint = Cast<UKlawrBlueprint>(Blueprint);
+		const FString FunctionName = function.Name.ToString();
+		UEdGraph* ScriptFunctionGraph = FindObject<UEdGraph>(ScriptBlueprint, *FString::Printf(TEXT("%s_Graph"), *FunctionName));
+
+		if (ScriptFunctionGraph)
+		{
+			ScriptFunctionGraph->MarkPendingKill();
+		}
+		FName fn = FName(TEXT("K2NOdeBPKlawr"));
+
+		bool bReplaceNode = false;
+
+		if (ScriptFunctionGraph)
+		{
+			bReplaceNode = true;
+		}
+		
+		{
+			ScriptFunctionGraph = NewObject<UEdGraph>(ScriptBlueprint, *FString::Printf(TEXT("%s_Graph"), *FunctionName));
+			ScriptFunctionGraph->Schema = UEdGraphSchema_K2::StaticClass();
+			ScriptFunctionGraph->SetFlags(RF_Transient);
+		}
+
+		FKismetFunctionContext* FunctionContext = CreateFunctionContext();
+		FunctionContext->SourceGraph = ScriptFunctionGraph;
+		FunctionContext->bCreateDebugData = false;
+
+
+		const UEdGraphSchema* Schema = ScriptFunctionGraph->GetSchema();
+		const UEdGraphSchema_K2* K2Schema = Cast<const UEdGraphSchema_K2>(ScriptFunctionGraph->GetSchema());
+
+		UBPNode_KlawrFunctionCall* callFunction;
+		if (bReplaceNode)
+		{
+			callFunction = SpawnIntermediateNode<UBPNode_KlawrFunctionCall>(NULL, ScriptFunctionGraph);
+			callFunction->AllocateDefaultPins();
+			UEdGraphNode* temp = FindNodeByClass(ScriptFunctionGraph, UBPNode_KlawrFunctionCall::StaticClass(), true);
+			if (temp)
+			{
+				UBPNode_KlawrFunctionCall* oldNode = CastChecked<UBPNode_KlawrFunctionCall>(temp);
+				oldNode->BreakAllNodeLinks();
+				oldNode->MarkPendingKill();
+
+			}
+		}
+		else
+		{
+			callFunction = SpawnIntermediateNode<UBPNode_KlawrFunctionCall>(NULL, ScriptFunctionGraph);
+		}
+
+		// callFunction->SetParameters(&function);
+		callFunction->AllocateDefaultPins();
+
+		UK2Node_FunctionEntry* EntryNode = SpawnIntermediateNode<UK2Node_FunctionEntry>(NULL, ScriptFunctionGraph);
+		EntryNode->CustomGeneratedFunctionName = function.Name;
+		EntryNode->AllocateDefaultPins();
+
+		UEdGraphPin* ExecPin = K2Schema->FindExecutionPin(*EntryNode, EGPD_Output);
+		UEdGraphPin* CallFunctionPin = K2Schema->FindExecutionPin(*callFunction, EGPD_Input);
+
+		ExecPin->MakeLinkTo(CallFunctionPin);
+		*/
+		
+
+		/*
+		UFunction* newFunction = NewObject<UFunction>(NewScripClass, *FunctionName);
+
+		int paramCount = 0;
+		for (auto& param : function.Parameters)
+		{
+			FString pinTypeName;
+			UClass* innerType = NULL;
+			if (param.Value == 0)
+			{
+				pinTypeName = Schema->PC_Float;
+			}
+			else if (param.Value == 1)
+			{
+				pinTypeName = Schema->PC_Int;
+			}
+			else if (param.Value == 2)
+			{
+				pinTypeName = Schema->PC_Boolean;
+			}
+			else if (param.Value == 3)
+			{
+				pinTypeName = Schema->PC_String;
+			}
+			else if (param.Value == 4)
+			{
+				pinTypeName = Schema->PC_Object;
+				innerType = function.parameterClasses[paramCount];
+			}
+
+			if (!pinTypeName.IsEmpty())
+			{
+				FEdGraphPinType ScriptPinType(pinTypeName, TEXT(""), innerType, false, false);
+				FString parameterName = FString::Printf(TEXT("%s.%s"), *FunctionName, *param.Key);
+				UProperty* ScriptProperty = CreateVariable(*parameterName, ScriptPinType);
+				
+				ScriptProperty->SetPropertyFlags(CPF_Parm | CPF_BlueprintVisible);
+
+				newFunction->AddCppProperty(ScriptProperty);
+				if (!newFunction->FirstPropertyToInit)
+				{
+					newFunction->FirstPropertyToInit = ScriptProperty;
+				}
+			}
+			paramCount++;
+		}
+		newFunction->Rename(*FunctionName);
+		for (auto xnode : ScriptFunctionGraph->Nodes)
+		{
+			xnode->
+		}
+		FBlueprintEditorUtils::AddFunctionGraph(ScriptBlueprint, ScriptFunctionGraph, true, newFunction);
+		*/
+
 	}
 } // namespace Klawr

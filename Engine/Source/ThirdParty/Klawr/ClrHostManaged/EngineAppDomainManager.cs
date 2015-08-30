@@ -600,7 +600,8 @@ namespace Klawr.ClrHost.Managed
             { return 2; }
             else if (mi.ReturnType == typeof(string))
             { return 3; }
-
+            else if (mi.ReturnType.IsSubclassOf(typeof(UObject)))
+            { return 4; }
             // Unknown type??
             return -1;
         }
@@ -618,7 +619,7 @@ namespace Klawr.ClrHost.Managed
             return mi.GetParameters().Select(x => x.Name).ToArray();
         }
 
-        public int GetScriptComponentFunctionParameterType(string componentName, string functionName, string parameterName)
+        public int GetScriptComponentFunctionParameterType(string componentName, string functionName, int parameterCount)
         {
             var scriptComponentType = FindTypeByName(componentName);
             if (scriptComponentType == null)
@@ -628,8 +629,39 @@ namespace Klawr.ClrHost.Managed
             }
 
             MethodInfo mi = scriptComponentType.GetMethod(functionName);
-            // TODO: the ifs
+            Type parameterType = mi.GetParameters()[parameterCount].ParameterType;
+            if (parameterType == typeof(float))
+            { return 0; }
+            else if (parameterType == typeof(int))
+            { return 1; }
+            else if (parameterType == typeof(bool))
+            { return 2; }
+            else if (parameterType == typeof(string))
+            { return 3; }
+            else if (parameterType.IsSubclassOf(typeof(UObject)))
+            { return 4; }
+
             return -1;
+        }
+
+        public string GetScriptComponentFunctionParameterTypeObjectClass(string componentName, string functionName, int parameterCount)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return "";
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            Type parameterType = mi.GetParameters()[parameterCount].ParameterType;
+
+            bool removeFirstChar = parameterType.GetCustomAttribute<ConvertClassNameAttribute>() != null;
+            if (removeFirstChar)
+            {
+                return parameterType.Name.Substring(1);
+            }
+            return parameterType.Name;
         }
 
         public int GetScriptComponentPropertyType(string componentName, string propertyName)

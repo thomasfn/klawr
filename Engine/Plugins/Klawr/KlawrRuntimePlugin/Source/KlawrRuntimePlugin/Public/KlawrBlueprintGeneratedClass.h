@@ -53,6 +53,23 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptField
 };
 
 
+struct KLAWRRUNTIMEPLUGIN_API FScriptFunction
+{
+	FName Name;
+	TMap<FString, FString> metas;
+	TMap<FString, int> Parameters;
+	TArray<UClass*> parameterClasses;
+
+	FScriptFunction()
+	{
+	}
+
+	FScriptFunction(FName InName)
+		:Name(InName)
+	{
+	}
+};
+
 UCLASS()
 class KLAWRRUNTIMEPLUGIN_API UKlawrBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
@@ -69,13 +86,19 @@ public:
 	FString ScriptDefinedType;
 
 	UPROPERTY()
-		TArray<UProperty*> ScriptProperties;
+	TArray<UProperty*> ScriptProperties;
+
+	UPROPERTY()
+	TArray<UFunction*> ScriptFunctions;
+
+	TArray<FScriptFunction> ScriptDefinedFunctions;
 
 	int appDomainId = 0;
 
 public:
 
 	void GetScriptDefinedFields(TArray<FScriptField>& OutFields);
+	void GetScriptDefinedFunctions(TArray<FScriptFunction>& OutFunctions);
 
 	bool GetAdvancedDisplay(const TCHAR* propertyName);
 	bool GetSaveGame(const TCHAR* propertyName);

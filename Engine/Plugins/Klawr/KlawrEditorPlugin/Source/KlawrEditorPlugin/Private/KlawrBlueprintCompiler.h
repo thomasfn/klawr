@@ -45,7 +45,11 @@ public:
 public: // FKismetCompilerContext interface
 	virtual void Compile() override;
 	virtual void KlawrCreateClassVariablesFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void KlawrCreateFunctionListFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void KlawrCreateFunction(FScriptFunction function, UKlawrBlueprintGeneratedClass* NewScripClass);
 	virtual void CreateClassVariablesFromBlueprint() override;
+	virtual void CreateFunctionList() override;
+
 	UKlawrBlueprint* KlawrBlueprint() const { return Cast<UKlawrBlueprint>(Blueprint); }
 
 protected: // FKismetCompilerContext interface
@@ -71,7 +75,9 @@ protected: // FKismetCompilerContext interface
 private:
 	typedef FKismetCompilerContext Super;
 	void CreateScriptContextProperty();
+	
 	TArray<FScriptField> ScriptDefinedFields;
+	TArray<FScriptFunction> ScriptDefinedFunctions;
 	UObjectProperty* ContextProperty;
 };
 

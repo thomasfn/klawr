@@ -509,4 +509,23 @@ const TCHAR* __cdecl ClrHost::GetScriptComponentPropertyClassType(int appDomainI
 	return TEXT("");
 }
 
+int __cdecl ClrHost::GetScriptComponentFunctionParameterType(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetScriptComponentFunctionParameterType(componentName, functionName, parameterCount);
+	}
+	return -1;
+}
+
+const TCHAR* __cdecl ClrHost::GetScriptComponentFunctionParameterTypeObjectClass(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetScriptComponentFunctionParameterTypeObjectClass(componentName, functionName, parameterCount);
+	}
+	return TEXT("");
+}
 } // namespace Klawr

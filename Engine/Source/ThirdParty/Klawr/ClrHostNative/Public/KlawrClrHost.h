@@ -200,6 +200,8 @@ public:
 	virtual const TCHAR* GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const = 0;
 	virtual void GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
 	virtual void GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const = 0;
+	virtual int GetScriptComponentFunctionParameterType(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const = 0;
+	virtual const TCHAR* GetScriptComponentFunctionParameterTypeObjectClass(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const = 0;
 
 	virtual bool GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 	virtual bool GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
