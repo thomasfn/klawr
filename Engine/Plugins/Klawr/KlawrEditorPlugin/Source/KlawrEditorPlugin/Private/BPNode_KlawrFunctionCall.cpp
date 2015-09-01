@@ -66,6 +66,7 @@ void UBPNode_KlawrFunctionCall::AllocateDefaultPins()
 	functionNamePin->bDefaultValueIsReadOnly = true;
 	functionNamePin->bNotConnectable = true;
 
+	AllocateFunctionParameterPins();
 }
 
 FText UBPNode_KlawrFunctionCall::GetNodeTitle(ENodeTitleType::Type TitleType) const
@@ -146,6 +147,7 @@ void UBPNode_KlawrFunctionCall::PinDefaultValueChanged(UEdGraphPin* Pin)
 void UBPNode_KlawrFunctionCall::PostReconstructNode()
 {
 	Super::PostReconstructNode();
+
 }
 
 //``
@@ -435,6 +437,124 @@ bool UBPNode_KlawrFunctionCall::IsParameterPin(UEdGraphPin* Pin)
 	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
 	return ((Pin->PinName != FGetConfigNodeName::GetInputObjectPinName()) && (Pin->PinName != FGetConfigNodeName::GetResultPinName()) && (Pin->PinName != FGetConfigNodeName::GetFunctionNamePinName())
 		&& (Pin->PinName != K2Schema->PN_Execute) && (Pin->PinName!=K2Schema->PN_Then));
+}
+
+void UBPNode_KlawrFunctionCall::AllocateFunctionParameterPins(UEdGraphPin* InputNodePin)
+{
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("------------------------------------------->"));
+	if (!InputNodePin)
+	{
+		PinTypeChanged(FindPin(FGetConfigNodeName::GetFunctionNamePinName()));
+	}
+	else
+	{
+		PinTypeChanged(InputNodePin);
+	}
+}
+
+void UBPNode_KlawrFunctionCall::ReconstructNode() 
+{
+	Modify();
+
+	UBlueprint* Blueprint = GetBlueprint();
+
+	// Break any links to 'orphan' pins
+	for (int32 PinIndex = 0; PinIndex < Pins.Num(); ++PinIndex)
+	{
+		UEdGraphPin* Pin = Pins[PinIndex];
+		TArray<class UEdGraphPin*> LinkedToCopy = Pin->LinkedTo;
+		for (int32 LinkIdx = 0; LinkIdx < LinkedToCopy.Num(); LinkIdx++)
+		{
+			UEdGraphPin* OtherPin = LinkedToCopy[LinkIdx];
+			// If we are linked to a pin that its owner doesn't know about, break that link
+			if ((OtherPin == NULL) || !OtherPin->GetOwningNodeUnchecked() || !OtherPin->GetOwningNode()->Pins.Contains(OtherPin))
+			{
+				Pin->LinkedTo.Remove(OtherPin);
+			}
+		}
+	}
+
+	// Move the existing pins to a saved array
+	TArray<UEdGraphPin*> OldPins(Pins);
+
+	Pins.Empty();
+
+	// Recreate the new pins
+	ReallocatePinsDuringReconstruction(OldPins);
+
+	bool bDestroyOldPins = true;
+
+	TArray<UEdGraphPin*> OldPinsNonParameter;
+	TArray<UEdGraphPin*> OldPinsParameter;
+
+	TArray<UEdGraphPin*> NewPinsNonParameter;
+	TArray<UEdGraphPin*> NewPinsParameter;
+
+	for (auto pin : OldPins)
+	{
+		if (IsParameterPin(pin))
+		{
+			OldPinsParameter.Add(pin);
+		}
+		else
+		{
+			OldPinsNonParameter.Add(pin);
+		}
+	}
+
+	for (auto pin : Pins)
+	{
+		if (IsParameterPin(pin))
+		{
+			NewPinsParameter.Add(pin);
+		}
+		else
+		{
+			NewPinsNonParameter.Add(pin);
+		}
+	}
+
+	RewireOldPinsToNewPins(OldPinsNonParameter, NewPinsNonParameter);
+	PinTypeChanged(FindPin(FGetConfigNodeName::GetFunctionNamePinName()));
+	RewireOldPinsToNewPins(OldPinsParameter, Pins);
+
+
+	if (bDestroyOldPins)
+	{
+		DestroyPinList(OldPins);
+	}
+
+	// Let subclasses do any additional work
+	PostReconstructNode();
+
+	GetGraph()->NotifyGraphChanged();
+
+}
+
+void UBPNode_KlawrFunctionCall::ReallocatePinsDuringReconstruction(TArray<UEdGraphPin*>& OldPins)
+{
+	AllocateDefaultPins();
+
+	for (auto OldPin : OldPins)
+	{
+		if (OldPin->ParentPin)
+		{
+			// find the new pin that corresponds to parent, and split it if it isn't already split
+			for (auto NewPin : Pins)
+			{
+				if (FCString::Stricmp(*(NewPin->PinName), *(OldPin->ParentPin->PinName)) == 0)
+				{
+					// Make sure we're not dealing with a menu node
+					UEdGraph* OuterGraph = GetGraph();
+					if (OuterGraph && OuterGraph->Schema && NewPin->SubPins.Num() == 0)
+					{
+						NewPin->PinType = OldPin->ParentPin->PinType;
+						GetSchema()->SplitPin(NewPin);
+					}
+				}
+			}
+		}
+	}
 }
 
 #undef LOCTEXT_NAMESPACE
