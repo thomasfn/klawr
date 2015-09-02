@@ -369,7 +369,77 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 	-Rama
 	*/
 
+	UK2Node_MakeArray* arrayFloat = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayFloat->AllocateDefaultPins();
+	UK2Node_MakeArray* arrayInt = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayInt->AllocateDefaultPins();
+	UK2Node_MakeArray* arrayBool = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayBool->AllocateDefaultPins();
+	UK2Node_MakeArray* arrayString = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayString->AllocateDefaultPins();
+	UK2Node_MakeArray* arrayObject = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayObject->AllocateDefaultPins();
+	
+	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
+
+	UEdGraphPin* execStart = GetExecPin();
+
+	TArray<UEdGraphPin*> parameterPins;
+	for (UEdGraphPin* pin : Pins)
+	{
+		if (IsParameterPin(pin))
+		{
+			if (pin->PinType.PinCategory == K2Schema->PC_Float)
+			{
+				arrayFloat->AddInputPin();
+				UEdGraphPin* newPin = arrayFloat->Pins.Last();
+				CompilerContext.MovePinLinksToIntermediate(*pin,*newPin);
+			}
+			else if (pin->PinType.PinCategory == K2Schema->PC_Int)
+			{
+				arrayInt->AddInputPin();
+				UEdGraphPin* newPin = arrayInt->Pins.Last();
+				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+			}
+			else if (pin->PinType.PinCategory == K2Schema->PC_Boolean)
+			{
+				arrayBool->AddInputPin();
+				UEdGraphPin* newPin = arrayBool->Pins.Last();
+				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+			}
+			else if (pin->PinType.PinCategory == K2Schema->PC_String)
+			{
+				arrayString->AddInputPin();
+				UEdGraphPin* newPin = arrayString->Pins.Last();
+				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+			}
+			else if (pin->PinType.PinCategory == K2Schema->PC_Object)
+			{
+				arrayObject->AddInputPin();
+				UEdGraphPin* newPin = arrayObject->Pins.Last();
+
+				/*
+				// Create the cast to UObject here
+				UK2Node_DynamicCast* castNode = CompilerContext.SpawnIntermediateNode<UK2Node_DynamicCast>(this, SourceGraph);
+				castNode->TargetType = UObject::StaticClass();
+				castNode->AllocateDefaultPins();
+				castNode->GetExecPin()->MakeLinkTo(execStart);
+				execStart = castNode->FindPin(K2Schema->PN_Then);
+				
+
+				UEdGraphPin* castSource = castNode->GetCastSourcePin();
+				CompilerContext.MovePinLinksToIntermediate(*pin, *castSource);
+				castNode->GetCastResultPin()->MakeLinkTo(newPin);
+				*/
+				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+
+			}
+
+		}
+	}
+	execStart->MakeLinkTo(FindPin(K2Schema->PN_Then));
 	 
+	
 	//~~~ 
 	/*
 	// The call function does all the real work, each child class implementing easing for a given type provides
