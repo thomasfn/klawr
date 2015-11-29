@@ -652,7 +652,6 @@ const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 inst
 		SAFEARRAY* stringsArray = NULL;
 		CreateSafeArrayString(&strings, &stringsArray);
 
-
 		return appDomainManager->CallCSFunctionString(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
 	}
 
@@ -749,7 +748,7 @@ void ClrHost::CreateSafeArrayString(std::vector<const TCHAR*>* strings, SAFEARRA
 			(
 				(SAFEARRAY*)(*stringsArray),
 				(long*)lIndexVector,
-				(void*)(&(temp))
+				(void*)(temp)
 				);
 		ulIndex++;
 	}

@@ -629,7 +629,15 @@ namespace Klawr.ClrHost.Managed
             }
 
             MethodInfo mi = scriptComponentType.GetMethod(functionName);
-            Type parameterType = mi.GetParameters()[parameterCount].ParameterType;
+            Type parameterType;
+            if (parameterCount == -1)
+            {
+                parameterType = mi.ReturnType;
+            }
+            else
+            {
+                parameterType = mi.GetParameters()[parameterCount].ParameterType;
+            }
             if (parameterType == typeof(float))
             { return 0; }
             else if (parameterType == typeof(int))
@@ -780,7 +788,6 @@ namespace Klawr.ClrHost.Managed
 
         public float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
         {
-            LogUtils.Log((_scriptComponents[instanceID].Instance.GetType().Name));
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
             int cFloats = 0;
@@ -802,10 +809,8 @@ namespace Klawr.ClrHost.Managed
                         case 4: parameters[i] = null; break;
                     }
                 }
-                LogUtils.Log("CallCSFunctionFloat reached successfully...");
-                LogUtils.Log("no code yet tho");
 
-                mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+                return (float)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
             }
             catch (Exception ee)
             {
@@ -815,18 +820,131 @@ namespace Klawr.ClrHost.Managed
         }
         public int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
         {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4: parameters[i] = null; break;
+                    }
+                }
+
+                return (int)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
             return 0;
         }
         public bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
         {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4: parameters[i] = null; break;
+                    }
+                }
+
+                return (bool)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
             return false;
         }
         public string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
         {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4: parameters[i] = null; break;
+                    }
+                }
+
+                return (string)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
             return "";
         }
         public UObject CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
         {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4: parameters[i] = null; break;
+                    }
+                }
+
+                mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+                return null;
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
             return null;
         }
     }

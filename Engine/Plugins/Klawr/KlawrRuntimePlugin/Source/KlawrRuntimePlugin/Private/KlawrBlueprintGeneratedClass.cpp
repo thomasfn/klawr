@@ -122,8 +122,9 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 		UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found Function %s"), dummy);
 		std::vector<Klawr::tstring> functionParameterNames;
 		Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterNames(appDomainId, *ScriptDefinedType, dummy, functionParameterNames);
-
 		FScriptFunction newFunction(dummy);
+		// Get Result type first
+		newFunction.ResultType = Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterType(appDomainId, *ScriptDefinedType, dummy, -1);
 		int paramCount = 0;
 		for (auto& functionParameterName : functionParameterNames)
 		{
@@ -132,6 +133,10 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 			newFunction.Parameters.Add(dummy2, parameterType);
 			if (parameterType == 4)
 			{
+				UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObjects as parameters are not supported yet. Please use local properties to pass UObjects into c# space. (Parameter '%s' of function '%s' in class '%s')"), 
+					dummy2, 
+					dummy, 
+					*ScriptDefinedType);
 				newFunction.parameterClasses.Add(FindObject<UClass>(ANY_PACKAGE, Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterTypeObjectClass(appDomainId, *ScriptDefinedType, dummy, paramCount)));
 			}
 			else

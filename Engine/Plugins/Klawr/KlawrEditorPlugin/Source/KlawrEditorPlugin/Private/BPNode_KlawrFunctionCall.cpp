@@ -348,8 +348,15 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 					}
 
 					UEdGraphPin* resultPin = FindPin(FGetConfigNodeName::GetResultPinName());
-					resultPin->PinType.PinCategory = K2Schema->PC_Float;
-					RawFunctionName = TEXT("CallCSFunctionFloat");
+
+					switch (scriptfunction.ResultType)
+					{
+					case 0: resultPin->PinType.PinCategory = K2Schema->PC_Float; RawFunctionName = TEXT("CallCSFunctionFloat"); break;
+					case 1: resultPin->PinType.PinCategory = K2Schema->PC_Int; RawFunctionName = TEXT("CallCSFunctionInt"); break;
+					case 2: resultPin->PinType.PinCategory = K2Schema->PC_Boolean; RawFunctionName = TEXT("CallCSFunctionBool"); break;
+					case 3: resultPin->PinType.PinCategory = K2Schema->PC_String; RawFunctionName = TEXT("CallCSFunctionString"); break;
+					case 4: resultPin->PinType.PinCategory = K2Schema->PC_Object; RawFunctionName = TEXT("CallCSFunctionObject"); break;
+					}
 
 					break;
 				}
@@ -420,7 +427,10 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 			if (pin->PinType.PinCategory == K2Schema->PC_Float)
 			{
 				UEdGraphPin* newPin = arrayFloat->Pins.Last();
-				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				if (pin->LinkedTo.Num() > 0)
+				{
+					pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				}
 				// CompilerContext.MovePinLinksToIntermediate(*pin,*newPin);
 				arrayFloat->NotifyPinConnectionListChanged(pin);
 				arrayFloat->AddInputPin();
@@ -428,7 +438,10 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 			else if (pin->PinType.PinCategory == K2Schema->PC_Int)
 			{
 				UEdGraphPin* newPin = arrayInt->Pins.Last();
-				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				if (pin->LinkedTo.Num() > 0)
+				{
+					pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				}
 				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
 				arrayInt->NotifyPinConnectionListChanged(pin);
 				arrayInt->AddInputPin();
@@ -436,7 +449,10 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 			else if (pin->PinType.PinCategory == K2Schema->PC_Boolean)
 			{
 				UEdGraphPin* newPin = arrayBool->Pins.Last();
-				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				if (pin->LinkedTo.Num() > 0)
+				{
+					pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				}
 				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
 				arrayBool->NotifyPinConnectionListChanged(pin);
 				arrayBool->AddInputPin();
@@ -444,7 +460,10 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 			else if (pin->PinType.PinCategory == K2Schema->PC_String)
 			{
 				UEdGraphPin* newPin = arrayString->Pins.Last();
-				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				if (pin->LinkedTo.Num() > 0)
+				{
+					pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				}
 				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
 				arrayString->NotifyPinConnectionListChanged(pin);
 				arrayString->AddInputPin();
@@ -591,6 +610,13 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 	UEdGraphPin* InternalFinishThen = CallFunction->GetThenPin();
 	CompilerContext.MovePinLinksToIntermediate(*SelfNodeThen, *InternalFinishThen);
 
+	// Connect Result Pin
+	if (FindPin(FGetConfigNodeName::GetResultPinName())->LinkedTo.Num() > 0)
+	{
+		UEdGraphPin* resultPin = CallFunction->GetReturnValuePin();
+		UEdGraphPin* resultPinOuter = FindPin(FGetConfigNodeName::GetResultPinName());
+		CompilerContext.MovePinLinksToIntermediate(*resultPin, *resultPinOuter);
+	}
 
 	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("CallFunction Pins:"));
 

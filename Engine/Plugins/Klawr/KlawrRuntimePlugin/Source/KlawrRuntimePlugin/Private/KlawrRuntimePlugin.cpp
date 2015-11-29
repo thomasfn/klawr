@@ -434,7 +434,8 @@ public: // IModuleInterface interface
 		std::vector<const TCHAR*> _strings;
 		for (auto string : strings)
 		{
-			_strings.push_back(*string);
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
 		}
 
 		std::vector<UObject*> _objects;
@@ -468,7 +469,8 @@ public: // IModuleInterface interface
 		std::vector<const TCHAR*> _strings;
 		for (auto string : strings)
 		{
-			_strings.push_back(*string);
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
 		}
 
 		std::vector<UObject*> _objects;
@@ -502,7 +504,8 @@ public: // IModuleInterface interface
 		std::vector<const TCHAR*> _strings;
 		for (auto string : strings)
 		{
-			_strings.push_back(*string);
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
 		}
 
 		std::vector<UObject*> _objects;
@@ -536,7 +539,8 @@ public: // IModuleInterface interface
 		std::vector<const TCHAR*> _strings;
 		for (auto string : strings)
 		{
-			_strings.push_back(*string);
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
 		}
 
 		std::vector<UObject*> _objects;
@@ -570,7 +574,8 @@ public: // IModuleInterface interface
 		std::vector<const TCHAR*> _strings;
 		for (auto string : strings)
 		{
-			_strings.push_back(*string);
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
 		}
 
 		std::vector<UObject*> _objects;
