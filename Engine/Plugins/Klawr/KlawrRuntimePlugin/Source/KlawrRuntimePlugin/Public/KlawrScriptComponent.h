@@ -63,6 +63,19 @@ public: // UActorComponent interface
 		float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction
 	) override;
 
+
+	UFUNCTION(meta = (BlueprintInternalUseOnly="true"), BlueprintCallable, Category="Klawr")
+	virtual float CallCSFunctionFloat(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual int32 CallCSFunctionInt(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual bool CallCSFunctionBool(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual FString CallCSFunctionString(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual UObject* CallCSFunctionObject(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+
+
 private:
 	void CreateScriptComponentProxy();
 	void DestroyScriptComponentProxy();

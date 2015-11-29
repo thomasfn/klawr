@@ -25,6 +25,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Klawr.ClrHost.Managed;
+using Klawr.UnrealEngine;
 
 namespace Klawr.ClrHost.Interfaces
 {
@@ -132,5 +133,16 @@ namespace Klawr.ClrHost.Interfaces
         bool GetBool(long instanceID, string propertyName);
         string GetStr(long instanceID, string propertyName);
         IntPtr GetObj(long instanceID, string propertyName);
+
+        float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        UObject CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
     }
 }

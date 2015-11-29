@@ -59,6 +59,7 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptFunction
 	TMap<FString, FString> metas;
 	TMap<FString, int> Parameters;
 	TArray<UClass*> parameterClasses;
+	int ResultType;
 
 	FScriptFunction()
 	{

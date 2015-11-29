@@ -148,3 +148,29 @@ void UKlawrScriptComponent::TickComponent(
 	}
 
 }
+
+float UKlawrScriptComponent::CallCSFunctionFloat(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionFloat(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+int32 UKlawrScriptComponent::CallCSFunctionInt(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionInt(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+bool UKlawrScriptComponent::CallCSFunctionBool(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionBool(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+FString UKlawrScriptComponent::CallCSFunctionString(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return FString(IKlawrRuntimePlugin::Get().CallCSFunctionString(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects));
+}
+
+UObject* UKlawrScriptComponent::CallCSFunctionObject(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionObject(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+

@@ -31,7 +31,8 @@ class UBPNode_KlawrFunctionCall : public UK2Node
 	virtual FText GetMenuCategory() const override;
 	virtual void ReallocatePinsDuringReconstruction(TArray<UEdGraphPin*>& OldPins) override;
 	// End UK2Node interface.
-	
+
+	UEdGraphPin* GetThenPin() const;
 private:
 	FText NodeTooltip;
 	void ChangePinType(UEdGraphPin* Pin);
@@ -43,4 +44,8 @@ private:
 	void AllocateFunctionParameterPins(UEdGraphPin* InputNodePin = NULL);
 	UPROPERTY()
 	TArray<FText> CSFunctionNames;
+	UPROPERTY()
+	FString RawFunctionName;
+	UPROPERTY()
+	UObject* dummyObject;
 };

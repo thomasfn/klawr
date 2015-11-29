@@ -79,6 +79,11 @@ public:
 
 	virtual void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const = 0;
 	virtual void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const = 0;
+	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
+	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
+	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
+	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
+	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
 	/**
 	 * Get the ID of the app domain in which the given object is referenced.
 	 */

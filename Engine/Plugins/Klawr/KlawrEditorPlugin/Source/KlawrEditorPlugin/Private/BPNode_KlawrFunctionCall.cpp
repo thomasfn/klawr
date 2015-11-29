@@ -2,6 +2,7 @@
 
 #include "KlawrEditorPluginPrivatePCH.h"
 #include "BPNode_KlawrFunctionCall.h"
+#include "BPNode_KlawrObjectArray.h"
 #include "KlawrScriptComponent.h"
 
 //BP
@@ -25,7 +26,7 @@ struct FGetConfigNodeName
 {
 	static const FString& GetInputObjectPinName()
 	{
-		static const FString SectionPinName(TEXT("InputComponent"));
+		static const FString SectionPinName(TEXT("KlawrComponent"));
 		return SectionPinName;
 	}
 
@@ -156,6 +157,7 @@ void UBPNode_KlawrFunctionCall::PostReconstructNode()
 //~~~~~~~~~~~~~~~~~
 bool UBPNode_KlawrFunctionCall::IsConnectionDisallowed(const UEdGraphPin* MyPin, const UEdGraphPin* OtherPin, FString& OutReason) const
 {
+	
 	/*
 	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
 
@@ -210,7 +212,14 @@ void UBPNode_KlawrFunctionCall::GetMenuActions(FBlueprintActionDatabaseRegistrar
 
 FText UBPNode_KlawrFunctionCall::GetMenuCategory() const
 {
-	return LOCTEXT("KlawrCategory", "Klawr");
+	static FNodeTextCache CachedCategory;
+	if (CachedCategory.IsOutOfDate(this))
+	{
+		// FText::Format() is slow, so we cache this to save on performance
+		CachedCategory.SetCachedText(FEditorCategoryUtils::BuildCategoryString(FCommonEditorCategory::Utilities, LOCTEXT("KlawrCategory", "Klawr")), this);
+	}
+	return CachedCategory;
+
 }
 
 void UBPNode_KlawrFunctionCall::ChangePinType(UEdGraphPin* Pin)
@@ -253,13 +262,16 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 			if (bChanged)
 			{
 				UKlawrBlueprintGeneratedClass* linkedToClass = CastChecked<UKlawrBlueprintGeneratedClass>(InstigatorPin->PinType.PinSubCategoryObject.Get());
+				auto a2 = InstigatorPin->PinType.PinSubCategoryObject.Get();
 				if (linkedToClass == NULL) 
 				{
 					UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Cast went wrong"));
 					return;
 				}
 				UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin linked to %s"), *(linkedToClass->ScriptDefinedType));
-				
+				UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("in Class %s"), *(linkedToClass->GetName()));
+				UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Which is %s"), *(linkedToClass->GetClass()->GetName()));
+
 				CSFunctionNames.Empty();
 				for (auto scriptfunction : linkedToClass->ScriptDefinedFunctions)
 				{
@@ -320,20 +332,25 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 
 						switch (key.Value)
 						{
-						case 0: PCType = K2Schema->PC_Float; break;
-						case 1: PCType = K2Schema->PC_Int; break;
-						case 2: PCType = K2Schema->PC_Boolean; break;
-						case 3: PCType = K2Schema->PC_String; break;
-						case 4: PCType = K2Schema->PC_Object; innerClass = scriptfunction.parameterClasses[fIndex]; break;
+							case 0: PCType = K2Schema->PC_Float; break;
+							case 1: PCType = K2Schema->PC_Int; break;
+							case 2: PCType = K2Schema->PC_Boolean; break;
+							case 3: PCType = K2Schema->PC_String; break;
+							case 4: PCType = K2Schema->PC_Object; innerClass = scriptfunction.parameterClasses[fIndex]; break;
 						}
 						if (!PCType.IsEmpty())
 						{
 							FString paramName = key.Key;
-							UEdGraphPin *ResultPin = CreatePin(EGPD_Input, *PCType, TEXT(""), innerClass, false, false, key.Key);
-							SetPinToolTip(*ResultPin, key.Key);
+							UEdGraphPin *InputPin = CreatePin(EGPD_Input, *PCType, TEXT(""), innerClass, false, false, key.Key);
+							SetPinToolTip(*InputPin, key.Key);
 						}
 						fIndex++;
 					}
+
+					UEdGraphPin* resultPin = FindPin(FGetConfigNodeName::GetResultPinName());
+					resultPin->PinType.PinCategory = K2Schema->PC_Float;
+					RawFunctionName = TEXT("CallCSFunctionFloat");
+
 					break;
 				}
 			}
@@ -356,90 +373,250 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 	Super::PinTypeChanged(Pin);
 }
 
+UEdGraphPin* UBPNode_KlawrFunctionCall::GetThenPin() const
+{
+	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
+
+	UEdGraphPin* Pin = FindPin(K2Schema->PN_Then);
+	check(Pin == NULL || Pin->Direction == EGPD_Output); // If pin exists, it must be input
+	return Pin;
+}
+
 
 void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
 {
 	Super::ExpandNode(CompilerContext, SourceGraph);
 
-	/**
-	At the end of this, the BPNode_KlawrFunctionCall will not be a part of the Blueprint, it merely handles connecting
-	the other nodes into the Blueprint.
-
-	Care must be taken that the result pin from the visible node is transferred to the result pin of the internal function
-	-Rama
-	*/
-
-	UK2Node_MakeArray* arrayFloat = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayFloat->AllocateDefaultPins();
-	UK2Node_MakeArray* arrayInt = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayInt->AllocateDefaultPins();
-	UK2Node_MakeArray* arrayBool = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayBool->AllocateDefaultPins();
-	UK2Node_MakeArray* arrayString = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayString->AllocateDefaultPins();
-	UK2Node_MakeArray* arrayObject = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayObject->AllocateDefaultPins();
-	
 	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
 
+	// Create the arrays which will hold the parameters
+	UK2Node_MakeArray* arrayFloat = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayFloat->AllocateDefaultPins();
+	arrayFloat->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Float;
+	UK2Node_MakeArray* arrayInt = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayInt->AllocateDefaultPins();
+	arrayInt->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Int;
+	UK2Node_MakeArray* arrayBool = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayBool->AllocateDefaultPins();
+	arrayBool->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Boolean;
+	UK2Node_MakeArray* arrayString = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
+	arrayString->AllocateDefaultPins();
+	arrayString->GetOutputPin()->PinType.PinCategory = K2Schema->PC_String;
+	UBPNode_KlawrObjectArray* arrayObject = CompilerContext.SpawnIntermediateNode<UBPNode_KlawrObjectArray>(this, SourceGraph);
+	arrayObject->AllocateDefaultPins();
+	arrayObject->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Object;
+	arrayObject->GetOutputPin()->PinType.PinSubCategoryObject = UObject::StaticClass();
+	
 	UEdGraphPin* execStart = GetExecPin();
 
+	// Create the array pins and link them to the parameter pins
 	TArray<UEdGraphPin*> parameterPins;
 	for (UEdGraphPin* pin : Pins)
 	{
+		// Link only parameter pins
 		if (IsParameterPin(pin))
 		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %d"), *(pin->GetDisplayName().ToString()), pin->LinkedTo.Num());
 			if (pin->PinType.PinCategory == K2Schema->PC_Float)
 			{
-				arrayFloat->AddInputPin();
 				UEdGraphPin* newPin = arrayFloat->Pins.Last();
-				CompilerContext.MovePinLinksToIntermediate(*pin,*newPin);
+				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				// CompilerContext.MovePinLinksToIntermediate(*pin,*newPin);
+				arrayFloat->NotifyPinConnectionListChanged(pin);
+				arrayFloat->AddInputPin();
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_Int)
 			{
-				arrayInt->AddInputPin();
 				UEdGraphPin* newPin = arrayInt->Pins.Last();
-				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				arrayInt->NotifyPinConnectionListChanged(pin);
+				arrayInt->AddInputPin();
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_Boolean)
 			{
-				arrayBool->AddInputPin();
 				UEdGraphPin* newPin = arrayBool->Pins.Last();
-				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				arrayBool->NotifyPinConnectionListChanged(pin);
+				arrayBool->AddInputPin();
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_String)
 			{
-				arrayString->AddInputPin();
 				UEdGraphPin* newPin = arrayString->Pins.Last();
-				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				arrayString->NotifyPinConnectionListChanged(pin);
+				arrayString->AddInputPin();
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_Object)
 			{
-				arrayObject->AddInputPin();
 				UEdGraphPin* newPin = arrayObject->Pins.Last();
-
-				/*
-				// Create the cast to UObject here
-				UK2Node_DynamicCast* castNode = CompilerContext.SpawnIntermediateNode<UK2Node_DynamicCast>(this, SourceGraph);
-				castNode->TargetType = UObject::StaticClass();
-				castNode->AllocateDefaultPins();
-				castNode->GetExecPin()->MakeLinkTo(execStart);
-				execStart = castNode->FindPin(K2Schema->PN_Then);
-				
-
-				UEdGraphPin* castSource = castNode->GetCastSourcePin();
-				CompilerContext.MovePinLinksToIntermediate(*pin, *castSource);
-				castNode->GetCastResultPin()->MakeLinkTo(newPin);
-				*/
-				CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
-
+				pin->LinkedTo.Last()->MakeLinkTo(newPin);
+				// CompilerContext.MovePinLinksToIntermediate(*pin, *newPin);
+				arrayObject->NotifyPinConnectionListChanged(pin);
+				arrayObject->AddInputPin();
 			}
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %d"), *(pin->GetDisplayName().ToString()), pin->LinkedTo.Num());
 
 		}
 	}
-	execStart->MakeLinkTo(FindPin(K2Schema->PN_Then));
-	 
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("FloatArray:"));
+	if (arrayFloat->NumInputs == 1)
+	{
+		UEdGraphPin* newPin = arrayFloat->Pins.Last();
+		newPin->PinType.PinCategory = K2Schema->PC_Float;
+		newPin->DefaultValue = TEXT("0.0f");
+		arrayFloat->PinDefaultValueChanged(newPin);
+
+		// UK2Node_TemporaryVariable* tempVar = CompilerContext.SpawnInternalVariable(this, K2Schema->PC_Float, TEXT(""), NULL, false);
+		// tempVar->AllocateDefaultPins();
+		// tempVar->GetVariablePin()->MakeLinkTo(newPin);
+		
+	}
+	for (UEdGraphPin* pin : arrayFloat->Pins)
+	{
+		for (UEdGraphPin* toPin : pin->LinkedTo)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %s"), *(pin->GetDisplayName().ToString()), *(toPin->GetDisplayName().ToString()));
+		}
+	}
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("IntArray:"));
+	if (arrayInt->NumInputs == 1)
+	{
+		UEdGraphPin* newPin = arrayInt->Pins.Last();
+		newPin->PinType.PinCategory = K2Schema->PC_Int;
+		newPin->DefaultValue = TEXT("0");
+		arrayInt->PinDefaultValueChanged(newPin);
+
+		// UK2Node_TemporaryVariable* tempVar = CompilerContext.SpawnInternalVariable(this, K2Schema->PC_Int, TEXT(""), NULL, false);
+		// tempVar->AllocateDefaultPins();
+		// tempVar->GetVariablePin()->MakeLinkTo(newPin);
+
+	}
+	for (UEdGraphPin* pin : arrayInt->Pins)
+	{
+		for (UEdGraphPin* toPin : pin->LinkedTo)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %s"), *(pin->GetDisplayName().ToString()), *(toPin->GetDisplayName().ToString()));
+		}
+	}
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("BoolArray:"));
+	if (arrayBool->NumInputs == 1)
+	{
+		UEdGraphPin* newPin = arrayBool->Pins.Last();
+		newPin->PinType.PinCategory = K2Schema->PC_Boolean;
+		newPin->DefaultValue = TEXT("false");
+
+		// UK2Node_TemporaryVariable* tempVar = CompilerContext.SpawnInternalVariable(this, K2Schema->PC_Boolean, TEXT(""), NULL, false);
+		// tempVar->AllocateDefaultPins();
+		// tempVar->GetVariablePin()->MakeLinkTo(newPin);
+		
+	}
+	for (UEdGraphPin* pin : arrayBool->Pins)
+	{
+		for (UEdGraphPin* toPin : pin->LinkedTo)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %s"), *(pin->GetDisplayName().ToString()), *(toPin->GetDisplayName().ToString()));
+		}
+	}
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("StringArray:"));
+	if (arrayString->NumInputs == 1)
+	{
+		UEdGraphPin* newPin = arrayString->Pins.Last();
+		newPin->PinType.PinCategory = K2Schema->PC_String;
+		newPin->DefaultValue = TEXT("");
+
+		// UK2Node_TemporaryVariable* tempVar = CompilerContext.SpawnInternalVariable(this, K2Schema->PC_String, TEXT(""), NULL, false);
+		// tempVar->AllocateDefaultPins();
+		// tempVar->GetVariablePin()->MakeLinkTo(newPin);
+
+	}
+	for (UEdGraphPin* pin : arrayString->Pins)
+	{
+		for (UEdGraphPin* toPin : pin->LinkedTo)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %s"), *(pin->GetDisplayName().ToString()), *(toPin->GetDisplayName().ToString()));
+		}
+	}
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("ObjectArray:"));
+	if (arrayObject->NumInputs == 1)
+	{
+		UEdGraphPin* newPin = arrayObject->Pins.Last();
+		FindPin(FGetConfigNodeName::GetInputObjectPinName())->LinkedTo[0]->MakeLinkTo(newPin);
+		newPin->PinType.PinSubCategoryObject = UObject::StaticClass();
+	}
+	for (UEdGraphPin* pin : arrayObject->Pins)
+	{
+		for (UEdGraphPin* toPin : pin->LinkedTo)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin %s is linked to %s"), *(pin->GetDisplayName().ToString()), *(toPin->GetDisplayName().ToString()));
+		}
+	}
+
 	
+	 
+	UK2Node_CallFunction* CallFunction = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+	UFunction* function = UKlawrScriptComponent::StaticClass()->FindFunctionByName(*RawFunctionName);
+
+	CallFunction->SetFromFunction(function);
+	CallFunction->AllocateDefaultPins();
+	// execStart->MakeLinkTo(CallFunction->GetExecPin());		
+	// CallFunction->GetThenPin()->MakeLinkTo(GetThenPin());
+
+	UEdGraphPin* targetPin = CallFunction->Pins[2];
+	UEdGraphPin* functionPin = FindPin(FGetConfigNodeName::GetInputObjectPinName());
+	CompilerContext.MovePinLinksToIntermediate(*functionPin, *targetPin);
+	// targetPin->BreakAllPinLinks();
+	// targetPin->MakeLinkTo(functionPin);
+
+	CompilerContext.MessageLog.NotifyIntermediateObjectCreation(CallFunction, this);
+	arrayFloat->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("floats")));
+	arrayInt->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("ints")));
+	arrayBool->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("bools")));
+	arrayObject->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("objects")));
+	arrayString->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("strings")));
+
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Function Name: %s"), *(this->FindPin(FGetConfigNodeName::GetFunctionNamePinName())->DefaultValue));
+	CallFunction->FindPin(TEXT("functionName"))->DefaultValue = this->FindPin(FGetConfigNodeName::GetFunctionNamePinName())->DefaultValue;
+
+	UEdGraphPin* SelfNodeExec = GetExecPin();							//FindPin(K2Schema->PN_Execute)
+	UEdGraphPin* SelfNodeThen = FindPin(K2Schema->PN_Then);	//GetThenPin();
+
+															//Connect Begin
+	UEdGraphPin* InternalBeginExec = CallFunction->GetExecPin();
+	CompilerContext.MovePinLinksToIntermediate(*SelfNodeExec, *InternalBeginExec);
+
+	//Connect End
+	UEdGraphPin* InternalFinishThen = CallFunction->GetThenPin();
+	CompilerContext.MovePinLinksToIntermediate(*SelfNodeThen, *InternalFinishThen);
+
+
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("CallFunction Pins:"));
+
+	int ic = 0;
+	for (UEdGraphPin* p : CallFunction->Pins)
+	{
+		UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin #%d: %s %s %d"), ic, *(p->GetName()), *(p->GetDisplayName().ToString()), p->LinkedTo.Num());
+		for (int i = 0; i < p->LinkedTo.Num(); i++)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Linked to (%d): %s %s"), i, *(p->LinkedTo[i]->GetName()), *(p->LinkedTo[i]->GetDisplayName().ToString()));
+		}
+		ic++;
+	}
+
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("KlawrFunctionCall Pins:"));
+
+	ic = 0;
+	for (UEdGraphPin* p : Pins)
+	{
+		UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Pin #%d: %s %s %d"), ic, *(p->GetName()), *(p->GetDisplayName().ToString()), p->LinkedTo.Num());
+		ic++;
+	}
+
+	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("ExecStart: %s %s"), *(execStart->GetName()), *(execStart->GetDisplayName().ToString()));
+
+	//UFunction* functionToCall = IKlawrRuntimePlugin::Get()
 	//~~~ 
 	/*
 	// The call function does all the real work, each child class implementing easing for a given type provides
@@ -462,7 +639,8 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 	CompilerContext.MovePinLinksToIntermediate(*FindPin(FGetConfigNodeName::GetResultPinName()), *CallFunction->GetReturnValuePin());
 	*/
 	// Cleanup links to ourselves and we are done!
-	BreakAllNodeLinks();
+	
+	BreakAllNodeLinks();	
 }
 
 void UBPNode_KlawrFunctionCall::ResetToWildcards(FText inPar)

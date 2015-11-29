@@ -411,6 +411,176 @@ public: // IModuleInterface interface
 		return returnValue;
 	}
 
+	float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			_strings.push_back(*string);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			_strings.push_back(*string);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			_strings.push_back(*string);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			_strings.push_back(*string);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			_strings.push_back(*string);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
 };
 
 } // namespace Klawr

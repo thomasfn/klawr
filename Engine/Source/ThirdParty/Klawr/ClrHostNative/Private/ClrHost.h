@@ -90,9 +90,16 @@ public: // IClrHost interface
 	virtual bool GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
 	virtual const TCHAR* GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
 	virtual UObject* GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
+
+	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
+	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
+	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
+	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
+	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
 public:
 	ClrHost() : _hostControl(nullptr) {}
-
+	void CreateSafeArrayBool(std::vector<bool>* bools, SAFEARRAY** boolsArray) const;
+	void CreateSafeArrayString(std::vector<const TCHAR*>* strings, SAFEARRAY** stringsArray) const;
 private:
 	class ClrHostControl* _hostControl;
 	ICLRRuntimeHostPtr _runtimeHost;

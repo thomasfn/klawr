@@ -143,3 +143,5 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 		OutFunctions.Add(newFunction);
 	}
 }
+
+
