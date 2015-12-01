@@ -144,5 +144,7 @@ namespace Klawr.ClrHost.Interfaces
             string[] strings);
         UObject CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
             string[] strings);
+        void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
     }
 }

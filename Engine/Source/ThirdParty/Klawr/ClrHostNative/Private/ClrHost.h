@@ -96,6 +96,7 @@ public: // IClrHost interface
 	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
 	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
 	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
+	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
 public:
 	ClrHost() : _hostControl(nullptr) {}
 	void CreateSafeArrayBool(std::vector<bool>* bools, SAFEARRAY** boolsArray) const;

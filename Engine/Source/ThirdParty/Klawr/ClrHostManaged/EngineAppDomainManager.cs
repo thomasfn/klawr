@@ -648,7 +648,8 @@ namespace Klawr.ClrHost.Managed
             { return 3; }
             else if (parameterType.IsSubclassOf(typeof(UObject)))
             { return 4; }
-
+            else if (parameterType==typeof(void))
+            { return 5; }
             return -1;
         }
 
@@ -947,5 +948,39 @@ namespace Klawr.ClrHost.Managed
             }
             return null;
         }
+
+        public void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4: parameters[i] = null; break;
+                    }
+                }
+
+                mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+        }
+
+
     }
 }

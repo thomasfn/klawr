@@ -356,6 +356,7 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 					case 2: resultPin->PinType.PinCategory = K2Schema->PC_Boolean; RawFunctionName = TEXT("CallCSFunctionBool"); break;
 					case 3: resultPin->PinType.PinCategory = K2Schema->PC_String; RawFunctionName = TEXT("CallCSFunctionString"); break;
 					case 4: resultPin->PinType.PinCategory = K2Schema->PC_Object; RawFunctionName = TEXT("CallCSFunctionObject"); break;
+					case 5:resultPin->bHidden = true; RawFunctionName = TEXT("CallCSFunctionVoid"); break;
 					}
 
 					break;

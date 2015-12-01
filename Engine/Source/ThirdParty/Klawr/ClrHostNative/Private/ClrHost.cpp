@@ -666,6 +666,24 @@ UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instance
 	return NULL;
 }
 
+void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+
+		appDomainManager->CallCSFunctionVoid(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
+	}
+}
+
 void ClrHost::CreateSafeArrayBool(std::vector<bool>* bools, SAFEARRAY** boolsArray) const
 {
 	if (boolsArray == NULL)
