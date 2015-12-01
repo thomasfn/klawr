@@ -615,7 +615,7 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 	{
 		UEdGraphPin* resultPin = CallFunction->GetReturnValuePin();
 		UEdGraphPin* resultPinOuter = FindPin(FGetConfigNodeName::GetResultPinName());
-		CompilerContext.MovePinLinksToIntermediate(*resultPin, *resultPinOuter);
+		CompilerContext.MovePinLinksToIntermediate(*resultPinOuter, *resultPin);
 	}
 
 	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("CallFunction Pins:"));
