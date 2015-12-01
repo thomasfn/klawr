@@ -22,7 +22,7 @@ echo PROJECT_FILENAME: Path to the .csproj that should be built.
 goto Exit
 
 :ReadyToCompile
-msbuild %PROJECT_FILENAME% /t:Rebuild /p:Platform=AnyCPU /p:Configuration=Release /nologo /verbosity:minimal
+msbuild %PROJECT_FILENAME% /t:Rebuild /p:Platform=x64 /p:Configuration=Release /nologo /verbosity:minimal
 if %ERRORLEVEL% == 0 goto Exit
 goto Error_BuildFailed
 
