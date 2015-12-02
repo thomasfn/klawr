@@ -26,12 +26,59 @@
 #include "Engine/BlueprintGeneratedClass.h"
 #include "KlawrBlueprintGeneratedClass.generated.h"
 
+
+/**
+* Script-defined field (variable or function)
+*/
+struct KLAWRRUNTIMEPLUGIN_API FScriptField
+{
+	/** Field name */
+	FName Name;
+	/** Field type */
+	UClass* Class;
+
+	UClass* innerClass;
+
+	TMap<FString, FString> metas;
+
+	FScriptField()
+		: Class(NULL)
+	{
+	}
+	FScriptField(FName InName, UClass* InClass)
+		: Name(InName)
+		, Class(InClass)
+	{
+	}
+};
+
+
+struct KLAWRRUNTIMEPLUGIN_API FScriptFunction
+{
+	FName Name;
+	TMap<FString, FString> metas;
+	TMap<FString, int> Parameters;
+	TArray<UClass*> parameterClasses;
+	int ResultType;
+
+	FScriptFunction()
+	{
+	}
+
+	FScriptFunction(FName InName)
+		:Name(InName)
+	{
+	}
+};
+
 UCLASS()
 class KLAWRRUNTIMEPLUGIN_API UKlawrBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
 	GENERATED_BODY()
 
 public:
+	
+	UKlawrBlueprintGeneratedClass(const FObjectInitializer& objectInitializer);
 	/** 
 	 * The fully qualified name of the type defined in the script associated with an instance of
 	 * this class.
@@ -39,13 +86,29 @@ public:
 	UPROPERTY()
 	FString ScriptDefinedType;
 
+	UPROPERTY()
+	TArray<UProperty*> ScriptProperties;
+
+	UPROPERTY()
+	TArray<UFunction*> ScriptFunctions;
+
+	TArray<FScriptFunction> ScriptDefinedFunctions;
+
+	int appDomainId = 0;
+
 public:
+
+	void GetScriptDefinedFields(TArray<FScriptField>& OutFields);
+	void GetScriptDefinedFunctions(TArray<FScriptFunction>& OutFunctions);
+
+	bool GetAdvancedDisplay(const TCHAR* propertyName);
+	bool GetSaveGame(const TCHAR* propertyName);
 	/**
 	 * Get the UKlawrBlueprintGeneratedClass from the inheritance hierarchy of the given class.
 	 * @return UKlawrBlueprintGeneratedClass instance, or nullptr if the given class is not derived
 	 *         from UKlawrBlueprintGeneratedClass
 	 */
-	static UKlawrBlueprintGeneratedClass* GetBlueprintGeneratedClass(UClass* Class)
+	FORCEINLINE static UKlawrBlueprintGeneratedClass* GetBlueprintGeneratedClass(UClass* Class)
 	{
 		UKlawrBlueprintGeneratedClass* GeneratedClass = nullptr;
 		for (auto CurrentClass = Class; CurrentClass; CurrentClass = CurrentClass->GetSuperClass())

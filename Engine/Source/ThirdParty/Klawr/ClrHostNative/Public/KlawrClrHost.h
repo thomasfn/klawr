@@ -193,26 +193,40 @@ public:
 	 */
 	virtual void GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const = 0;
 
-	virtual void GetScriptComponentProperties(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
+	virtual void GetScriptComponentPropertyNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
+	virtual void GetScriptComponentPropertyMetadata(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName, std::vector<tstring>& metaData) const = 0;
 
 	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
+	virtual const TCHAR* GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const = 0;
+	virtual void GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
+	virtual void GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const = 0;
+	virtual int GetScriptComponentFunctionParameterType(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const = 0;
+	virtual const TCHAR* GetScriptComponentFunctionParameterTypeObjectClass(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const = 0;
 
-	virtual void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const = 0;
-	virtual void SetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName, int value) const = 0;
-	virtual void SetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName, bool value) const = 0;
-	virtual void SetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const = 0;
-	virtual void SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const = 0;
+	virtual bool GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
+	virtual bool GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 
-	virtual float GetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
-	virtual int GetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
-	virtual bool GetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
-	virtual const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
-	virtual UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual void SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const = 0;
+	virtual void SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int value) const = 0;
+	virtual void SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const = 0;
+	virtual void SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const = 0;
+	virtual void SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const = 0;
 
-
+	virtual float GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual int GetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual bool GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual const TCHAR* GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual UObject* GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
+	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
+	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
+	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
+	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
+	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
+	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
 public:
 	/** Get the singleton instance. */
 	static IClrHost* Get();
+
 };
 
 } // namespace Klawr

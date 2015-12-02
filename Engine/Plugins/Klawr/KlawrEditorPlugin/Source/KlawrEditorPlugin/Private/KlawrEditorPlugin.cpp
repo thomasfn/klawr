@@ -214,7 +214,7 @@ public: // IBlueprintCompiler
 	{
 		if (auto KlawrBlueprint = Cast<UKlawrBlueprint>(Blueprint))
 		{
-			FBlueprintCompiler Compiler(KlawrBlueprint, Results, CompileOptions, ObjLoaded);
+			FKlawrBlueprintCompiler Compiler(KlawrBlueprint, Results, CompileOptions, ObjLoaded);
 			Compiler.Compile();
 			check(Compiler.NewClass);
 		}

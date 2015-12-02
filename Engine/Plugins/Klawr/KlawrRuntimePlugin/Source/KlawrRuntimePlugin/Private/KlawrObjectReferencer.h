@@ -42,6 +42,8 @@ public:
 	static void AddObjectRef(const UObject* Object);
 	static void RemoveObjectRef(const UObject* Object);
 
+	static int32 GetObjectReferenceCount(const UObject* Object);
+
 #if WITH_EDITOR
 
 	static int32 RemoveAllObjectRefsInAppDomain(int AppDomainID);
@@ -51,7 +53,6 @@ public:
 	
 public: // FGCObject interface
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
-
 private:
 	/** An annotation containing a reference count. */
 	struct FRefCountAnnotation

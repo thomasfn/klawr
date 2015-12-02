@@ -36,6 +36,7 @@ UKlawrScriptComponent::UKlawrScriptComponent(const FObjectInitializer& objectIni
 	bTickInEditor = false;
 	bAutoActivate = false;
 	bWantsInitializeComponent = false;
+	this->GetClass()->GetDefaultObject();
 }
 
 void UKlawrScriptComponent::CreateScriptComponentProxy()
@@ -46,10 +47,11 @@ void UKlawrScriptComponent::CreateScriptComponentProxy()
 	if (GeneratedClass)
 	{
 		Proxy = new Klawr::ScriptComponentProxy();
+		appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this);
 		bool bCreated = Klawr::IClrHost::Get()->CreateScriptComponent(
-			IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this),
+			appDomainId,
 			*GeneratedClass->ScriptDefinedType, this, *Proxy
-			);
+		);
 
 		if (!bCreated)
 		{
@@ -70,8 +72,8 @@ void UKlawrScriptComponent::DestroyScriptComponentProxy()
 	if (Proxy->InstanceID != 0)
 	{
 		Klawr::IClrHost::Get()->DestroyScriptComponent(
-			IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this), Proxy->InstanceID
-			);
+			appDomainId, Proxy->InstanceID
+		);
 	}
 
 	delete Proxy;
@@ -111,7 +113,7 @@ void UKlawrScriptComponent::OnUnregister()
 		{
 			Proxy->OnUnregister();
 		}
-
+	
 		DestroyScriptComponentProxy();
 	}
 
@@ -124,26 +126,58 @@ void UKlawrScriptComponent::InitializeComponent()
 
 	if (Proxy && Proxy->InitializeComponent)
 	{
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(GetClass());
+		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, this);
 		Proxy->InitializeComponent();
+		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, this);
 	}
 }
 
 void UKlawrScriptComponent::TickComponent(
 	float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction
-	)
+)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	int appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(this);
-	long long InstanceID = Proxy->InstanceID;
-	//UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("TestTick: %d - %d"), appDomainId, InstanceID);
-	const TCHAR* propName = TEXT("IntPropertyTest");
-	Klawr::IClrHost::Get()->SetInt(appDomainId, InstanceID, propName, 6);
 	if (Proxy && Proxy->TickComponent)
-	{
+	{ 
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(GetClass());
+		IKlawrRuntimePlugin::Get().PushAllProperties(appDomainId, Proxy->InstanceID, this);
 		Proxy->TickComponent(DeltaTime);
+		IKlawrRuntimePlugin::Get().PopAllProperties(appDomainId, Proxy->InstanceID, this);
 	}
-	
-	UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Testproperty: '%d'"), Klawr::IClrHost::Get()->GetInt(appDomainId, InstanceID, propName));
 
 }
+
+float UKlawrScriptComponent::CallCSFunctionFloat(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionFloat(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+int32 UKlawrScriptComponent::CallCSFunctionInt(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionInt(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+bool UKlawrScriptComponent::CallCSFunctionBool(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionBool(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+FString UKlawrScriptComponent::CallCSFunctionString(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+{
+	return FString(IKlawrRuntimePlugin::Get().CallCSFunctionString(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects));
+}
+
+UObject* UKlawrScriptComponent::CallCSFunctionObject(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects)
+{
+	return IKlawrRuntimePlugin::Get().CallCSFunctionObject(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+void UKlawrScriptComponent::CallCSFunctionVoid(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects)
+{
+	IKlawrRuntimePlugin::Get().CallCSFunctionVoid(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+}
+
+
+

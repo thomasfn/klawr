@@ -25,6 +25,15 @@
 #include "KlawrClrHost.h"
 #include "KlawrNativeUtils.h"
 #include "KlawrObjectReferencer.h"
+#include "KlawrBlueprintGeneratedClass.h"
+
+#if WITH_EDITOR
+#include "BlueprintEditorUtils.h"
+#include "AssetRegistryModule.h"
+#include "KismetEditorUtilities.h"
+#include "CompilerResultsLog.h"
+#include "KlawrBlueprint.h"
+#endif
 
 DEFINE_LOG_CATEGORY(LogKlawrRuntimePlugin);
 
@@ -38,7 +47,7 @@ UProperty* FindScriptPropertyHelper(const UClass* Class, FName PropertyName)
 		UProperty* Property = *PropertyIt;
 		if (Property->GetFName() == PropertyName)
 		{
-			return Property;
+			return Property; 
 		}
 	}
 	return nullptr;
@@ -88,10 +97,25 @@ public:
 			{
 				PrimaryEngineAppDomainID = NewAppDomainID;
 				bReloaded = true;
+
 			}
 			else
 			{
 				DestroyAppDomain(NewAppDomainID);
+			}
+			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+			TArray<FAssetData> AssetData;
+			AssetRegistryModule.Get().GetAssetsByClass(UKlawrBlueprint::StaticClass()->GetFName(), AssetData);
+
+			for (const auto& iter : AssetData)
+			{
+				UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Recreating Graph for class %s"), *(iter.AssetName.ToString()));
+				UKlawrBlueprint* temp = CastChecked<UKlawrBlueprint>(iter.GetAsset());
+
+				FCompilerResultsLog LogResults;
+				LogResults.bLogDetailedResults = true;
+				LogResults.EventDisplayThresholdMs = 500;
+				FKismetEditorUtilities::CompileBlueprint(temp, false, false, false, &LogResults);
 			}
 		}
 		else
@@ -113,17 +137,6 @@ public:
 		{
 			const TCHAR* type = *(FString(scriptType.c_str()));
 			Types.Add(FString(scriptType.c_str()));
-			
-			UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found class %s"), type);
-			
-			std::vector<tstring> propertyNames;
-			IClrHost::Get()->GetScriptComponentProperties(PrimaryEngineAppDomainID, type, propertyNames);
-
-			for (const auto& propertyName : propertyNames)
-			{
-				UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found property %s in class %s"), *(FString(propertyName.c_str())), type);
-			}
-
 		}
 	}
 #endif // WITH_EDITOR
@@ -131,7 +144,7 @@ public:
 	virtual int GetObjectAppDomainID(const UObject* Object) const override
 	{
 #if WITH_EDITOR
-		return (Object->GetOutermost()->PackageFlags & PKG_PlayInEditor) ?
+		return (Object->GetOutermost()->HasAnyPackageFlags(PKG_PlayInEditor)) ?
 			PIEAppDomainID : PrimaryEngineAppDomainID;
 #else
 		return PrimaryEngineAppDomainID;
@@ -264,6 +277,350 @@ public: // IModuleInterface interface
 		// so this module cannot be reloaded
 		return false;
 	}
+	void PushAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const override
+	{
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(object->GetClass());
+		for (auto prop : bpClass->ScriptProperties)
+		{
+			FString dummy = prop->GetFName().ToString();
+			const TCHAR* propertyName = *(dummy);
+			if (prop->GetClass()->IsChildOf(UBoolProperty::StaticClass()))
+			{
+				UBoolProperty* propBool = Cast<UBoolProperty>(prop);
+				SetBool(appDomainID, instanceID, propertyName, propBool->GetPropertyValue_InContainer(object));
+			}
+			else if (prop->GetClass()->IsChildOf(UIntProperty::StaticClass()))
+			{
+				UIntProperty* propInt = Cast<UIntProperty>(prop);
+				SetInt(appDomainID, instanceID, propertyName, propInt->GetPropertyValue_InContainer(object));
+			}
+			else if (prop->GetClass()->IsChildOf(UStrProperty::StaticClass()))
+			{
+				UStrProperty* propStr = Cast<UStrProperty>(prop);
+				SetStr(appDomainID, instanceID, propertyName, *(propStr->GetPropertyValue_InContainer(object)));
+			}
+			else if (prop->GetClass()->IsChildOf(UFloatProperty::StaticClass()))
+			{
+				UFloatProperty* propFloat = Cast<UFloatProperty>(prop);
+				SetFloat(appDomainID, instanceID, propertyName, propFloat->GetPropertyValue_InContainer(object));
+			}
+			else if (prop->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
+			{
+				UObjectProperty* propObject = Cast<UObjectProperty>(prop);
+				UObject* temp = propObject->GetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object));
+				SetObj(appDomainID, instanceID, propertyName, propObject->GetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object)));
+			}
+		}
+	}
+
+	void PopAllProperties(int appDomainID, __int64 instanceID, UKlawrScriptComponent* object) const override 
+	{
+		auto bpClass = UKlawrBlueprintGeneratedClass::GetBlueprintGeneratedClass(object->GetClass());
+		for (auto prop : bpClass->ScriptProperties)
+		{
+			FString dummy = prop->GetFName().ToString();
+			const TCHAR* propertyName = *(dummy);
+			if (prop->GetClass()->IsChildOf(UBoolProperty::StaticClass()))
+			{
+				UBoolProperty* propBool = Cast<UBoolProperty>(prop);
+				propBool->SetPropertyValue_InContainer(object, GetBool(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UIntProperty::StaticClass()))
+			{
+				UIntProperty* propInt = Cast<UIntProperty>(prop);
+				propInt->SetPropertyValue_InContainer(object, GetInt(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UStrProperty::StaticClass()))
+			{
+				UStrProperty* propStr = Cast<UStrProperty>(prop);
+				propStr->SetPropertyValue_InContainer(object, GetStr(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UFloatProperty::StaticClass()))
+			{
+				UFloatProperty* propFloat = Cast<UFloatProperty>(prop);
+				propFloat->SetPropertyValue_InContainer(object, GetFloat(appDomainID, instanceID, propertyName));
+			}
+			else if (prop->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
+			{
+				UObjectProperty* propObject = Cast<UObjectProperty>(prop);
+				UObject* returnObject = GetObj(appDomainID, instanceID, propertyName);
+				if ((returnObject != NULL) && (returnObject != nullptr))
+				{
+					propObject->SetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object), returnObject);
+				}
+			}
+		}
+	}
+
+	void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const override
+	{
+		IClrHost::Get()->SetFloat(appDomainID, instanceID, propertyName, value);
+	}
+
+	void SetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName, int value) const override
+	{
+		IClrHost::Get()->SetInt(appDomainID, instanceID, propertyName, value);
+	}
+
+	void SetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName, bool value) const override
+	{
+		IClrHost::Get()->SetBool(appDomainID, instanceID, propertyName, value);
+	}
+
+	void SetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const override
+	{
+		IClrHost::Get()->SetStr(appDomainID, instanceID, propertyName, value);
+	}
+
+	virtual void SetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName, UObject* value) const override
+	{
+		if (value)
+		{
+			if (value != GetObj(appDomainID, instanceID, propertyName))
+			{
+				FObjectReferencer::AddObjectRef(value);
+			}
+			IClrHost::Get()->SetObj(appDomainID, instanceID, propertyName, value);
+		}
+	}
+
+
+	float GetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const 
+	{
+		return IClrHost::Get()->GetFloat(appDomainID, instanceID, propertyName);
+	}
+	int GetInt(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return IClrHost::Get()->GetInt(appDomainID, instanceID, propertyName);
+	}
+
+	bool GetBool(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return IClrHost::Get()->GetBool(appDomainID, instanceID, propertyName);
+	}
+
+	const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const
+	{
+		return IClrHost::Get()->GetStr(appDomainID, instanceID, propertyName);
+	}
+
+	UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const 
+	{
+		
+		UObject* returnValue = IClrHost::Get()->GetObj(appDomainID, instanceID, propertyName);
+		return returnValue;
+	}
+
+	float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
+	void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	{
+		std::vector<float> _floats;
+		for (auto fl : floats)
+		{
+			_floats.push_back(fl);
+		}
+
+		std::vector<int> _ints;
+		for (auto It : ints)
+		{
+			_ints.push_back(It);
+		}
+
+		std::vector<bool> _bools;
+		for (auto bo : bools)
+		{
+			_bools.push_back(bo);
+		}
+
+		std::vector<const TCHAR*> _strings;
+		for (auto string : strings)
+		{
+			const TCHAR* temp = MakeStringCopyForCLR(*string);
+			_strings.push_back(temp);
+		}
+
+		std::vector<UObject*> _objects;
+		for (auto obj : objects)
+		{
+			_objects.push_back(obj);
+		}
+		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	}
+
 };
 
 } // namespace Klawr

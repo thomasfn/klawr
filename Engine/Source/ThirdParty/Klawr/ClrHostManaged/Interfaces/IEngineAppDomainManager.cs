@@ -25,6 +25,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Klawr.ClrHost.Managed;
+using Klawr.UnrealEngine;
 
 namespace Klawr.ClrHost.Interfaces
 {
@@ -88,7 +89,7 @@ namespace Klawr.ClrHost.Interfaces
             ref LogUtilsProxy logUtilsProxy,
             ref ArrayUtilsProxy arrayUtilsProxy
         );
-
+                
         bool CreateScriptComponent(
             string className, IntPtr nativeComponent, ref ScriptComponentProxy proxy
         );
@@ -101,10 +102,25 @@ namespace Klawr.ClrHost.Interfaces
         /// </summary>
         /// <returns>Script component type names.</returns>
         string[] GetScriptComponentTypes();
-
+    
         string[] GetScriptComponentPropertyNames(string componentName);
 
+        string[] GetScriptComponentPropertyMetadata(string componentName, string propertyName);
+
+        bool GetScriptComponentPropertyIsAdvancedDisplay(string componentName, string propertyName);
+
+        bool GetScriptComponentPropertyIsSaveGame(string componentName, string propertyName);
+
         int GetScriptComponentPropertyType(string componentName, string propertyName);
+
+        string GetScriptComponentPropertyClassType(string componentName, string propertyName);
+
+        string[] GetScriptComponentFunctionNames(string componentName);
+
+        string[] GetScriptComponentFunctionParameterNames(string componentName, string functionName);
+        int GetScriptComponentFunctionParameterType(string componentName, string functionName, int parameterCount);
+
+        string GetScriptComponentFunctionParameterTypeObjectClass(string componentName, string functionName, int parameterCount);
 
         void SetFloat(long instanceID, string propertyName, float value);
         void SetInt(long instanceID, string propertyName, int value);
@@ -118,5 +134,17 @@ namespace Klawr.ClrHost.Interfaces
         string GetStr(long instanceID, string propertyName);
         IntPtr GetObj(long instanceID, string propertyName);
 
+        float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        UObject CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
+        void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings);
     }
 }
