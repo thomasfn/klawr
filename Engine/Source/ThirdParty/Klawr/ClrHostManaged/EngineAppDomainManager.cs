@@ -783,7 +783,7 @@ namespace Klawr.ClrHost.Managed
             return uobject.NativeObject.Handle;
         }
 
-        public float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        public float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
@@ -791,6 +791,7 @@ namespace Klawr.ClrHost.Managed
             int cInts = 0;
             int cBools = 0;
             int cStrings = 0;
+            int cObjects = 0;
             try
             {
                 object[] parameters = new object[mi.GetParameters().Length];
@@ -803,7 +804,21 @@ namespace Klawr.ClrHost.Managed
                         case 1: parameters[i] = ints[cInts++]; break;
                         case 2: parameters[i] = bools[cBools++]; break;
                         case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4: parameters[i] = null; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
                     }
                 }
 
@@ -815,7 +830,7 @@ namespace Klawr.ClrHost.Managed
             }
             return 0.0f;
         }
-        public int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        public int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
@@ -823,6 +838,7 @@ namespace Klawr.ClrHost.Managed
             int cInts = 0;
             int cBools = 0;
             int cStrings = 0;
+            int cObjects = 0;
             try
             {
                 object[] parameters = new object[mi.GetParameters().Length];
@@ -835,7 +851,22 @@ namespace Klawr.ClrHost.Managed
                         case 1: parameters[i] = ints[cInts++]; break;
                         case 2: parameters[i] = bools[cBools++]; break;
                         case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4: parameters[i] = null; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+
                     }
                 }
 
@@ -847,7 +878,7 @@ namespace Klawr.ClrHost.Managed
             }
             return 0;
         }
-        public bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        public bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
@@ -855,6 +886,7 @@ namespace Klawr.ClrHost.Managed
             int cInts = 0;
             int cBools = 0;
             int cStrings = 0;
+            int cObjects = 0;
             try
             {
                 object[] parameters = new object[mi.GetParameters().Length];
@@ -867,7 +899,22 @@ namespace Klawr.ClrHost.Managed
                         case 1: parameters[i] = ints[cInts++]; break;
                         case 2: parameters[i] = bools[cBools++]; break;
                         case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4: parameters[i] = null; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+
                     }
                 }
 
@@ -879,7 +926,7 @@ namespace Klawr.ClrHost.Managed
             }
             return false;
         }
-        public string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        public string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
@@ -887,6 +934,7 @@ namespace Klawr.ClrHost.Managed
             int cInts = 0;
             int cBools = 0;
             int cStrings = 0;
+            int cObjects = 0;
             try
             {
                 object[] parameters = new object[mi.GetParameters().Length];
@@ -899,7 +947,22 @@ namespace Klawr.ClrHost.Managed
                         case 1: parameters[i] = ints[cInts++]; break;
                         case 2: parameters[i] = bools[cBools++]; break;
                         case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4: parameters[i] = null; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+
                     }
                 }
 
@@ -911,7 +974,7 @@ namespace Klawr.ClrHost.Managed
             }
             return "";
         }
-        public UObject CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        public IntPtr CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
@@ -919,6 +982,7 @@ namespace Klawr.ClrHost.Managed
             int cInts = 0;
             int cBools = 0;
             int cStrings = 0;
+            int cObjects = 0;
             try
             {
                 object[] parameters = new object[mi.GetParameters().Length];
@@ -931,21 +995,34 @@ namespace Klawr.ClrHost.Managed
                         case 1: parameters[i] = ints[cInts++]; break;
                         case 2: parameters[i] = bools[cBools++]; break;
                         case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4: parameters[i] = null; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
                     }
                 }
 
-                mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
-                return null;
+                return ((UObject)(mi.Invoke(_scriptComponents[instanceID].Instance, parameters))).NativeObject.Handle;
             }
             catch (Exception ee)
             {
                 LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
             }
-            return null;
+            return IntPtr.Zero;
         }
 
-        public void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings)
+        public void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
@@ -953,6 +1030,7 @@ namespace Klawr.ClrHost.Managed
             int cInts = 0;
             int cBools = 0;
             int cStrings = 0;
+            int cObjects = 0;
             try
             {
                 object[] parameters = new object[mi.GetParameters().Length];
@@ -965,7 +1043,21 @@ namespace Klawr.ClrHost.Managed
                         case 1: parameters[i] = ints[cInts++]; break;
                         case 2: parameters[i] = bools[cBools++]; break;
                         case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4: parameters[i] = null; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
                     }
                 }
 
@@ -992,7 +1084,8 @@ namespace Klawr.ClrHost.Managed
             }
             StringBuilder result = new StringBuilder();
             try
-            { result.Append("{ " + Quoted("classInfos") + ": [ ");
+            {
+                result.Append("{ " + Quoted("classInfos") + ": [ ");
                 bool firstClass = true;
                 foreach (var componentTypeName in AppDomain.CurrentDomain.GetAssemblies()
                     .Where(assembly => !assembly.IsDynamic)
@@ -1028,7 +1121,7 @@ namespace Klawr.ClrHost.Managed
                             }
                             firstParam = false;
                             result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
-                            result.Append(Quoted(GetClassName(parameterInfo.ParameterType))+","+Quoted("metaData")+":[]");
+                            result.Append(Quoted(GetClassName(parameterInfo.ParameterType)) + "," + Quoted("metaData") + ":[]");
                             result.Append("}");
                         }
 

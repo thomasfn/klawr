@@ -137,6 +137,7 @@ void CreateSafeArray
 }
 } // unnamed namespace
 
+
 namespace Klawr {
 
 struct ProxySizeChecks
@@ -484,7 +485,7 @@ void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, co
 	}
 }
 
-float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
+float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -497,14 +498,15 @@ float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, 
 		CreateSafeArrayBool(&bools, &boolsArray);
 		SAFEARRAY* stringsArray = NULL;
 		CreateSafeArrayString(&strings, &stringsArray);
-		 
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
 
-		return appDomainManager->CallCSFunctionFloat(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
+		return appDomainManager->CallCSFunctionFloat(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
 	}
 	return 0.0f;
 }
 
-int __cdecl ClrHost::CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
+int __cdecl ClrHost::CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -517,14 +519,15 @@ int __cdecl ClrHost::CallCSFunctionInt(int appDomainID, __int64 instanceID, cons
 		CreateSafeArrayBool(&bools, &boolsArray);
 		SAFEARRAY* stringsArray = NULL;
 		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
 
-
-		return appDomainManager->CallCSFunctionInt(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
+		return appDomainManager->CallCSFunctionInt(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
 	}
 	return 0;
 }
 
-bool __cdecl ClrHost::CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
+bool __cdecl ClrHost::CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -537,15 +540,16 @@ bool __cdecl ClrHost::CallCSFunctionBool(int appDomainID, __int64 instanceID, co
 		CreateSafeArrayBool(&bools, &boolsArray);
 		SAFEARRAY* stringsArray = NULL;
 		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
 
-
-		return appDomainManager->CallCSFunctionBool(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
+		return appDomainManager->CallCSFunctionBool(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
 	}
 
 	return false;
 }
 
-const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
+const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -558,22 +562,16 @@ const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 inst
 		CreateSafeArrayBool(&bools, &boolsArray);
 		SAFEARRAY* stringsArray = NULL;
 		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
 
-		return appDomainManager->CallCSFunctionString(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
+		return appDomainManager->CallCSFunctionString(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
 	}
 
 	return NULL;
 }
 
-UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
-{
-
-	// Empty for now, dunno if i can implement it correctly  /!\
-
-	return NULL;
-}
-
-void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
+UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -586,8 +584,34 @@ void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, co
 		CreateSafeArrayBool(&bools, &boolsArray);
 		SAFEARRAY* stringsArray = NULL;
 		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
 
-		appDomainManager->CallCSFunctionVoid(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
+		UObject* ptr;
+		ptr = (UObject*)(appDomainManager->CallCSFunctionObject(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray));
+		return ptr;
+	}
+
+	return NULL;
+}
+
+void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		appDomainManager->CallCSFunctionVoid(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
 	}
 }
 

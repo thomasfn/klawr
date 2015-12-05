@@ -438,10 +438,11 @@ public: // IModuleInterface interface
 			_strings.push_back(temp);
 		}
 
-		std::vector<UObject*> _objects;
+		std::vector<long long> _objects;
 		for (auto obj : objects)
 		{
-			_objects.push_back(obj);
+			long long temp = (long long)obj;
+			_objects.push_back(temp);
 		}
 		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
@@ -473,10 +474,10 @@ public: // IModuleInterface interface
 			_strings.push_back(temp);
 		}
 
-		std::vector<UObject*> _objects;
+		std::vector<LONGLONG> _objects;
 		for (auto obj : objects)
 		{
-			_objects.push_back(obj);
+			_objects.push_back((long long)obj);
 		}
 		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
@@ -508,10 +509,10 @@ public: // IModuleInterface interface
 			_strings.push_back(temp);
 		}
 
-		std::vector<UObject*> _objects;
+		std::vector<LONGLONG> _objects;
 		for (auto obj : objects)
 		{
-			_objects.push_back(obj);
+			_objects.push_back((long long)obj);
 		}
 		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
@@ -543,10 +544,10 @@ public: // IModuleInterface interface
 			_strings.push_back(temp);
 		}
 
-		std::vector<UObject*> _objects;
+		std::vector<LONGLONG> _objects;
 		for (auto obj : objects)
 		{
-			_objects.push_back(obj);
+			_objects.push_back((long long)obj);
 		}
 		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
@@ -578,10 +579,10 @@ public: // IModuleInterface interface
 			_strings.push_back(temp);
 		}
 
-		std::vector<UObject*> _objects;
+		std::vector<LONGLONG> _objects;
 		for (auto obj : objects)
 		{
-			_objects.push_back(obj);
+			_objects.push_back((long long)obj);
 		}
 		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
@@ -613,10 +614,10 @@ public: // IModuleInterface interface
 			_strings.push_back(temp);
 		}
 
-		std::vector<UObject*> _objects;
+		std::vector<LONGLONG> _objects;
 		for (auto obj : objects)
 		{
-			_objects.push_back(obj);
+			_objects.push_back((long long)obj);
 		}
 		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}

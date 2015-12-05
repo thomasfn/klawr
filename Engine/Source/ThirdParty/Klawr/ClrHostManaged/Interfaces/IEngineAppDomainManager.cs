@@ -120,17 +120,17 @@ namespace Klawr.ClrHost.Interfaces
         IntPtr GetObj(long instanceID, string propertyName);
 
         float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
-            string[] strings);
+            string[] strings, IntPtr[] objects);
         int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
-            string[] strings);
+            string[] strings, IntPtr[] objects);
         bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
-            string[] strings);
+            string[] strings, IntPtr[] objects);
         string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
-            string[] strings);
-        UObject CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
-            string[] strings);
+            string[] strings, IntPtr[] objects);
+        IntPtr CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
         void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
-            string[] strings);
+            string[] strings, IntPtr[] objects);
 
         string GetAssemblyInfo();
     }

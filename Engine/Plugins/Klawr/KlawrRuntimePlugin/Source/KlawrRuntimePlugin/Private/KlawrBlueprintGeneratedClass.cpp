@@ -127,8 +127,10 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 			{
 				FScriptFunction newFunction(*CLRMethod.Name);
 				newFunction.ResultType = CLRMethod.ReturnType;
+				newFunction.ResultClass = NULL;
 				if (CLRMethod.ReturnType == ParameterTypeTranslation::ParametertypeObject)
 				{
+					newFunction.ResultClass = FindObject<UClass>(ANY_PACKAGE, *CLRMethod.ClassName);
 					UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObject as return value is not supported yet. Please use local properties to pass UObjects into/from c# space. (Function '%s' in class '%s')"),
 						*CLRMethod.Name, *CLRClass.Name);
 				}
