@@ -24,6 +24,9 @@
 
 #include "KlawrRuntimePluginPrivatePCH.h"
 #include "KlawrBlueprintGeneratedClass.h"
+#include "JsonObject.h"
+#include "JsonObjectConverter.h"
+#include "../../../ThirdParty/Klawr/ClrHostManaged/Wrappers/TypeTranslatorEnum.cs"
 
 
 UKlawrBlueprintGeneratedClass::UKlawrBlueprintGeneratedClass(const FObjectInitializer& objectInitializer)
@@ -59,49 +62,48 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 		return;
 	}
 
-	// Read properties from generated class
-	std::vector<Klawr::tstring> propertyNames;
-	// We are most certainly in the editor atm
-	Klawr::IClrHost::Get()->GetScriptComponentPropertyNames(appDomainId, *ScriptDefinedType, propertyNames);
-	
-	for (auto& propertyName : propertyNames)
+	FCLRAssemblyInfo assemblyInfo;
+	FJsonObjectConverter::JsonObjectStringToUStruct(FString(Klawr::IClrHost::Get()->GetAssemblyInfo(appDomainId)), &assemblyInfo, 0, 0);
+
+	for (auto CLRClass : assemblyInfo.ClassInfos)
 	{
-		int propertyType = Klawr::IClrHost::Get()->GetScriptComponentPropertyType(appDomainId, *ScriptDefinedType, propertyName.c_str());
-		FScriptField propertyInfo;
-		switch (propertyType)
+		if (CLRClass.Name.Equals(ScriptDefinedType))
 		{
-		case 0:
-			propertyInfo.Class = UFloatProperty::StaticClass();
-			break;
-		case 1:
-			propertyInfo.Class = UIntProperty::StaticClass();
-			break;
-		case 2:
-			propertyInfo.Class = UBoolProperty::StaticClass();
-			break;
-		case 3:
-			propertyInfo.Class = UStrProperty::StaticClass();
-			break;
-		case 4:
-			propertyInfo.Class = UObjectProperty::StaticClass();
-
-			const TCHAR* propertyClassName = Klawr::IClrHost::Get()->GetScriptComponentPropertyClassType(appDomainId, *ScriptDefinedType, propertyName.c_str());
-			propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, propertyClassName);
-			break;
-		}
-
-		if (propertyInfo.Class)
-		{
-			propertyInfo.Name = FName(propertyName.c_str());
-			std::vector<Klawr::tstring> metaDatas;
-			Klawr::IClrHost::Get()->GetScriptComponentPropertyMetadata(appDomainId, *ScriptDefinedType, propertyName.c_str(), metaDatas);
-			bool keyValue = false;
-			for (int i = 0; i < metaDatas.size(); i += 2)
+			// Found the one we're looking for here
+			for (auto CLRProperty : CLRClass.PropertyInfos)
 			{
-				propertyInfo.metas.Add(FString(metaDatas[i].c_str()), FString(metaDatas[i + 1].c_str()));
-			}
+				FScriptField propertyInfo;
+				switch (CLRProperty.TypeId)
+				{
+				case ParameterTypeTranslation::ParametertypeFloat:
+					propertyInfo.Class = UFloatProperty::StaticClass();
+					break;
+				case ParameterTypeTranslation::ParametertypeInt:
+					propertyInfo.Class = UIntProperty::StaticClass();
+					break;
+				case ParameterTypeTranslation::ParametertypeBool:
+					propertyInfo.Class = UBoolProperty::StaticClass();
+					break;
+				case ParameterTypeTranslation::ParametertypeString:
+					propertyInfo.Class = UStrProperty::StaticClass();
+					break;
+				case ParameterTypeTranslation::ParametertypeObject:
+					propertyInfo.Class = UObjectProperty::StaticClass();
+					const TCHAR* temp = *CLRProperty.ClassName;
+					propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, *CLRProperty.ClassName);
+					break;
+				}
 
-			OutFields.Add(propertyInfo);
+				if (propertyInfo.Class)
+				{
+					propertyInfo.Name = FName(*CLRProperty.Name);
+					for (auto meta : CLRProperty.MetaData)
+					{
+						propertyInfo.metas.Add(FString(meta.MetaKey), FString(meta.MetaValue));
+					}
+					OutFields.Add(propertyInfo);
+				}
+			}
 		}
 	}
 }
@@ -113,39 +115,41 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 	{
 		return;
 	}
+	FCLRAssemblyInfo assemblyInfo;
+	FJsonObjectConverter::JsonObjectStringToUStruct(FString(Klawr::IClrHost::Get()->GetAssemblyInfo(appDomainId)), &assemblyInfo, 0, 0);
 
-	std::vector<Klawr::tstring> functionNames;
-	Klawr::IClrHost::Get()->GetScriptComponentFunctionNames(appDomainId, *ScriptDefinedType, functionNames);
-	for (auto& functionName : functionNames)
+	for (auto CLRClass : assemblyInfo.ClassInfos)
 	{
-		const TCHAR* dummy = functionName.c_str();
-		UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Found Function %s"), dummy);
-		std::vector<Klawr::tstring> functionParameterNames;
-		Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterNames(appDomainId, *ScriptDefinedType, dummy, functionParameterNames);
-		FScriptFunction newFunction(dummy);
-		// Get Result type first
-		newFunction.ResultType = Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterType(appDomainId, *ScriptDefinedType, dummy, -1);
-		int paramCount = 0;
-		for (auto& functionParameterName : functionParameterNames)
+		if (CLRClass.Name.Equals(ScriptDefinedType))
 		{
-			const TCHAR* dummy2 = functionParameterName.c_str();
-			int parameterType = Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterType(appDomainId, *ScriptDefinedType, dummy, paramCount);
-			newFunction.Parameters.Add(dummy2, parameterType);
-			if (parameterType == 4)
+			// Found the one we're looking for here
+			for (auto CLRMethod : CLRClass.MethodInfos)
 			{
-				UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObjects as parameters are not supported yet. Please use local properties to pass UObjects into c# space. (Parameter '%s' of function '%s' in class '%s')"), 
-					dummy2, 
-					dummy, 
-					*ScriptDefinedType);
-				newFunction.parameterClasses.Add(FindObject<UClass>(ANY_PACKAGE, Klawr::IClrHost::Get()->GetScriptComponentFunctionParameterTypeObjectClass(appDomainId, *ScriptDefinedType, dummy, paramCount)));
+				FScriptFunction newFunction(*CLRMethod.Name);
+				newFunction.ResultType = CLRMethod.ReturnType;
+				if (CLRMethod.ReturnType == ParameterTypeTranslation::ParametertypeObject)
+				{
+					UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObject as return value is not supported yet. Please use local properties to pass UObjects into/from c# space. (Function '%s' in class '%s')"),
+						*CLRMethod.Name, *CLRClass.Name);
+				}
+				for (auto CLRParameter : CLRMethod.Parameters)
+				{
+					newFunction.Parameters.Add(CLRParameter.Name, CLRParameter.TypeId);
+					if (CLRParameter.TypeId == ParameterTypeTranslation::ParametertypeObject)
+					{
+						UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObjects as parameters are not supported yet. Please use local properties to pass UObjects into c# space. (Parameter '%s' of function '%s' in class '%s')"),
+							*CLRParameter.Name, *CLRMethod.Name, *CLRClass.Name);
+
+						newFunction.parameterClasses.Add(FindObject<UClass>(ANY_PACKAGE, *CLRParameter.ClassName));
+					}
+					else
+					{
+						newFunction.parameterClasses.Add(NULL);
+					}
+				}
+				OutFunctions.Add(newFunction);
 			}
-			else
-			{
-				newFunction.parameterClasses.Add(NULL);
-			}
-			paramCount++;
 		}
-		OutFunctions.Add(newFunction);
 	}
 }
 

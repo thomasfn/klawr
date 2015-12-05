@@ -369,32 +369,6 @@ void __cdecl ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstri
 	}
 }
 
-void __cdecl ClrHost::GetScriptComponentPropertyNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentPropertyNames(typeName);
-		if (safeArray)
-		{
-			SafeArrayToVector<BSTR>(safeArray, properties);
-		}
-	}
-}
-
-void __cdecl ClrHost::GetScriptComponentPropertyMetadata(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName, std::vector<tstring>& metaData) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentPropertyMetadata(typeName, propertyName);
-		if (safeArray)
-		{
-			SafeArrayToVector<BSTR>(safeArray, metaData);
-		}
-	}
-}
-
 bool __cdecl ClrHost::GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
@@ -413,43 +387,6 @@ bool __cdecl ClrHost::GetScriptComponentPropertyIsSaveGame(int appDomainID, cons
 		return (appDomainManager->GetScriptComponentPropertyIsSaveGame(typeName, propertyName) & 1) == 1;
 	}
 	return false;
-}
-
-int __cdecl ClrHost::GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		return appDomainManager->GetScriptComponentPropertyType(typeName, propertyName);
-	}
-	return -1;
-}
-
-
-void __cdecl ClrHost::GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& functionNames) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentFunctionNames(typeName);
-		if (safeArray)
-		{
-			SafeArrayToVector<BSTR>(safeArray, functionNames);
-		}
-	}
-}
-
-void __cdecl ClrHost::GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		SAFEARRAY* safeArray = appDomainManager->GetScriptComponentFunctionParameterNames(typeName, functionName);
-		if (safeArray)
-		{
-			SafeArrayToVector<BSTR>(safeArray, functionNames);
-		}
-	}
 }
 
 float __cdecl ClrHost::GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
@@ -545,36 +482,6 @@ void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, co
 	{
 		appDomainManager->SetObj(instanceID, propertyName, (long long)value);
 	}
-}
-
-const TCHAR* __cdecl ClrHost::GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		return appDomainManager->GetScriptComponentPropertyClassType(componentName, propertyName);
-	}
-	return TEXT("");
-}
-
-int __cdecl ClrHost::GetScriptComponentFunctionParameterType(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		return appDomainManager->GetScriptComponentFunctionParameterType(componentName, functionName, parameterCount);
-	}
-	return -1;
-}
-
-const TCHAR* __cdecl ClrHost::GetScriptComponentFunctionParameterTypeObjectClass(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const
-{
-	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
-	if (appDomainManager)
-	{
-		return appDomainManager->GetScriptComponentFunctionParameterTypeObjectClass(componentName, functionName, parameterCount);
-	}
-	return TEXT("");
 }
 
 float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const
@@ -682,6 +589,16 @@ void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, co
 
 		appDomainManager->CallCSFunctionVoid(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray);
 	}
+}
+
+const TCHAR* __cdecl ClrHost::GetAssemblyInfo(int appDomainID) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetAssemblyInfo();
+	}
+	return NULL;
 }
 
 void ClrHost::CreateSafeArrayBool(std::vector<bool>* bools, SAFEARRAY** boolsArray) const

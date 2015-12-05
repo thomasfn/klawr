@@ -193,16 +193,6 @@ public:
 	 */
 	virtual void GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const = 0;
 
-	virtual void GetScriptComponentPropertyNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
-	virtual void GetScriptComponentPropertyMetadata(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName, std::vector<tstring>& metaData) const = 0;
-
-	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
-	virtual const TCHAR* GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const = 0;
-	virtual void GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const = 0;
-	virtual void GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const = 0;
-	virtual int GetScriptComponentFunctionParameterType(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const = 0;
-	virtual const TCHAR* GetScriptComponentFunctionParameterTypeObjectClass(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const = 0;
-
 	virtual bool GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 	virtual bool GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const = 0;
 
@@ -223,6 +213,8 @@ public:
 	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
 	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
 	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const = 0;
+
+	virtual const TCHAR* GetAssemblyInfo(int appDomainID) const = 0;
 public:
 	/** Get the singleton instance. */
 	static IClrHost* Get();

@@ -21,6 +21,7 @@ namespace Klawr.ClrHost.Managed.Attributes
         public UPROPERTYAttribute()
         {
         }
+
         public UPROPERTYAttribute(string Category = "", bool SaveGame = false, bool AdvancedDisplay = false)
         {
             this.saveGame = SaveGame;

@@ -64,20 +64,8 @@ public: // IClrHost interface
 
 	virtual void GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const override;
 
-	virtual void GetScriptComponentPropertyNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const override;
-	virtual void GetScriptComponentPropertyMetadata(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& metaData) const override;
-
 	virtual bool GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const override;
 	virtual bool GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const override;
-
-	virtual void GetScriptComponentFunctionNames(int appDomainID, const TCHAR* typeName, std::vector<tstring>& properties) const override;
-
-	virtual int GetScriptComponentPropertyType(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const override;
-	virtual const TCHAR* GetScriptComponentPropertyClassType(int appDomainID, const TCHAR* componentName, const TCHAR* propertyName) const override;
-
-	virtual void GetScriptComponentFunctionParameterNames(int appDomainID, const TCHAR* typeName, const TCHAR* functionName, std::vector<tstring>& functionNames) const override;
-	virtual int GetScriptComponentFunctionParameterType(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const override;
-	virtual const TCHAR* GetScriptComponentFunctionParameterTypeObjectClass(int appDomainID, const TCHAR* componentName, const TCHAR* functionName, int parameterCount) const override;
 
 	virtual void SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const override;
 	virtual void SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int value) const override;
@@ -97,6 +85,8 @@ public: // IClrHost interface
 	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
 	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
 	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<UObject*> objects) const override;
+
+	virtual const TCHAR* GetAssemblyInfo(int appDomainID) const override;
 public:
 	ClrHost() : _hostControl(nullptr) {}
 	void CreateSafeArrayBool(std::vector<bool>* bools, SAFEARRAY** boolsArray) const;

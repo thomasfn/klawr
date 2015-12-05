@@ -621,6 +621,11 @@ public: // IModuleInterface interface
 		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 
+	const TCHAR* GetAssemblyInfo(int appDomainID) const
+	{
+		return IClrHost::Get()->GetAssemblyInfo(appDomainID);
+	}
+
 };
 
 } // namespace Klawr

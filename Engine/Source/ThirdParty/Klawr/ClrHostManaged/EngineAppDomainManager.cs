@@ -32,8 +32,11 @@ using System.Reflection;
 using System.Threading;
 using System.Runtime.InteropServices;
 using Klawr.ClrHost.Managed.Attributes;
+using Klawr.ClrHost.Managed.Wrappers;
 using Klawr.UnrealEngine;
 using System.IO;
+using System.Text;
+
 namespace Klawr.ClrHost.Managed
 {
     /// <summary>
@@ -648,7 +651,7 @@ namespace Klawr.ClrHost.Managed
             { return 3; }
             else if (parameterType.IsSubclassOf(typeof(UObject)))
             { return 4; }
-            else if (parameterType==typeof(void))
+            else if (parameterType == typeof(void))
             { return 5; }
             return -1;
         }
@@ -741,13 +744,6 @@ namespace Klawr.ClrHost.Managed
             var constructor = propType.GetConstructor(new Type[] { typeof(UObjectHandle) });
             var idisp = constructor.Invoke(new object[] { nativeObject });
             pi.SetValue(_scriptComponents[instanceID].Instance, idisp);
-        }
-
-        private void XDebug(string ds)
-        {
-            TextWriter tw = new StreamWriter(@"R:\klawr.txt", true);
-            tw.WriteLine(ds);
-            tw.Close();
         }
 
         public float GetFloat(long instanceID, string propertyName)
@@ -981,6 +977,167 @@ namespace Klawr.ClrHost.Managed
             }
         }
 
+        private string Quoted(string str)
+        {
+            return "\"" + str + "\"";
+        }
 
+        public string GetAssemblyInfo()
+        {
+            // this type is defined in the UE4 wrappers assembly
+            var scriptComponentType = FindTypeByName("Klawr.UnrealEngine.UKlawrScriptComponent");
+            if (scriptComponentType == null)
+            {
+                return "";
+            }
+            StringBuilder result = new StringBuilder();
+            try
+            { result.Append("{ " + Quoted("classInfos") + ": [ ");
+                bool firstClass = true;
+                foreach (var componentTypeName in AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(assembly => !assembly.IsDynamic)
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(t => t.IsSubclassOf(scriptComponentType))
+                    .Select(t => t.FullName))
+                {
+                    Type componentType = FindTypeByName(componentTypeName);
+                    if (!firstClass)
+                    {
+                        result.Append(",");
+                    }
+                    firstClass = false;
+                    result.Append("{" + Quoted("name") + ": " + Quoted(componentType.FullName) + "," + Quoted("methodInfos") + ": [ ");
+                    // Get method infos
+                    bool first = true;
+                    foreach (MethodInfo methodInfo in componentType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(function => function.GetCustomAttributes<UFUNCTIONAttribute>(true).Any()))
+                    {
+                        if (!first)
+                        {
+                            result.Append(",");
+                        }
+                        first = false;
+                        result.Append("{" + Quoted("name") + ": " + Quoted(methodInfo.Name) + "," + Quoted("returnType") + ": " + TranslateReturnType(methodInfo.ReturnType) + ",");
+                        result.Append(Quoted("className") + ":" + Quoted(GetClassName(methodInfo.ReturnType)) + ",");
+                        result.Append(Quoted("parameters") + ": [");
+                        bool firstParam = true;
+                        foreach (ParameterInfo parameterInfo in methodInfo.GetParameters())
+                        {
+                            if (!firstParam)
+                            {
+                                result.Append(",");
+                            }
+                            firstParam = false;
+                            result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
+                            result.Append(Quoted(GetClassName(parameterInfo.ParameterType))+","+Quoted("metaData")+":[]");
+                            result.Append("}");
+                        }
+
+                        result.Append("],");
+                        result.Append(Quoted("metaData") + ":[");
+                        bool firstMeta = true;
+                        // Can not be NULL
+                        UFUNCTIONAttribute ufa = (UFUNCTIONAttribute)methodInfo.GetCustomAttribute(typeof(UFUNCTIONAttribute));
+                        string[] tempMetas = ufa.GetMetas();
+                        for (int i = 0; i < tempMetas.Length; i += 2)
+                        {
+                            if (!firstMeta)
+                            {
+                                result.Append(",");
+                            }
+                            firstMeta = false;
+                            result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
+                            result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
+                        }
+                        result.Append("]");
+                        result.Append("}");
+                    }
+
+                    result.Append("]," + Quoted("propertyInfos") + ": [");
+                    bool firstProperty = true;
+                    // Get property infos
+                    foreach (PropertyInfo propertyInfo in componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()))
+                    {
+                        if (!firstProperty)
+                        {
+                            result.Append(",");
+                        }
+                        firstProperty = false;
+                        result.Append("{" + Quoted("name") + ": " + Quoted(propertyInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(propertyInfo.PropertyType) + "," + Quoted("className") + ":");
+
+                        result.Append(Quoted(GetClassName(propertyInfo.PropertyType)) + ",");
+                        result.Append(Quoted("metaData") + ":[");
+                        bool firstMeta = true;
+                        UPROPERTYAttribute upa = propertyInfo.GetCustomAttribute<UPROPERTYAttribute>();
+                        string[] tempMetas = upa.GetMetas();
+                        for (int i = 0; i < tempMetas.Length; i += 2)
+                        {
+                            if (!firstMeta)
+                            {
+                                result.Append(",");
+                            }
+                            firstMeta = false;
+                            result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
+                            result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
+                        }
+                        result.Append("]");
+
+                        result.Append("}");
+                    }
+                    result.Append("]}");
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Append(ex.StackTrace + " " + ex.Message);
+            }
+            result.Append("]}");
+
+            return result.ToString();
+        }
+
+        private string GetClassName(Type type)
+        {
+            string typeName = "";
+            if ((type == typeof(UObject)) || (type.IsSubclassOf(typeof(UObject))))
+            {
+                typeName = type.Name;
+                if (type.GetCustomAttribute<ConvertClassNameAttribute>() != null)
+                {
+                    typeName = typeName.Substring(1);
+                }
+            }
+            return typeName;
+        }
+
+        private int TranslateReturnType(Type inputType)
+        {
+            if (inputType == typeof(void))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeVoid;
+            }
+            else if (inputType == typeof(int))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeInt;
+            }
+            else if (inputType == typeof(float))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeFloat;
+            }
+            else if (inputType == typeof(bool))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeBool;
+            }
+            else if (inputType == typeof(string))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeString;
+            }
+            else if ((inputType == typeof(UObject)) || (inputType.IsSubclassOf(typeof(UObject))))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeObject;
+            }
+
+            // Nothing of the above applied, return negative
+            return -1;
+        }
     }
 }

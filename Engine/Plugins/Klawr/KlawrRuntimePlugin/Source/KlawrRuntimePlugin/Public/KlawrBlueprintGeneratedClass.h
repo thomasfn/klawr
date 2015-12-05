@@ -71,6 +71,83 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptFunction
 	}
 };
 
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRMeta
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString MetaKey;
+
+	UPROPERTY()
+	FString MetaValue;
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRTypeInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	int32 TypeId;
+
+	UPROPERTY()
+	FString ClassName;
+
+	UPROPERTY()
+	TArray<FCLRMeta> MetaData;
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRMethodInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	int32 ReturnType;
+
+	UPROPERTY()
+	FString ClassName;
+
+	UPROPERTY()
+	TArray<FCLRTypeInfo> Parameters;
+
+	UPROPERTY()
+	TArray<FCLRMeta> MetaData;
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRClassInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	TArray<FCLRMethodInfo> MethodInfos;
+
+	UPROPERTY()
+	TArray<FCLRTypeInfo> PropertyInfos;
+};
+
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRAssemblyInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	TArray<FCLRClassInfo> ClassInfos;
+};
+
+
 UCLASS()
 class KLAWRRUNTIMEPLUGIN_API UKlawrBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
@@ -118,4 +195,5 @@ public:
 		}
 		return GeneratedClass;
 	}
+	void TestJSon();
 };

@@ -85,6 +85,8 @@ public:
 	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
 	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
 	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
+
+	virtual const TCHAR* GetAssemblyInfo(int appDomainID) const = 0;
 	/**
 	 * Get the ID of the app domain in which the given object is referenced.
 	 */

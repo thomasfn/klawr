@@ -63,10 +63,10 @@
     <Compile Include="Proxies\ObjectUtilsProxy.cs" />
     <Compile Include="Proxies\ScriptComponentProxy.cs" />
     <Compile Include="Proxies\ScriptObjectInstanceInfo.cs" />
+    <Compile Include="Wrappers\TypeTranslatorEnum.cs" />
     <Compile Include="Wrappers\UE4Structs.cs" />
     <Compile Include="UELogWriter.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>call "$(DevEnvDir)..\..\VC\vcvarsall.bat" x86_amd64

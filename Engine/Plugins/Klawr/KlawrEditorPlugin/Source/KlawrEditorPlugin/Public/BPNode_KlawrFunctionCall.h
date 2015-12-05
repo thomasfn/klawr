@@ -36,7 +36,7 @@ class UBPNode_KlawrFunctionCall : public UK2Node
 private:
 	FText NodeTooltip;
 	void ChangePinType(UEdGraphPin* Pin);
-	void ResetToWildcards(FText inPar);
+	void ChangeNodeToMethod(FText inPar);
 	void SetPinToolTip(UEdGraphPin& MutatablePin, const FText& PinDescription) const;
 	void SetPinToolTip(UEdGraphPin& MutatablePin, const FString PinDescription) const;
 	bool IsParameterPin(UEdGraphPin* Pin);
