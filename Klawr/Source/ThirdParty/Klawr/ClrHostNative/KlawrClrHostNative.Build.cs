@@ -12,8 +12,9 @@ public class KlawrClrHostNative : ModuleRules
 
         var moduleName = this.GetType().Name;
         // path to directory containing this Build.cs file
-        var basePath = Path.GetDirectoryName(RulesCompiler.GetModuleFilename(moduleName));
-        
+//        var basePath = Path.GetDirectoryName(RulesCompiler.GetModuleFilename(moduleName));
+        var basePath = Path.GetDirectoryName(ModuleDirectory);
+		
         string architecture = null;
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {

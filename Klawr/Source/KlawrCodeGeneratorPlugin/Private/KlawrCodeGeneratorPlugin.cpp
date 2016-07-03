@@ -58,7 +58,7 @@ public:	// IScriptGeneratorPlugin interface
 		const FString& ModuleGeneratedIncludeDirectory
 	) const
 	{
-		bool bCanExport = (ModuleType == EBuildModuleType::Runtime || ModuleType == EBuildModuleType::Game);
+		bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
 		if (bCanExport)
 		{
 			// only export functions from selected modules

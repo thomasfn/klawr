@@ -36,3 +36,15 @@ Engine/Plugins/Klawr/KlawrCodeGeneratorPlugin/Binaries/
 Engine/Source/ThirdParty/Klawr/ClrHostManaged/bin/
 Engine/Source/ThirdParty/Klawr/ClrHostNative/Klawr.ClrHost.Native.vcxproj.user
 Engine/Source/ThirdParty/Klawr/.vs/
+/Klawr/Source/ThirdParty/Klawr/ipch
+/Klawr/Source/ThirdParty/Klawr/Debug
+/Klawr/Source/ThirdParty/Klawr/Build
+/Klawr/Source/ThirdParty/Klawr/Binaries
+/Klawr/Source/ThirdParty/Klawr/ClrHostNative/Build
+/Klawr/Source/ThirdParty/Klawr/ClrHostNative/Debug
+/Klawr/Source/ThirdParty/Klawr/ClrHostManaged/bin
+/Klawr/Source/ThirdParty/Klawr/ClrHostManaged/obj
+/Klawr/Source/ThirdParty/Klawr/.vs
+/Klawr/Intermediate
+/Klawr/Binaries
+/Klawr/Source/ThirdParty/Klawr/*.db

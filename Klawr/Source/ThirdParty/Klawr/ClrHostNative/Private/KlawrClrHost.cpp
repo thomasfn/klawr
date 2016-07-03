@@ -21,16 +21,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //-------------------------------------------------------------------------------
-#pragma once
 
-#include <assert.h>
+#include "KlawrClrHostPCH.h"
+#include "KlawrClrHost.h"
+#include "ClrHost.h"
+#include <memory> // for unique_ptr
 
-#ifdef NDEBUG
+namespace Klawr {
 
-#define verify(_Expression) (_Expression)
+    TCHAR * MakeStringCopyForCLR(const TCHAR * stringToCopy) {
+        const size_t bufferSize = (_tcslen(stringToCopy) + 1) * sizeof(TCHAR);
+        TCHAR * buffer = (TCHAR*)CoTaskMemAlloc(bufferSize);
+        if(buffer) {
+            memcpy(buffer, stringToCopy, bufferSize);
+        }
+        return buffer;
+    }
 
-#else // NDEBUG not defined
+    IClrHost * IClrHost::Get() {
+        static auto singleton = std::make_unique<ClrHost>();
+        return singleton.get();
+    }
 
-#define verify(_Expression) ( (!!(_Expression)) || (_wassert(_CRT_WIDE(#_Expression), _CRT_WIDE(__FILE__), __LINE__), 0) )
-
-#endif // NDEBUG
+} // namespace Klawr

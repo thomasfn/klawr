@@ -31,7 +31,8 @@
 class IKlawrRuntimePlugin : public IModuleInterface
 {
 public:
-	/**
+       
+    /**
 	 * Singleton-like access to this module's interface.
 	 * @warning Don't call this during the shutdown phase, the module might have been unloaded already.
 	 * @warning It is only valid to call Get() if IsAvailable() returns true.
