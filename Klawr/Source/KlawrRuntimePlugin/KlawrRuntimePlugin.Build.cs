@@ -15,8 +15,9 @@ namespace UnrealBuildTool.Rules
 
 			PrivateIncludePaths.AddRange(
 				new string[] {
-                    "KlawrRuntimePlugin/Private"
-					// ... add other private include paths required here ...
+                    "KlawrRuntimePlugin/Private",
+                    "ThirdParty/Klawr/ClrHostNative/Public"
+                    // ... add other private include paths required here ...
 				}
 			);
 
@@ -27,13 +28,13 @@ namespace UnrealBuildTool.Rules
 					"CoreUObject",
 					"Engine",
 					"InputCore",
+					"SlateCore",
                     // ... add other public dependencies that you statically link with here ...
 				}
 			);
 
 			if (UEBuildConfiguration.bBuildEditor == true)
 			{
-
 				PublicDependencyModuleNames.AddRange(
 					new string[] 
 					{

@@ -54,9 +54,7 @@ public class KlawrClrHostNative : ModuleRules
         string hostAssemblyName = "Klawr.ClrHost.Managed";
         string hostAssemblyDLL = hostAssemblyName + ".dll";
         string hostAssemblyPDB = hostAssemblyName + ".pdb";
-        string hostAssemblySourceDir = Path.Combine(
-            basePath, Path.Combine("..", "ClrHostManaged", "bin", configuration)
-        );
+        string hostAssemblySourceDir = Path.Combine(basePath, Path.Combine("..", "ClrHostManaged", "bin", configuration));
         Utils.CollapseRelativeDirectories(ref hostAssemblySourceDir);
         
         string binariesDir = Path.Combine(
@@ -64,15 +62,8 @@ public class KlawrClrHostNative : ModuleRules
         );
 
         bool bOverwrite = true;
-        File.Copy(
-            Path.Combine(hostAssemblySourceDir, hostAssemblyDLL),
-            Path.Combine(binariesDir, hostAssemblyDLL), 
-            bOverwrite
-        );
-        File.Copy(
-            Path.Combine(hostAssemblySourceDir, hostAssemblyPDB),
-            Path.Combine(binariesDir, hostAssemblyPDB),
-            bOverwrite
-        );
+
+        File.Copy(Path.Combine(hostAssemblySourceDir, hostAssemblyDLL), Path.Combine(binariesDir, hostAssemblyDLL), bOverwrite);
+        File.Copy(Path.Combine(hostAssemblySourceDir, hostAssemblyPDB), Path.Combine(binariesDir, hostAssemblyPDB), bOverwrite);
     }
 }

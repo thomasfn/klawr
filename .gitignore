@@ -48,3 +48,5 @@ Engine/Source/ThirdParty/Klawr/.vs/
 /Klawr/Intermediate
 /Klawr/Binaries
 /Klawr/Source/ThirdParty/Klawr/*.db
+/Klawr/Resources/Templates/GameProjectTemplate/obj
+/Klawr/Resources/Templates/GameProjectTemplate/bin

@@ -9,9 +9,8 @@ namespace UnrealBuildTool.Rules
 		{
             PublicIncludePaths.AddRange(
 				new string[] {
-                    // FIXME: This path only works when building the plugin as part of the engine! 
 					"Programs/UnrealHeaderTool/Public",
-                    "KlawrCodeGeneratorPlugin/Public"
+                    "KlawrCodeGeneratorPlugin/Public",
 					// ... add other public include paths required here ...
 				}
 			);
@@ -47,10 +46,11 @@ namespace UnrealBuildTool.Rules
 				}
 			);
 
-            //var KlawrPath = Path.Combine(UEBuildConfiguration.UEThirdPartySourceDirectory, "Klawr");
-            //if(Directory.Exists(KlawrPath)) {
-            //    Definitions.Add("WITH_KLAWR=1");
-            //}
+            var KlawrPath = Path.Combine(UEBuildConfiguration.UEThirdPartySourceDirectory, "Klawr");
+            if(Directory.Exists(KlawrPath)) {
+                Definitions.Add("WITH_KLAWR=1");
+                Definitions.Add("KLAWRGEN_PATH=" + ModuleDirectory);
+            }
         }
 	}
 }

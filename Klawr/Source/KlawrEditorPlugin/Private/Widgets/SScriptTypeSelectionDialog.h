@@ -32,7 +32,7 @@ class SScriptTypeSelectionDialog : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SScriptTypeSelectionDialog) {}
-		SLATE_TEXT_ARGUMENT(DefaultSelection)
+		SLATE_ARGUMENT(FString, DefaultSelection)
 	SLATE_END_ARGS()
 
 public:

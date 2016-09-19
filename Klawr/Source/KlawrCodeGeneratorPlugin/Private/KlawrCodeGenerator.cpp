@@ -396,9 +396,8 @@ void FCodeGenerator::ExportClass(
 
 void FCodeGenerator::GenerateManagedWrapperProject()
 {
-	const FString resourcesBasePath = 
-		FPaths::EnginePluginsDir() / TEXT("Klawr/KlawrCodeGeneratorPlugin/Resources/WrapperProjectTemplate");
-	const FString projectBasePath = FPaths::EngineIntermediateDir() / TEXT("ProjectFiles/Klawr");
+	const FString resourcesBasePath = FPaths::GamePluginsDir() / TEXT("Klawr/Klawr/Resources/WrapperProjectTemplate");
+	const FString projectBasePath = FPaths::GameIntermediateDir() / TEXT("ProjectFiles/Klawr");
 
 	IPlatformFile& platformFile = FPlatformFileManager::Get().GetPlatformFile();
 	if (!platformFile.CopyDirectoryTree(*projectBasePath, *resourcesBasePath, true))

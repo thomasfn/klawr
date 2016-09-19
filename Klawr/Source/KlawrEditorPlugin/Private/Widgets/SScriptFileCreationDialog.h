@@ -35,7 +35,7 @@ public:
 	SLATE_BEGIN_ARGS(SScriptFileCreationDialog) {}
 
 		/** Initial value for Source Filename text-box. */
-		SLATE_TEXT_ARGUMENT(SourceFilename)
+		SLATE_ARGUMENT(FText, SourceFilename)
 
 	SLATE_END_ARGS()
 

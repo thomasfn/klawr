@@ -25,98 +25,74 @@
 #include "KlawrCodeGeneratorPluginPrivatePCH.h"
 #include "KlawrCodeGenerator.h"
 #include "Runtime/Core/Public/Features/IModularFeatures.h"
+#include "KlawrCodeGeneratorPlugin/Public/IKlawrCodeGeneratorPlugin.h"
+#include "Programs/UnrealHeaderTool/Public/IScriptGeneratorPluginInterface.h"
 
 DEFINE_LOG_CATEGORY(LogKlawrCodeGenerator);
 
 namespace Klawr {
 
-class FCodeGeneratorPlugin : public ICodeGeneratorPlugin
-{
-private:
-	TAutoPtr<FCodeGenerator> CodeGenerator;
+    class FCodeGeneratorPlugin : public ICodeGeneratorPlugin {
+    private:
+        TAutoPtr<FCodeGenerator> CodeGenerator;
 
-public: // IModuleInterface interface
-	virtual void StartupModule() override
-	{
-		IModularFeatures::Get().RegisterModularFeature(TEXT("ScriptGenerator"), this);
-	}
-	
-	virtual void ShutdownModule() override
-	{
-		CodeGenerator.Reset();
-		IModularFeatures::Get().UnregisterModularFeature(TEXT("ScriptGenerator"), this);
-	}
+    public: // IModuleInterface interface
+        virtual void StartupModule() override {
+            IModularFeatures::Get().RegisterModularFeature(TEXT("KlawrScriptGenerator"), this);
+        }
 
-public:	// IScriptGeneratorPlugin interface
-	virtual FString GetGeneratedCodeModuleName() const override
-	{
-		return TEXT("KlawrRuntimePlugin");
-	}
-	
-	virtual bool ShouldExportClassesForModule(
-		const FString& ModuleName, EBuildModuleType::Type ModuleType, 
-		const FString& ModuleGeneratedIncludeDirectory
-	) const
-	{
-		bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
-		if (bCanExport)
-		{
-			// only export functions from selected modules
-			static struct FConfig
-			{
-				TArray<FString> SupportedModules;
-				TArray<FString> ExcludedModules;
-				FConfig()
-				{
-					GConfig->GetArray(
-						TEXT("Plugins"), TEXT("ScriptSupportedModules"), SupportedModules, 
-						GEngineIni
-					);
-					GConfig->GetArray(
-						TEXT("Plugins"), TEXT("ScriptExcludedModules"), ExcludedModules,
-						GEngineIni
-					);
-				}
-			} config;
-			bCanExport = !config.ExcludedModules.Contains(ModuleName) 
-				&& ((config.SupportedModules.Num() == 0) || config.SupportedModules.Contains(ModuleName));
-		}
-		return bCanExport;
-	}
-	
-	virtual bool SupportsTarget(const FString& TargetName) const override
-	{
-		return true;
-	}
-	
-	virtual void Initialize(
-		const FString& RootLocalPath, const FString& RootBuildPath, const FString& OutputDirectory, 
-		const FString& IncludeBase
-	) override
-	{
-		UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Using Klawr Code Generator."));
-		CodeGenerator = new FCodeGenerator(RootLocalPath, RootBuildPath, OutputDirectory, IncludeBase);
-		UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Output directory: %s"), *OutputDirectory);
-	}
-	
-	virtual void ExportClass(
-		UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename, 
-		bool bHasChanged
-	) override
-	{
-		CodeGenerator->ExportClass(Class, SourceHeaderFilename, GeneratedHeaderFilename, bHasChanged);
-	}
-	
-	virtual void FinishExport() override
-	{
-		CodeGenerator->FinishExport();
-	}
+        virtual void ShutdownModule() override {
+            CodeGenerator.Reset();
+            IModularFeatures::Get().UnregisterModularFeature(TEXT("KlawrScriptGenerator"), this);
+        }
 
-	virtual FString GetGeneratorName() const override
-	{
-		return TEXT("Klawr Code Generator Plugin");
-	}
-};
+    public: // IScriptGeneratorPlugin interface
+        virtual FString GetGeneratedCodeModuleName() const override {
+            return TEXT("KlawrRuntimePlugin");
+        }
+
+        virtual bool ShouldExportClassesForModule(const FString & ModuleName, EBuildModuleType::Type ModuleType, const FString & ModuleGeneratedIncludeDirectory) const override {
+            __debugbreak();
+            bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
+            if(bCanExport) {
+                // only export functions from selected modules
+                static struct FConfig {
+                    TArray<FString> SupportedModules;
+                    TArray<FString> ExcludedModules;
+
+                    FConfig() {
+                        GConfig->GetArray(TEXT("Plugins"), TEXT("ScriptSupportedModules"), SupportedModules, GEngineIni);
+                        GConfig->GetArray(TEXT("Plugins"), TEXT("ScriptExcludedModules"), ExcludedModules, GEngineIni);
+                    }
+                } config;
+                bCanExport = !config.ExcludedModules.Contains(ModuleName)
+                        && ((config.SupportedModules.Num() == 0) || config.SupportedModules.Contains(ModuleName));
+            }
+            return bCanExport;
+        }
+
+        virtual bool SupportsTarget(const FString & TargetName) const override {
+            return true;
+        }
+
+        virtual void Initialize(const FString & RootLocalPath, const FString & RootBuildPath, const FString & OutputDirectory, const FString & IncludeBase) override {
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Using Klawr Code Generator."));
+            CodeGenerator = new FCodeGenerator(RootLocalPath, RootBuildPath, OutputDirectory, IncludeBase);
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Output directory: %s"), *OutputDirectory);
+        }
+
+        virtual void ExportClass(UClass * Class, const FString & SourceHeaderFilename, const FString & GeneratedHeaderFilename, bool bHasChanged) override {
+            CodeGenerator->ExportClass(Class, SourceHeaderFilename, GeneratedHeaderFilename, bHasChanged);
+        }
+
+        virtual void FinishExport() override {
+            CodeGenerator->FinishExport();
+        }
+
+        virtual FString GetGeneratorName() const override {
+            return TEXT("Klawr Code Generator Plugin");
+        }
+    };
 
 } // namespace Klawr
 
