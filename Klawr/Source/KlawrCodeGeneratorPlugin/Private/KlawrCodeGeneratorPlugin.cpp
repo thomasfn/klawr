@@ -24,26 +24,26 @@
 
 #include "KlawrCodeGeneratorPluginPrivatePCH.h"
 #include "KlawrCodeGenerator.h"
-#include "Runtime/Core/Public/Features/IModularFeatures.h"
 #include "KlawrCodeGeneratorPlugin/Public/IKlawrCodeGeneratorPlugin.h"
+#include "Features/IModularFeatures.h"
 #include "Programs/UnrealHeaderTool/Public/IScriptGeneratorPluginInterface.h"
 
 DEFINE_LOG_CATEGORY(LogKlawrCodeGenerator);
 
 namespace Klawr {
 
-    class FCodeGeneratorPlugin : public ICodeGeneratorPlugin {
+    class FCodeGeneratorPlugin : public IKlawrCodeGeneratorPlugin {
     private:
         TAutoPtr<FCodeGenerator> CodeGenerator;
 
     public: // IModuleInterface interface
         virtual void StartupModule() override {
-            IModularFeatures::Get().RegisterModularFeature(TEXT("KlawrScriptGenerator"), this);
+            IModularFeatures::Get().RegisterModularFeature(TEXT("KlawrCodeGenerator"), this);
         }
 
         virtual void ShutdownModule() override {
             CodeGenerator.Reset();
-            IModularFeatures::Get().UnregisterModularFeature(TEXT("KlawrScriptGenerator"), this);
+            IModularFeatures::Get().UnregisterModularFeature(TEXT("KlawrCodeGenerator"), this);
         }
 
     public: // IScriptGeneratorPlugin interface

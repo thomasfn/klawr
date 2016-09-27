@@ -48,9 +48,10 @@ namespace UnrealBuildTool.Rules
 
             var KlawrPath = Path.Combine(UEBuildConfiguration.UEThirdPartySourceDirectory, "Klawr");
             if(Directory.Exists(KlawrPath)) {
-                Definitions.Add("WITH_KLAWR=1");
                 Definitions.Add("KLAWRGEN_PATH=" + ModuleDirectory);
             }
+            Definitions.Add("WITH_KLAWR=1");
+    		Definitions.Add("HACK_HEADER_GENERATOR=1");
         }
 	}
 }

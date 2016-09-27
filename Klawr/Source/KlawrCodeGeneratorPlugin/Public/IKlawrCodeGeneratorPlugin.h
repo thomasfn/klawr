@@ -27,25 +27,36 @@
 
 namespace Klawr {
 
-/**
- * Plugin for Unreal Header Tool (UHT) that generates both native (C++) and managed (C#) glue code
- * that exposes part of the UE4 API (the part accessible via Blueprints) to any managed code 
- * executed on the MS CLR.
- *
- * The generated unmanaged glue code is built as part of the KlawrRuntimePlugin, the generated
- * managed glue code is built separately.
- */
-class ICodeGeneratorPlugin : public IScriptGeneratorPluginInterface
-{
-public:
-	/**
-	 * Checks to see if this module is loaded and ready. 
-	 * @return true if the module is loaded and ready to use.
-	 */
-	static inline bool IsAvailable()
-	{
-		return FModuleManager::Get().IsModuleLoaded("KlawrCodeGeneratorPlugin");
-	}
-};
+    /**
+     * Plugin for Unreal Header Tool (UHT) that generates both native (C++) and managed (C#) glue code
+     * that exposes part of the UE4 API (the part accessible via Blueprints) to any managed code 
+     * executed on the MS CLR.
+     *
+     * The generated unmanaged glue code is built as part of the KlawrRuntimePlugin, the generated
+     * managed glue code is built separately.
+     */
+    class IKlawrCodeGeneratorPlugin : public IScriptGeneratorPluginInterface
+    {
+    public:
+
+        /**
+        * Singleton-like access to this module's interface.  This is just for convenience!
+        * Beware of calling this during the shutdown phase, though.  Your module might have been unloaded already.
+        *
+        * @return Returns singleton instance, loading the module on demand if needed
+        */
+        static inline IKlawrCodeGeneratorPlugin& Get() {
+            return FModuleManager::LoadModuleChecked< IKlawrCodeGeneratorPlugin >("KlawrCodeGeneratorPlugin");
+        }
+
+	    /**
+	     * Checks to see if this module is loaded and ready. 
+	     * @return true if the module is loaded and ready to use.
+	     */
+	    static inline bool IsAvailable()
+	    {
+		    return FModuleManager::Get().IsModuleLoaded("KlawrCodeGeneratorPlugin");
+	    }
+    };
 
 } // namespace Klawr
