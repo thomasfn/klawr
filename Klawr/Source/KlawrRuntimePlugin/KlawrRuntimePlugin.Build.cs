@@ -57,11 +57,18 @@ namespace UnrealBuildTool.Rules
 				}
 			);
 
-			var KlawrPath = Path.Combine(UEBuildConfiguration.UEThirdPartySourceDirectory, "Klawr");
-			if (Directory.Exists(KlawrPath))
-			{
-				Definitions.Add("WITH_KLAWR=1");
+            var basePath = Path.GetDirectoryName(ModuleDirectory);
+			var pluginPath = Path.GetFullPath(Path.Combine(basePath, "..", @"Source\ThirdParty\Klawr", Target.Platform.ToString(), "Release", "Klawr.ClrHost.Native-x64-Release.lib"));
+			if (File.Exists(pluginPath)){
+//				Definitions.Add("WITH_KLAWR=1");
+        		Log.TraceInformation("Klawr runntime module dir at " + ModuleDirectory);
+        		Log.TraceInformation("Linking " + pluginPath);
+				PublicLibraryPaths.Add(Path.GetDirectoryName(pluginPath));
+				PublicAdditionalLibraries.Add(pluginPath);
+
 				PrivateDependencyModuleNames.Add("KlawrClrHostNative");
+			} else{
+        		Log.TraceInformation("Error: File not found for runntime plugin: " + pluginPath);			    
 			}
 		}
 	}

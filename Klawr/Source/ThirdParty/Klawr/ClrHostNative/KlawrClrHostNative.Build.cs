@@ -23,6 +23,8 @@ public class KlawrClrHostNative : ModuleRules
         else if (Target.Platform == UnrealTargetPlatform.Win32)
         {
             architecture = "x86";
+        } else{
+            architecture = "x64";            
         }
 
         string configuration = null;
@@ -54,7 +56,7 @@ public class KlawrClrHostNative : ModuleRules
         string hostAssemblyName = "Klawr.ClrHost.Managed";
         string hostAssemblyDLL = hostAssemblyName + ".dll";
         string hostAssemblyPDB = hostAssemblyName + ".pdb";
-        string hostAssemblySourceDir = Path.Combine(basePath, Path.Combine("..", "ClrHostManaged", "bin", configuration));
+        string hostAssemblySourceDir = Path.Combine(basePath, Path.Combine("ClrHostManaged", "bin", configuration));
         Utils.CollapseRelativeDirectories(ref hostAssemblySourceDir);
         
         string binariesDir = Path.Combine(
@@ -63,7 +65,13 @@ public class KlawrClrHostNative : ModuleRules
 
         bool bOverwrite = true;
 
-        File.Copy(Path.Combine(hostAssemblySourceDir, hostAssemblyDLL), Path.Combine(binariesDir, hostAssemblyDLL), bOverwrite);
-        File.Copy(Path.Combine(hostAssemblySourceDir, hostAssemblyPDB), Path.Combine(binariesDir, hostAssemblyPDB), bOverwrite);
+        var from = Path.Combine(hostAssemblySourceDir, hostAssemblyDLL);
+        var to = Path.Combine(binariesDir, hostAssemblyDLL);
+        var msg = "Copy: " + from + "\nTo: " + to;
+		Log.TraceInformation(msg);
+        File.Copy(from, to, bOverwrite);
+        from = Path.Combine(hostAssemblySourceDir, hostAssemblyPDB);
+        to = Path.Combine(binariesDir, hostAssemblyPDB);
+        File.Copy(from, to, bOverwrite);
     }
 }

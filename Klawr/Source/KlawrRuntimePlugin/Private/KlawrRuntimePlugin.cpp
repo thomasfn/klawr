@@ -48,6 +48,10 @@ namespace NativeGlue {
 
 // defined in KlawrGeneratedNativeWrappers.inl (included down below)
 void RegisterWrapperClasses();
+#if !defined WITH_KLAWR
+void RegisterWrapperClasses() {}
+#endif
+
 
 } // namespace NativeGlue
 
@@ -258,4 +262,6 @@ public: // IModuleInterface interface
 
 IMPLEMENT_MODULE(Klawr::FRuntimePlugin, KlawrRuntimePlugin)
 
+#if defined WITH_KLAWR
 #include "KlawrGeneratedNativeWrappers.inl"
+#endif
