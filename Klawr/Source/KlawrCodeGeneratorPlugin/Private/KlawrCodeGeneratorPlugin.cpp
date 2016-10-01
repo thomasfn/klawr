@@ -51,6 +51,7 @@ namespace Klawr {
         }
 
         virtual bool ShouldExportClassesForModule(const FString & ModuleName, EBuildModuleType::Type ModuleType, const FString & ModuleGeneratedIncludeDirectory) const override {
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Test Module for Export."));
             bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
             if(bCanExport) {
                 // only export functions from selected modules
