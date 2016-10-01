@@ -45,15 +45,15 @@ namespace UnrealBuildTool.Rules
                     // ... add any modules that your module loads dynamically here ...
                 }
             );
-            
 
-            var pluginPath = Path.Combine("..", @"Plugins\Klawr\Klawr\Source\ThirdParty\Klawr", Target.Platform.ToString(), "Release", "Klawr.ClrHost.Native-x64-Release.dll");
+
+            var pluginPath = Path.GetFullPath(Path.Combine("..", @"Plugins\Klawr\Klawr\Source\ThirdParty\Klawr", Target.Platform.ToString(), "Release", "Klawr.ClrHost.Native-x64-Release.lib"));
             if(File.Exists(pluginPath)) {
                 Definitions.Add("KLAWRGEN_PATH=" + ModuleDirectory);
                 Definitions.Add("WITH_KLAWR=1");
-                Log.TraceInformation("Klawr enabled. Module dir: " + ModuleDirectory);
+                Log.TraceInformation("Klawr enabled. Module dir: " + ModuleDirectory + " Path: " + pluginPath);
             } else{
-                Log.TraceInformation("Klawr source directory not found.");                
+                Log.TraceError("Klawr source directory not found: " + pluginPath);                
             }
             Definitions.Add("HACK_HEADER_GENERATOR=1");
         }

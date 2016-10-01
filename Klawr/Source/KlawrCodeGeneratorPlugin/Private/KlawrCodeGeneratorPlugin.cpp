@@ -24,7 +24,6 @@
 
 #include "KlawrCodeGeneratorPluginPrivatePCH.h"
 #include "KlawrCodeGenerator.h"
-#include "KlawrCodeGeneratorPlugin/Public/IKlawrCodeGeneratorPlugin.h"
 #include "Features/IModularFeatures.h"
 #include "Programs/UnrealHeaderTool/Public/IScriptGeneratorPluginInterface.h"
 
@@ -52,7 +51,6 @@ namespace Klawr {
         }
 
         virtual bool ShouldExportClassesForModule(const FString & ModuleName, EBuildModuleType::Type ModuleType, const FString & ModuleGeneratedIncludeDirectory) const override {
-            __debugbreak();
             bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
             if(bCanExport) {
                 // only export functions from selected modules
