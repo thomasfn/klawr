@@ -67,9 +67,9 @@ public class KlawrClrHostNative : ModuleRules
 
         var from = Path.Combine(hostAssemblySourceDir, hostAssemblyDLL);
         var to = Path.Combine(binariesDir, hostAssemblyDLL);
-        var msg = "Copy: " + from + "\nTo: " + to;
-		Log.TraceInformation(msg);
         if (!File.Exists(to)){
+            var msg = "Copy: " + from + "\nTo: " + to;
+ 		    Log.TraceInformation(msg);
             File.Copy(from, to, bOverwrite);
         }
         from = Path.Combine(hostAssemblySourceDir, hostAssemblyPDB);

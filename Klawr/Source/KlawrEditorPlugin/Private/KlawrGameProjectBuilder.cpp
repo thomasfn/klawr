@@ -92,21 +92,21 @@ bool FGameProjectBuilder::GenerateProject()
 	if (!PlatformFile.CreateDirectoryTree(*ProjectBasePath))
 	{
 		// TODO: log error
-		return false;
+        return false;
 	}
 
 	// copy the entire project template folder
 	if (!PlatformFile.CopyDirectoryTree(*ProjectBasePath, *ProjectTemplateDir, true))
 	{
 		// TODO: log error
-		return false;
+        return false;
 	}
 
 	// rename the template .csproj
 	if (!IFileManager::Get().Move(*ProjectFilename, *(ProjectBasePath / TEXT("Game.csproj"))))
 	{
 		// TODO: log error
-		return false;
+        return false;
 	}
 
 	// TODO: run a search/replace on AssemblyInfo.cs
@@ -206,14 +206,14 @@ FString FGameProjectBuilder::GetTemplatesDir()
 	FString BaseDir = FPaths::EnginePluginsDir();
 	if (!BaseDir.IsEmpty())
 	{
-		FString CandidateDir = BaseDir / TEXT("Klawr/KlawrEditorPlugin/Resources/Templates");
+		FString CandidateDir = BaseDir / TEXT("Klawr/Klawr/Resources/Templates");
 		if (IFileManager::Get().DirectoryExists(*CandidateDir))
 		{
 			return CandidateDir;
 		}
 		else
 		{
-			CandidateDir = BaseDir / TEXT("KlawrEditorPlugin/Resources/Templates");
+			CandidateDir = BaseDir / TEXT("Klawr/Resources/Templates");
 			if (IFileManager::Get().DirectoryExists(*CandidateDir))
 			{
 				return CandidateDir;
@@ -224,14 +224,14 @@ FString FGameProjectBuilder::GetTemplatesDir()
 	BaseDir = FPaths::GamePluginsDir();
 	if (!BaseDir.IsEmpty())
 	{
-		FString CandidateDir = BaseDir / TEXT("Klawr/KlawrEditorPlugin/Resources/Templates");
+		FString CandidateDir = BaseDir / TEXT("Klawr/Klawr/Resources/Templates");
 		if (!IFileManager::Get().DirectoryExists(*CandidateDir))
 		{
 			return CandidateDir;
 		}
 		else
 		{
-			CandidateDir = BaseDir / TEXT("KlawrEditorPlugin/Resources/Templates");
+			CandidateDir = BaseDir / TEXT("Klawr/Resources/Templates");
 			if (IFileManager::Get().DirectoryExists(*CandidateDir))
 			{
 				return CandidateDir;
@@ -302,7 +302,8 @@ bool FGameProjectBuilder::BuildProject(FFeedbackContext* Warn)
 		if (!GenerateProject())
 		{
 			// TODO: log error
-			return false;
+            Warn->Log(TEXT("Error BuildProject: The project could not be created. The Project Template was not found."));
+            return false;
 		}
 	}
 
@@ -319,7 +320,8 @@ bool FGameProjectBuilder::BuildProject(FFeedbackContext* Warn)
 	if (!FPaths::FileExists(EnvironmentSetupFilename))
 	{
 		// TODO: log error
-		return false;
+        Warn->Log(TEXT("Error EnvironmentSetupFilename:"));
+        return false;
 	}
 
 	FString BuildFilename = FPaths::GetPath(GetProjectFilename()) / TEXT("Build.bat");

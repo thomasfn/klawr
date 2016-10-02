@@ -143,15 +143,15 @@ public: // IModuleInterface interface
 	
 	virtual void StartupModule() override
 	{
+        auto path = FGameProjectBuilder::GetProjectAssemblyFilename();
 		// check if game scripts assembly exists, if not build it
-		if (!FPaths::FileExists(FGameProjectBuilder::GetProjectAssemblyFilename()))
+		if (!FPaths::FileExists(path))
 		{
 			// FIXME: this shouldn't display any dialogs or anything, we're still loading modules
 			// (though this seems to work fine for now)
-			if (!FGameProjectBuilder::BuildProject(GWarn) || 
-				!FPaths::FileExists(FGameProjectBuilder::GetProjectAssemblyFilename()))
+			if (!FGameProjectBuilder::BuildProject(GWarn) || !FPaths::FileExists(path))
 			{
-				UE_LOG(LogKlawrEditorPlugin, Error, TEXT("Failed to build scripts assembly."));
+				UE_LOG(LogKlawrEditorPlugin, Error, TEXT("Failed to build scripts assembly: %s"), *path);
 				return;
 			}
 		}

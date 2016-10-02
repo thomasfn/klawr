@@ -51,3 +51,4 @@ Engine/Source/ThirdParty/Klawr/.vs/
 /Klawr/Resources/Templates/GameProjectTemplate/obj
 /Klawr/Resources/Templates/GameProjectTemplate/bin
 *.opendb
+obj

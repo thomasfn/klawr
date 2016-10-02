@@ -411,9 +411,7 @@ void FCodeGenerator::GenerateManagedWrapperProject()
 
 	// load the template .csproj
 	pugi::xml_document xmlDoc;
-	pugi::xml_parse_result result = xmlDoc.load_file(
-		*projectTemplateFilename, pugi::parse_default | pugi::parse_declaration | pugi::parse_comments
-	);
+	pugi::xml_parse_result result = xmlDoc.load_file(*projectTemplateFilename, pugi::parse_default | pugi::parse_declaration | pugi::parse_comments);
 
 	if (!result)
 	{
@@ -427,7 +425,7 @@ void FCodeGenerator::GenerateManagedWrapperProject()
 		{
 			FString assemblyPath =
 				FPaths::RootDir()
-				/ TEXT("Engine/Source/ThirdParty/Klawr/ClrHostManaged/bin/$(Configuration)")
+				/ TEXT("Plugins/Klawr/Klawr/Source/ThirdParty/Klawr/ClrHostManaged/bin/$(Configuration)")
 				/ ClrHostManagedAssemblyName + TEXT(".dll");
 			FPaths::MakePathRelativeTo(assemblyPath, *projectOutputFilename);
 			FPaths::MakePlatformFilename(assemblyPath);
