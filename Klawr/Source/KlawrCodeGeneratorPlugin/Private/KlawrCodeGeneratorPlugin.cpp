@@ -37,12 +37,12 @@ namespace Klawr {
 
     public: // IModuleInterface interface
         virtual void StartupModule() override {
-            IModularFeatures::Get().RegisterModularFeature(TEXT("KlawrCodeGeneratorPlugin"), this);
+            IModularFeatures::Get().RegisterModularFeature(TEXT("ScriptGenerator"), this);
         }
 
         virtual void ShutdownModule() override {
             CodeGenerator.Reset();
-            IModularFeatures::Get().UnregisterModularFeature(TEXT("KlawrCodeGeneratorPlugin"), this);
+            IModularFeatures::Get().UnregisterModularFeature(TEXT("ScriptGenerator"), this);
         }
 
     public: // IScriptGeneratorPlugin interface
