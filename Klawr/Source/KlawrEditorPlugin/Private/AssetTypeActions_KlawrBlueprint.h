@@ -33,45 +33,41 @@
 class FAssetTypeActions_KlawrBlueprint : public FAssetTypeActions_Base
 {
 public: // IAssetTypeActions interface
-	virtual FText GetName() const override
-	{
-		return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_KlawrBlueprint", "Klawr Blueprint");
-	}
+    virtual FText GetName() const override
+    {
+        return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_KlawrBlueprint", "C# Blueprint");
+    }
 
-	virtual UClass* GetSupportedClass() const override
-	{
-		return UKlawrBlueprint::StaticClass();
-	}
+    virtual UClass* GetSupportedClass() const override
+    {
+        return UKlawrBlueprint::StaticClass();
+    }
 
-	virtual FColor GetTypeColor() const override
-	{
-		return FColor(80, 123, 72);
-	}
+    virtual FColor GetTypeColor() const override
+    {
+        return FColor(80, 123, 72);
+    }
 
-	virtual void OpenAssetEditor(
-		const TArray<UObject*>& InObjects,
-		TSharedPtr<IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>()
-	) override
-	{
-		const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ?
-			EToolkitMode::WorldCentric : EToolkitMode::Standalone;
+    virtual void OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>()) override
+    {
+        const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
 
-		for (auto Object : InObjects)
-		{
-			auto Blueprint = Cast<UBlueprint>(Object);
-			if (Blueprint && Blueprint->SkeletonGeneratedClass && Blueprint->GeneratedClass)
-			{
-				TArray<UBlueprint*> Blueprints;
-				Blueprints.Add(Blueprint);
+        for (auto Object : InObjects)
+        {
+            auto Blueprint = Cast<UBlueprint>(Object);
+            if (Blueprint && Blueprint->SkeletonGeneratedClass && Blueprint->GeneratedClass)
+            {
+                TArray<UBlueprint*> Blueprints;
+                Blueprints.Add(Blueprint);
 
-				TSharedRef<FKlawrBlueprintEditor> Editor(new FKlawrBlueprintEditor());
-				Editor->InitBlueprintEditor(Mode, EditWithinLevelEditor, Blueprints);
-			}
-		}
-	}
+                TSharedRef<FKlawrBlueprintEditor> Editor(new FKlawrBlueprintEditor());
+                Editor->InitBlueprintEditor(Mode, EditWithinLevelEditor, Blueprints);
+            }
+        }
+    }
 
-	virtual uint32 GetCategories() override
-	{
-		return EAssetTypeCategories::Blueprint;
-	}
+    virtual uint32 GetCategories() override
+    {
+        return EAssetTypeCategories::Blueprint;
+    }
 };
