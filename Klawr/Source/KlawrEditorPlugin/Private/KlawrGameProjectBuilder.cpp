@@ -32,10 +32,7 @@ namespace Klawr {
 namespace FGameProjectBuilderInternal 
 {
 	/** @return true if the .csproj was modified, false otherwise */
-	bool AddSourceFileToProject(
-		const TSharedRef<FCSharpProject>& Project, const FString& SourceFilename, 
-		const TArray<FString>& SourceDirs
-	)
+	bool AddSourceFileToProject(const TSharedRef<FCSharpProject>& Project, const FString& SourceFilename, const TArray<FString>& SourceDirs)
 	{
 		const FString GameDir = FPaths::GameDir();
 		FString LinkFilename = SourceFilename;
@@ -129,14 +126,9 @@ bool FGameProjectBuilder::GenerateProject()
 	FPaths::MakePlatformFilename(OutputPath);
 	Project->SetOutputPath(OutputPath);
 
-	Project->AddAssemblyReference(
-		FPaths::Combine(FPlatformProcess::BaseDir(), TEXT("Klawr.ClrHost.Managed.dll")),
-		false
-	);
-	Project->AddAssemblyReference(
-		FPaths::Combine(FPlatformProcess::BaseDir(), TEXT("Klawr.UnrealEngine.dll")),
-		false
-	);
+    //Both assemblies are needed at runntime. So copy them.
+	Project->AddAssemblyReference(FPaths::Combine(FPlatformProcess::BaseDir(), TEXT("Klawr.ClrHost.Managed.dll")), true);
+	Project->AddAssemblyReference(FPaths::Combine(FPlatformProcess::BaseDir(), TEXT("Klawr.UnrealEngine.dll")),	true);
 		
 	// TODO: scan for assemblies in the script source directories and add them to project references,
 	// the tricky part is figuring out if it's a native dll or an assembly
