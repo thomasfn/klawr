@@ -41,6 +41,7 @@ namespace Klawr {
         }
 
         virtual void ShutdownModule() override {
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Shutdown klawr generator module."));
             CodeGenerator.Reset();
             IModularFeatures::Get().UnregisterModularFeature(TEXT("ScriptGenerator"), this);
         }
@@ -51,7 +52,7 @@ namespace Klawr {
         }
 
         virtual bool ShouldExportClassesForModule(const FString & ModuleName, EBuildModuleType::Type ModuleType, const FString & ModuleGeneratedIncludeDirectory) const override {
-            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Test Module for Export."));
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Test Module for Export: %s"), *ModuleName);
             bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
             if(bCanExport) {
                 // only export functions from selected modules
@@ -60,13 +61,16 @@ namespace Klawr {
                     TArray<FString> ExcludedModules;
 
                     FConfig() {
-                        GConfig->GetArray(TEXT("Plugins"), TEXT("ScriptSupportedModules"), SupportedModules, GEngineIni);
-                        GConfig->GetArray(TEXT("Plugins"), TEXT("ScriptExcludedModules"), ExcludedModules, GEngineIni);
+                        auto configFile = FCodeGenerator::GetConfigFilePath();
+                        GConfig->GetArray(TEXT("Config"), TEXT("ScriptSupportedModules"), SupportedModules, configFile);
+                        GConfig->GetArray(TEXT("Config"), TEXT("ScriptExcludedModules"), ExcludedModules, configFile);
                     }
                 } config;
+
                 bCanExport = !config.ExcludedModules.Contains(ModuleName)
                         && ((config.SupportedModules.Num() == 0) || config.SupportedModules.Contains(ModuleName));
             }
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Export: %s"), bCanExport ? TEXT("true") : TEXT("false"));
             return bCanExport;
         }
 

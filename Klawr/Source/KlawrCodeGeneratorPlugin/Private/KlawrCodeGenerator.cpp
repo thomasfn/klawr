@@ -272,15 +272,24 @@ bool FCodeGenerator::CanExportProperty(const UClass* Class, const UProperty* Pro
 	return IsPropertyTypeSupported(Property);
 }
 
-void FCodeGenerator::ExportClass(
-	UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename, 
-	bool bHasChanged
-)
-{
+void FCodeGenerator::ExportClass(UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename, bool bHasChanged){
 	if (Class->HasAnyClassFlags(CLASS_Deprecated))
-	{
+    {
 		return;
 	}
+
+    static struct FConfig {
+        TArray<FString> Excluded;
+
+        FConfig() {
+            auto configFile = GetConfigFilePath();
+            GConfig->GetArray(TEXT("Config"), TEXT("ScriptExcludedNames"), Excluded, configFile);
+        }
+    } config;
+
+    if(config.Excluded.Contains(FPaths::GetCleanFilename(SourceHeaderFilename))) {
+        return;
+    }
 
 	if (AllExportedClasses.Contains(Class))
 	{
@@ -288,7 +297,12 @@ void FCodeGenerator::ExportClass(
 		return;
 	}
 
-	UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Exporting class %s"), *Class->GetName());
+    if(!Class) {
+        UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Error exporting class: %s"), *SourceHeaderFilename);
+        return;
+    }
+
+	UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Exporting class %s %s"), *Class->GetName(), *SourceHeaderFilename);
 
 	// even if a class can't be properly exported generate a C# wrapper for it, because it may 
 	// still be used as a function parameter in a function that is exported by another class
@@ -372,13 +386,15 @@ void FCodeGenerator::ExportClass(
 
 		if (nativeWrapperGenerator.GetPropertyCount() != csharpWrapperGenerator.GetPropertyCount())
 		{
-			FError::Throwf(TEXT("Native and C# property wrapper count doesn't match!"));
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("ERROR: Native and C# property wrapper count doesn't match!"));
+            return;
 		}
 
 		if (nativeWrapperGenerator.GetFunctionCount() != csharpWrapperGenerator.GetFunctionCount())
 		{
-			FError::Throwf(TEXT("Native and C# function wrapper count doesn't match!"));
-		}
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("ERROR: Native and C# function wrapper count doesn't match!"));
+            return;
+        }
 
 		nativeWrapperGenerator.GenerateFooter();
 				
@@ -386,23 +402,30 @@ void FCodeGenerator::ExportClass(
 		AllScriptHeaders.Add(nativeGlueFilename);
 		WriteToFile(nativeGlueFilename, nativeGlueCode.Content);
 	}
-
-	csharpWrapperGenerator.GenerateFooter();
+    
+    csharpWrapperGenerator.GenerateFooter();
 
 	const FString managedGlueFilename = GeneratedCodePath / (Class->GetName() + TEXT(".cs"));
 	AllManagedWrapperFiles.Add(managedGlueFilename);
 	WriteToFile(managedGlueFilename, managedGlueCode.Content);
 }
 
-void FCodeGenerator::GenerateManagedWrapperProject()
+bool FCodeGenerator::GenerateManagedWrapperProject()
 {
-	const FString resourcesBasePath = FPaths::GamePluginsDir() / TEXT("Klawr/Klawr/Resources/WrapperProjectTemplate");
-	const FString projectBasePath = FPaths::GameIntermediateDir() / TEXT("ProjectFiles/Klawr");
+    const FString resourcesBasePath = FPaths::ConvertRelativePathToFull(FPaths::EnginePluginsDir() / TEXT("Klawr/Klawr/Resources/WrapperProjectTemplate"));
+	const FString projectBasePath = FPaths::ConvertRelativePathToFull(FPaths::GameDir() / TEXT("Klawr"));
 
+    UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Start generating wrapper project! From: %s To: %s"), *resourcesBasePath, *projectBasePath);
 	IPlatformFile& platformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+    if(!FPaths::DirectoryExists(*projectBasePath)) {
+        platformFile.CreateDirectory(*projectBasePath);
+    }
+
 	if (!platformFile.CopyDirectoryTree(*projectBasePath, *resourcesBasePath, true))
 	{
-		FError::Throwf(TEXT("Failed to copy wrapper template!"));
+        UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Failed to copy wrapper template! From: %s To: %s"), *resourcesBasePath, *projectBasePath);
+        return false;
 	}
 
 	const FString projectName("Klawr.UnrealEngine.csproj");
@@ -415,7 +438,8 @@ void FCodeGenerator::GenerateManagedWrapperProject()
 
 	if (!result)
 	{
-		FError::Throwf(TEXT("Failed to load %s"), *projectTemplateFilename);
+        UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Failed to load %s"), *projectTemplateFilename);
+        return false;
 	}
 	else
 	{
@@ -470,19 +494,22 @@ void FCodeGenerator::GenerateManagedWrapperProject()
 					.append_child(TEXT("PostBuildEvent")).text() = *postBuildCmd;
 
 		// preserve the BOM and line endings of the template .csproj when writing out the new file
-		unsigned int outputFlags =
-			pugi::format_default | pugi::format_write_bom | pugi::format_save_file_text;
+		unsigned int outputFlags = pugi::format_default | pugi::format_write_bom | pugi::format_save_file_text;
 
 		if (!xmlDoc.save_file(*projectOutputFilename, TEXT("  "), outputFlags))
 		{
-			FError::Throwf(TEXT("Failed to save %s"), *projectOutputFilename);
+            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Failed to save %s"), *projectOutputFilename);
+            return false;
 		}
 	}
+    return true;
 }
 
 void FCodeGenerator::BuildManagedWrapperProject()
 {
-	FString buildFilename = FPaths::EngineIntermediateDir() / TEXT("ProjectFiles/Klawr/Build.bat");
+    UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Start building wrapper project"));
+
+    FString buildFilename = FPaths::EngineIntermediateDir() / TEXT("ProjectFiles/Klawr/Build.bat");
 	FPaths::CollapseRelativeDirectories(buildFilename);
 	FPaths::MakePlatformFilename(buildFilename);
 	int32 returnCode = 0;
@@ -493,22 +520,28 @@ void FCodeGenerator::BuildManagedWrapperProject()
 		*buildFilename, TEXT(""), &returnCode, &stdOut, &stdError
 	);
 
-	if (returnCode != 0)
-	{
-		FError::Throwf(TEXT("Failed to build Klawr.UnrealEngine assembly!"));
+	if (returnCode != 0){
+        UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Failed to build Klawr.UnrealEngine assembly!"));
+        return;
 	}
+
+    UE_LOG(LogKlawrCodeGenerator, Log, TEXT("finish building wrapper project"));
 }
 
 void FCodeGenerator::FinishExport()
 {
-	GlueAllNativeWrapperFiles();
-	GenerateManagedWrapperProject();
+    GlueAllNativeWrapperFiles();
+    if(!GenerateManagedWrapperProject()){
+        return;
+    };
 	BuildManagedWrapperProject();
 }
 
 void FCodeGenerator::GlueAllNativeWrapperFiles()
 {
-	// generate the file that will be included by ScriptPlugin.cpp
+    UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Start GlueAllNativeWrapperFiles"));
+    
+    // generate the file that will be included by ScriptPlugin.cpp
 	FString glueFilename = GeneratedCodePath / TEXT("KlawrGeneratedNativeWrappers.inl");
 	FCodeFormatter generatedGlue(TEXT('\t'), 1);
 
@@ -561,6 +594,8 @@ void FCodeGenerator::GlueAllNativeWrapperFiles()
 		<< TEXT("}} // namespace Klawr::NativeGlue");
 
 	WriteToFile(glueFilename, generatedGlue.Content);
+
+    UE_LOG(LogKlawrCodeGenerator, Log, TEXT("finish GlueAllNativeWrapperFiles"));
 }
 
 void FCodeGenerator::WriteToFile(const FString& Path, const FString& Content)

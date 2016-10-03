@@ -53,8 +53,7 @@ namespace Klawr {
 	     * Checks to see if this module is loaded and ready. 
 	     * @return true if the module is loaded and ready to use.
 	     */
-	    static inline bool IsAvailable()
-	    {
+	    static inline bool IsAvailable(){
              return FModuleManager::Get().IsModuleLoaded("KlawrCodeGeneratorPlugin");
 	    }
     };

@@ -52,6 +52,11 @@ public:
 
 	/** Check if the property type is a struct that can be used for interop. */
 	static bool IsStructPropertyTypeSupported(const UStructProperty* Property);
+    
+    inline static FString const & GetConfigFilePath() {
+        static auto const path = FPaths::ConvertRelativePathToFull(FPaths::EnginePluginsDir() / TEXT("Klawr/Klawr/Resources/Config.ini"));
+        return path;
+    }
 
 private:
 	static const FName Name_Vector2D;
@@ -87,7 +92,7 @@ private:
 	static bool CanExportFunction(const UClass* Class, const UFunction* Function);
 
 	/** Generate a .csproj for the C# wrapper classes. */
-	void GenerateManagedWrapperProject();
+	bool GenerateManagedWrapperProject();
 	/** Build the generated .csproj of C# wrapper classes. */
 	void BuildManagedWrapperProject();
 	/** Create a 'glue' file that merges all generated script files */
