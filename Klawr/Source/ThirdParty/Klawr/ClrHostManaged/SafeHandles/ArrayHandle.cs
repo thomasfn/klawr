@@ -25,13 +25,11 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed.SafeHandles
-{
+namespace Klawr.ClrHost.Managed.SafeHandles{
     /// <summary>
     /// Encapsulates a native UE TArray wrapper pointer and takes care of properly disposing of it.
     /// </summary>
-    public class ArrayHandle : SafeHandle
-    {
+    public class ArrayHandle : SafeHandle{
         /// <summary>
         /// Encapsulates a native null pointer.
         /// </summary>
@@ -41,10 +39,7 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// Construct a new handle.
         /// </summary>
         /// <remarks>This constructor is used by the interop code, user code should not invoke it.</remarks>
-        public ArrayHandle()
-            : base(IntPtr.Zero, true)
-        {
-        }
+        public ArrayHandle() : base(IntPtr.Zero, true){}
 
         /// <summary>
         /// Construct a new handle to a native TArray wrapper instance.
@@ -52,19 +47,13 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// <param name="nativePtr">Pointer to a native array wrapper instance.</param>
         /// <param name="ownsHandle">true if the handle should release the native object when 
         /// disposed, false otherwise</param>
-        public ArrayHandle(IntPtr nativePtr, bool ownsHandle)
-            : base(IntPtr.Zero, ownsHandle)
-        {
+        public ArrayHandle(IntPtr nativePtr, bool ownsHandle) : base(IntPtr.Zero, ownsHandle){
             SetHandle(nativePtr);
         }
 
-        public override bool IsInvalid
-        {
-            get { return handle == IntPtr.Zero; }
-        }
+        public override bool IsInvalid { get { return handle == IntPtr.Zero; } }
 
-        protected override bool ReleaseHandle()
-        {
+        protected override bool ReleaseHandle(){
             ArrayUtils.Destroy(handle);
             handle = IntPtr.Zero;
             return true;
@@ -75,13 +64,11 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// </summary>
         /// <param name="obj">ArrayHandle to compare with.</param>
         /// <returns>true if specified ArrayHandle is equal to this one, false otherwise</returns>
-        public override bool Equals(object obj)
-        {
+        public override bool Equals(object obj){
             return handle.Equals(obj);
         }
 
-        public override int GetHashCode()
-        {
+        public override int GetHashCode(){
             return handle.GetHashCode();
         }
     }

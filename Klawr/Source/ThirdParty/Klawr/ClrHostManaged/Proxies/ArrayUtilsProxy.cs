@@ -27,8 +27,7 @@ using Klawr.UnrealEngine;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Contains pointers to native TArray manipulation functions.
     /// </summary>
@@ -37,8 +36,7 @@ namespace Klawr.ClrHost.Managed
     [ComVisible(true)]
     [Guid("B4A6ED98-4CCC-49E1-9818-D9AF7DD5FA0E")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct ArrayUtilsProxy
-    {
+    public struct ArrayUtilsProxy{
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate Int32 NumFunc(ArrayHandle arrayHandle);
 

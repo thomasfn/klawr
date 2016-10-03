@@ -25,29 +25,23 @@
 using Klawr.ClrHost.Managed.SafeHandles;
 using System;
 
-namespace Klawr.ClrHost.Managed
-{
-    internal class ObjectUtils
-    {
+namespace Klawr.ClrHost.Managed{
+    internal class ObjectUtils{
         private static ObjectUtilsProxy _proxy;
 
-        internal ObjectUtils(ref ObjectUtilsProxy proxy)
-        {
+        internal ObjectUtils(ref ObjectUtilsProxy proxy){
             _proxy = proxy;
         }
 
-        public static UObjectHandle GetClassByName(string nativeClassName)
-        {
+        public static UObjectHandle GetClassByName(string nativeClassName){
             return _proxy.GetClassByName(nativeClassName);
         }
 
-        public static string GetClassName(UObjectHandle nativeClass)
-        {
+        public static string GetClassName(UObjectHandle nativeClass){
             return _proxy.GetClassName(nativeClass);
         }
 
-        public static bool IsClassChildOf(UObjectHandle derivedClass, UObjectHandle baseClass)
-        {
+        public static bool IsClassChildOf(UObjectHandle derivedClass, UObjectHandle baseClass){
             return _proxy.IsClassChildOf(derivedClass, baseClass);
         }
 
@@ -55,12 +49,8 @@ namespace Klawr.ClrHost.Managed
         /// Release a reference to a native UObject instance.
         /// </summary>
         /// <param name="handle">Pointer to a native UObject instance.</param>
-        public static void ReleaseObject(IntPtr nativeObject)
-        {
-            if (_proxy.RemoveObjectRef != null)
-            {
-                _proxy.RemoveObjectRef(nativeObject);
-            }
+        public static void ReleaseObject(IntPtr nativeObject){
+            _proxy.RemoveObjectRef?.Invoke(nativeObject);
         }
     }
 }

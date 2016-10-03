@@ -25,30 +25,24 @@
 using Klawr.ClrHost.Managed.SafeHandles;
 using System;
 
-namespace Klawr.UnrealEngine
-{
+namespace Klawr.UnrealEngine{
     /// <summary>
     /// Base class of all UObject wrapper classes.
     /// </summary>
-    public class UObject : IDisposable
-    {
+    public class UObject : IDisposable{
         private UObjectHandle _nativeObject;
         private bool _isDisposed = false;
 
         /// <summary>
         /// Handle to the native UObject instance.
         /// </summary>
-        public UObjectHandle NativeObject
-        {
-            get { return _nativeObject; }
-        }
-		
+        public UObjectHandle NativeObject { get { return _nativeObject; } }
+
         /// <summary>
         /// Construct a new instance from the given native UObject instance.
         /// </summary>
         /// <param name="nativeObject">Handle to a native UObject instance.</param>
-        public UObject(UObjectHandle nativeObject)
-        {
+        public UObject(UObjectHandle nativeObject){
             _nativeObject = nativeObject;
         }
 
@@ -57,18 +51,16 @@ namespace Klawr.UnrealEngine
         /// </summary>
         /// <param name="obj">UObject instance to convert, or null.</param>
         /// <returns>UObjectHandle instance.</returns>
-        public static explicit operator UObjectHandle(UObject obj)
-        {
-            return (obj != null) ? obj.NativeObject : UObjectHandle.Null;
+        public static explicit operator UObjectHandle(UObject obj){
+            return obj != null ? obj.NativeObject : UObjectHandle.Null;
         }
 
         /// <summary>
         /// Get the UClass instance for this object.
         /// </summary>
         /// <returns>A UClass instance.</returns>
-        public static UClass StaticClass()
-        {
-            return (UClass)typeof(UObject);
+        public static UClass StaticClass(){
+            return (UClass) typeof(UObject);
         }
 
         /// <summary>
@@ -76,11 +68,9 @@ namespace Klawr.UnrealEngine
         /// </summary>
         /// <param name="baseClass">Expected UE type of this UObject instance.</param>
         /// <returns>true if the instance is of the specified UE type, false otherwise</returns>
-        public bool IsA(UClass baseClass)
-        {
-            var thisClass = (UClass)this.GetType();
-            if (thisClass == baseClass)
-            {
+        public bool IsA(UClass baseClass){
+            var thisClass = (UClass) this.GetType();
+            if (thisClass == baseClass){
                 return true;
             }
             return thisClass.IsChildOf(baseClass);
@@ -94,20 +84,16 @@ namespace Klawr.UnrealEngine
         /// </summary>
         /// <param name="isDisposing">false when called from the finalizer (in which case managed 
         /// resources must not be disposed of), true otherwise</param>
-        protected virtual void Dispose(bool isDisposing)
-        {
-            if (!_isDisposed)
-            {
-                if (isDisposing)
-                {
+        protected virtual void Dispose(bool isDisposing){
+            if (!_isDisposed){
+                if (isDisposing){
                     _nativeObject.Dispose();
                 }
                 _isDisposed = true;
             }
         }
 
-        public void Dispose()
-        {
+        public void Dispose(){
             Dispose(true);
         }
     }

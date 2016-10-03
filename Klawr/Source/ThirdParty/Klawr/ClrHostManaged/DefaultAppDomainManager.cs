@@ -26,36 +26,31 @@ using Klawr.ClrHost.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using DomainId = System.Int32; 
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Default app domain manager.
     /// </summary>
-    public sealed class DefaultAppDomainManager : AppDomainManager, IDefaultAppDomainManager
-    {
-        private Dictionary<int /* Domain ID */, AppDomain> _engineAppDomains =
-            new Dictionary<int, AppDomain>();
+    public sealed class DefaultAppDomainManager : AppDomainManager, IDefaultAppDomainManager{
+        private readonly Dictionary<DomainId, AppDomain> engineAppDomains = new Dictionary<DomainId, AppDomain>();
 
         // NOTE: the base implementation of this method does nothing, so no need to call it
-        public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
-        {
+        public override void InitializeNewDomain(AppDomainSetup appDomainInfo){
             // register the custom domain manager with the unmanaged host
             this.InitializationFlags = AppDomainManagerInitializationOptions.RegisterWithHost;
         }
 
-        public int CreateEngineAppDomain(string applicationBase)
-        {
+        public int CreateEngineAppDomain(string applicationBase){
             var currentSetup = AppDomain.CurrentDomain.SetupInformation;
-            var setup = new AppDomainSetup()
-            {
+            var setup = new AppDomainSetup(){
                 AppDomainManagerAssembly = "Klawr.ClrHost.Managed",
                 AppDomainManagerType = "Klawr.ClrHost.Managed.EngineAppDomainManager",
                 ApplicationName = $"{GlobalStrings.KlawrUnrealEngineNamespace}",
                 ApplicationBase = (
-                    String.IsNullOrEmpty(applicationBase) ? 
-                    currentSetup.ApplicationBase : applicationBase
-                ),
+                                      String.IsNullOrEmpty(applicationBase) ?
+                                          currentSetup.ApplicationBase : applicationBase
+                                  ),
                 // semi-colon delimited list of subdirectories of ApplicationBase where private 
                 // assemblies can be loaded from
                 PrivateBinPath = "Assemblies;ShadowCopy",
@@ -71,59 +66,41 @@ namespace Klawr.ClrHost.Managed
             setup.CachePath = Path.Combine(setup.ApplicationBase, "Cache");
 
             int domainId = 0;
-            try
-            {
+            try{
                 // this will instantiate a new app domain manager and call InitializeNewDomain()
                 var engineAppDomain = AppDomain.CreateDomain("EngineDomain", null, setup);
                 domainId = engineAppDomain.Id;
-                _engineAppDomains.Add(domainId, engineAppDomain);
-            }
-            catch (Exception except)
-            {
+                engineAppDomains.Add(domainId, engineAppDomain);
+            } catch (Exception except){
                 Console.WriteLine(except.ToString());
             }
             return domainId;
         }
 
-        public bool DestroyEngineAppDomain(int domainId)
-        {
+        public bool DestroyEngineAppDomain(int domainId){
             AppDomain appDomain;
-            if (!_engineAppDomains.TryGetValue(domainId, out appDomain))
-            {
-                throw new InvalidOperationException(
-                    String.Format("Engine app domain with ID {0} doesn't exist!", domainId)
-                );
+            if (!engineAppDomains.TryGetValue(domainId, out appDomain)){
+                throw new InvalidOperationException($"Engine app domain with ID {domainId} doesn't exist!");
             }
-            else
-            {
-                try
-                {
-                    _engineAppDomains.Remove(domainId);
-                    AppDomain.Unload(appDomain);
-                    return true;
-                }
-                catch (AppDomainUnloadedException)
-                {
-                    // ho hum, log an error maybe?
-                }
+            try{
+                engineAppDomains.Remove(domainId);
+                AppDomain.Unload(appDomain);
+                return true;
+            } catch (AppDomainUnloadedException){
+                // ho hum, log an error maybe?
             }
             return false;
         }
 
-        public void DestroyAllEngineAppDomains()
-        {
-            foreach (var appDomain in _engineAppDomains.Values)
-            {
-                try
-                {
+        public void DestroyAllEngineAppDomains(){
+            foreach (var appDomain in engineAppDomains.Values){
+                try{
                     AppDomain.Unload(appDomain);
-                }
-                catch (AppDomainUnloadedException)
-                {
+                } catch (AppDomainUnloadedException){
                     // oh well
                 }
             }
-            _engineAppDomains.Clear();
+            engineAppDomains.Clear();
         }
     }
 }

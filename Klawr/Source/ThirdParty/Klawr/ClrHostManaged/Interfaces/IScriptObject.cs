@@ -24,8 +24,7 @@
 
 using System;
 
-namespace Klawr.ClrHost.Interfaces
-{
+namespace Klawr.ClrHost.Interfaces{
     /// <summary>
     /// Interface for user defined classes that are accessible to the native side of the CLR host.
     ///
@@ -35,16 +34,12 @@ namespace Klawr.ClrHost.Interfaces
     /// 
     /// IScriptObject instances must only be created in an engine app domain.
     /// </summary>
-    public interface IScriptObject : IDisposable
-    {
+    public interface IScriptObject : IDisposable{
         /// <summary>
         /// Unique identifier for this instance that's guaranteed to be unique amongst all the
         /// IScriptObject instances within the app domain this instance was created in.
         /// </summary>
-        long InstanceID
-        {
-            get;
-        }
+        long InstanceID { get; }
 
         void BeginPlay();
         void Tick(float deltaTime);

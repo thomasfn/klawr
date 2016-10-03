@@ -22,97 +22,64 @@
 // SOFTWARE.
 //
 
-using Klawr.ClrHost.Interfaces;
-
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Logging functions that output text to the UE console and log file.
     /// </summary>
-    public class LogUtils
-    {
+    public class LogUtils{
         private static LogUtilsProxy _proxy;
 
-        internal LogUtils(ref LogUtilsProxy proxy)
-        {
+        internal LogUtils(ref LogUtilsProxy proxy){
             _proxy = proxy;
         }
 
         /// <summary>
         /// Print an error to the UE console and log file, then crash (even if logging is disabled).
         /// </summary>
-        public static void LogFatalError(string text)
-        {
-            if (_proxy.LogFatalError != null)
-            {
-                _proxy.LogFatalError(text);
-            }
+        public static void LogFatalError(string text){
+            _proxy.LogFatalError?.Invoke(text);
         }
 
         /// <summary>
         /// Print an error to the UE console and log file.
         /// </summary>
-        public static void LogError(string text)
-        {
-            if (_proxy.LogError != null)
-            {
-                _proxy.LogError(text);
-            }
+        public static void LogError(string text){
+            _proxy.LogError?.Invoke(text);
         }
 
         /// <summary>
         /// Print a warning to the UE console and log file.
         /// </summary>
-        public static void LogWarning(string text)
-        {
-            if (_proxy.LogWarning != null)
-            {
-                _proxy.LogWarning(text);
-            }
+        public static void LogWarning(string text){
+            _proxy.LogWarning?.Invoke(text);
         }
 
         /// <summary>
         /// Print a message to the UE console and log file.
         /// </summary>
-        public static void Display(string text)
-        {
-            if (_proxy.Display != null)
-            {
-                _proxy.Display(text);
-            }
+        public static void Display(string text){
+            _proxy.Display?.Invoke(text);
         }
 
         /// <summary>
         /// Print a message to the log file, but not to the UE console.
         /// </summary>
-        public static void Log(string text)
-        {
-            if (_proxy.Log != null)
-            {
-                _proxy.Log(text);
-            }
+        public static void Log(string text){
+            _proxy.Log?.Invoke(text);
         }
 
         /// <summary>
         /// Print a verbose message to a log file (if Verbose logging is enabled).
         /// </summary>
-        public static void LogVerbose(string text)
-        {
-            if (_proxy.LogVerbose != null)
-            {
-                _proxy.LogVerbose(text);
-            }
+        public static void LogVerbose(string text){
+            _proxy.LogVerbose?.Invoke(text);
         }
 
         /// <summary>
         /// Print a verbose message to a log file (if VeryVerbose logging is enabled).
         /// </summary>
-        public static void LogVeryVerbose(string text)
-        {
-            if (_proxy.LogVeryVerbose != null)
-            {
-                _proxy.LogVeryVerbose(text);
-            }
+        public static void LogVeryVerbose(string text){
+            _proxy.LogVeryVerbose?.Invoke(text);
         }
     }
 }

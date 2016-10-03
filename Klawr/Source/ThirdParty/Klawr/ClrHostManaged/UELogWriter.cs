@@ -27,37 +27,26 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Writes text to the UE console and log file.
     /// </summary>
-    internal class UELogWriter : TextWriter
-    {
+    internal class UELogWriter : TextWriter{
         private StringBuilder _stringBuilder = new StringBuilder();
 
-        public UELogWriter() 
-            : this(CultureInfo.CurrentCulture)
-        {
-        }
+        public UELogWriter()
+            : this(CultureInfo.CurrentCulture){}
 
         public UELogWriter(IFormatProvider formatProvider)
-            : base(formatProvider)
-        {
-        }
+            : base(formatProvider){}
 
-        public override Encoding Encoding
-        {
-            get { return Encoding.Unicode; }
-        }
+        public override Encoding Encoding { get { return Encoding.Unicode; } }
 
         /// <summary>
         /// Output any buffered text.
         /// </summary>
-        public override void Flush()
-        {
-            if (_stringBuilder.Length > 0)
-            {
+        public override void Flush(){
+            if (_stringBuilder.Length > 0){
                 LogUtils.Display(_stringBuilder.ToString());
                 _stringBuilder.Clear();
             }
@@ -66,22 +55,16 @@ namespace Klawr.ClrHost.Managed
         /// <summary>
         /// Output any buffered text if it ends with a line terminator.
         /// </summary>
-        private void FlushOnNewLine()
-        {
+        private void FlushOnNewLine(){
             // look for the line terminator at the end of the buffered text
             var terminatorChars = base.NewLine.ToCharArray();
             int terminatorStart = _stringBuilder.Length - terminatorChars.Length;
-            if (terminatorStart >= 0)
-            {
+            if (terminatorStart >= 0){
                 int terminatorIndex = terminatorChars.Length - 1;
-                for (int i = _stringBuilder.Length - 1; i >= terminatorStart; --i, --terminatorIndex)
-                {
-                    if (_stringBuilder[i] != terminatorChars[terminatorIndex])
-                    {
+                for (int i = _stringBuilder.Length - 1; i >= terminatorStart; --i, --terminatorIndex){
+                    if (_stringBuilder[i] != terminatorChars[terminatorIndex]){
                         break;
-                    }
-                    else if (terminatorIndex == 0)
-                    {
+                    } else if (terminatorIndex == 0){
                         // LogUtils.Display() will automatically append a line terminator, 
                         // so strip away the line terminator that's already there to avoid a blank
                         // line the user didn't expect
@@ -96,8 +79,7 @@ namespace Klawr.ClrHost.Managed
         /// Write out a single character.
         /// </summary>
         /// <remarks>Output is buffered until a line terminator is encountered.</remarks>
-        public override void Write(char value)
-        {
+        public override void Write(char value){
             _stringBuilder.Append(value);
             FlushOnNewLine();
         }
@@ -106,8 +88,7 @@ namespace Klawr.ClrHost.Managed
         /// Write out a range of characters.
         /// </summary>
         /// <remarks>Output is buffered unless it ends with a line terminator.</remarks>
-        public override void Write(char[] buffer, int index, int count)
-        {
+        public override void Write(char[] buffer, int index, int count){
             _stringBuilder.Append(buffer, index, count);
             FlushOnNewLine();
         }
@@ -116,8 +97,7 @@ namespace Klawr.ClrHost.Managed
         /// Write out a line terminator.
         /// </summary>
         /// <remarks>Any buffered text will be output first, followed by a line terminator.</remarks>
-        public override void WriteLine()
-        {
+        public override void WriteLine(){
             // LogUtils.Display() will automatically append a line terminator, so there's no need
             // to add a line terminator at this point
             LogUtils.Display(_stringBuilder.ToString());
@@ -127,8 +107,7 @@ namespace Klawr.ClrHost.Managed
         /// <summary>
         /// Write out a string followed by a line terminator.
         /// </summary>
-        public override void WriteLine(string value)
-        {
+        public override void WriteLine(string value){
             Write(value);
             WriteLine();
         }

@@ -26,26 +26,24 @@ using Klawr.ClrHost.Managed.SafeHandles;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Contains delegates encapsulating native UObject and UClass utility functions.
     /// </summary>
     [ComVisible(true)]
     [Guid("06A91CEC-0B66-4DCC-B4AB-7DFF3F237F48")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct ObjectUtilsProxy
-    {
+    public struct ObjectUtilsProxy{
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         public delegate UObjectHandle GetClassByNameFunc(string nativeClassName);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         public delegate string GetClassNameFunc(UObjectHandle nativeClass);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         [return: MarshalAs(UnmanagedType.U1)]
         public delegate bool IsClassChildOfFunc(UObjectHandle derivedClass, UObjectHandle baseClass);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void RemoveObjectRefAction(IntPtr nativeObject);
 
@@ -54,10 +52,10 @@ namespace Klawr.ClrHost.Managed
 
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public GetClassNameFunc GetClassName;
-        
+
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public IsClassChildOfFunc IsClassChildOf;
-        
+
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public RemoveObjectRefAction RemoveObjectRef;
     }

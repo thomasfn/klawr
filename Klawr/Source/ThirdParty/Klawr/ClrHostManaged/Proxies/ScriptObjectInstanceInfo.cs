@@ -24,20 +24,20 @@
 
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Contains native/managed interop information for a ScriptObject instance.
     /// </summary>
     [ComVisible(true)]
     [GuidAttribute("B4F3A010-B7B6-42D6-82F9-331C56487AA2")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct ScriptObjectInstanceInfo
-    {
+    public struct ScriptObjectInstanceInfo{
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void BeginPlayAction();
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void TickAction(float deltaTime);
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void DestroyAction();
 

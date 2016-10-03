@@ -25,8 +25,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Interfaces
-{
+namespace Klawr.ClrHost.Interfaces{
     /// <summary>
     /// Manager for the default app domain (that can't be unloaded), accessible via COM.
     /// 
@@ -35,8 +34,7 @@ namespace Klawr.ClrHost.Interfaces
     /// </summary>
     [ComVisible(true)]
     [GuidAttribute("D90BC9C3-F4DC-4103-BEFA-966FA8C4B7EF")]
-    public interface IDefaultAppDomainManager
-    {
+    public interface IDefaultAppDomainManager{
         /// <summary>
         /// Create an engine app domain that can be unloaded.
         /// </summary>

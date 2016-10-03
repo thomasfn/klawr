@@ -24,8 +24,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// A native proxy for a managed UKlawrScriptComponent instance.
     /// 
@@ -37,8 +36,7 @@ namespace Klawr.ClrHost.Managed
     [ComVisible(true)]
     [Guid("E4378A9D-8E83-415F-B5CC-F6BE73F7137A")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct ScriptComponentProxy
-    {
+    public struct ScriptComponentProxy{
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void OnComponentCreatedAction();
 
@@ -79,7 +77,7 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public OnRegisterAction OnRegister;
-        
+
         /// <summary>
         /// Delegate instance encapsulating UKlawrScriptComponent.OnUnregister() override (may be null).
         /// </summary>
@@ -91,7 +89,7 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public InitializeComponentAction InitializeComponent;
-        
+
         /// <summary>
         /// Delegate instance encapsulating UKlawrScriptComponent.TickComponent() override (may be null).
         /// </summary>

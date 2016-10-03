@@ -25,13 +25,11 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed.SafeHandles
-{
+namespace Klawr.ClrHost.Managed.SafeHandles{
     /// <summary>
     /// Encapsulates a native UObject pointer and takes care of properly disposing of it.
     /// </summary>
-    public class UObjectHandle : SafeHandle
-    {
+    public class UObjectHandle : SafeHandle{
         /// <summary>
         /// Encapsulates a native null pointer.
         /// </summary>
@@ -41,10 +39,7 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// Construct a new handle.
         /// </summary>
         /// <remarks>This constructor is used by the interop code, user code should not invoke it.</remarks>
-        public UObjectHandle() 
-            : base(IntPtr.Zero, true)
-        {
-        }
+        public UObjectHandle() : base(IntPtr.Zero, true){}
 
         /// <summary>
         /// Construct a new handle to a native UObject instance.
@@ -54,19 +49,13 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// <param name="nativeObject">Pointer to a native UObject instance.</param>
         /// <param name="ownsHandle">true if the handle should release the native object when 
         /// disposed, false otherwise</param>
-        public UObjectHandle(IntPtr nativeObject, bool ownsHandle)
-            : base(IntPtr.Zero, ownsHandle)
-        {
+        public UObjectHandle(IntPtr nativeObject, bool ownsHandle) : base(IntPtr.Zero, ownsHandle){
             SetHandle(nativeObject);
         }
 
-        public override bool IsInvalid
-        {
-            get { return handle == IntPtr.Zero; }
-        }
+        public override bool IsInvalid { get { return handle == IntPtr.Zero; } }
 
-        protected override bool ReleaseHandle()
-        {
+        protected override bool ReleaseHandle(){
             ObjectUtils.ReleaseObject(handle);
             handle = IntPtr.Zero;
             return true;
@@ -77,13 +66,11 @@ namespace Klawr.ClrHost.Managed.SafeHandles
         /// </summary>
         /// <param name="obj">UObjectHandle to compare with.</param>
         /// <returns>true if specified UObjectHandle is equal to this one, false otherwise</returns>
-        public override bool Equals(object obj)
-        {
+        public override bool Equals(object obj){
             return handle.Equals(obj);
         }
 
-        public override int GetHashCode()
-        {
+        public override int GetHashCode(){
             return handle.GetHashCode();
         }
     }

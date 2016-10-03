@@ -26,15 +26,13 @@ using System;
 using System.Runtime.InteropServices;
 using Klawr.ClrHost.Managed;
 
-namespace Klawr.ClrHost.Interfaces
-{
+namespace Klawr.ClrHost.Interfaces{
     /// <summary>
     /// Manager for engine app domains (that can be unloaded), accessible in native code via COM.
     /// </summary>
     [ComVisible(true)]
     [Guid("CBFAB628-9E4D-4439-89FA-EF8B1D5FF966")]
-    public interface IEngineAppDomainManager
-    {
+    public interface IEngineAppDomainManager{
         /// <summary>
         /// Store pointers to native functions that wrap methods of a C++ class.
         /// </summary>
@@ -83,15 +81,9 @@ namespace Klawr.ClrHost.Interfaces
         /// initialization of the engine app domain, before any native UObject instance is 
         /// passed to the managed side.
         /// </summary>
-        void BindUtils(
-            ref ObjectUtilsProxy objectUtilsProxy,
-            ref LogUtilsProxy logUtilsProxy,
-            ref ArrayUtilsProxy arrayUtilsProxy
-        );
-                
-        bool CreateScriptComponent(
-            string className, IntPtr nativeComponent, ref ScriptComponentProxy proxy
-        );
+        void BindUtils( ref ObjectUtilsProxy objectUtilsProxy, ref LogUtilsProxy logUtilsProxy, ref ArrayUtilsProxy arrayUtilsProxy);
+
+        bool CreateScriptComponent(string className, IntPtr nativeComponent, ref ScriptComponentProxy proxy);
 
         void DestroyScriptComponent(long scriptComponentID);
 

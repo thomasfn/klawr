@@ -1,17 +1,14 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Klawr.UnrealEngine
-{
+namespace Klawr.UnrealEngine{
     [StructLayout(LayoutKind.Sequential)]
-    public struct FVector2D
-    {
+    public struct FVector2D{
         public float X;
         public float Y;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct FVector
-    {
+    public struct FVector{
         public float X;
         public float Y;
         public float Z;
@@ -20,8 +17,7 @@ namespace Klawr.UnrealEngine
     // TODO: The FVector4 class is 16-byte aligned, but the mirror FVector4 USTRUCT is not,
     //       which one of those is this struct actually going to correspond to? And does it matter?
     [StructLayout(LayoutKind.Sequential)]
-    public struct FVector4
-    {
+    public struct FVector4{
         public float X;
         public float Y;
         public float Z;
@@ -30,8 +26,7 @@ namespace Klawr.UnrealEngine
 
     // TODO: Check the alignment is correct
     [StructLayout(LayoutKind.Sequential)]
-    public struct FQuat
-    {
+    public struct FQuat{
         public float X;
         public float Y;
         public float Z;
@@ -39,8 +34,7 @@ namespace Klawr.UnrealEngine
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct FTransform
-    {
+    public struct FTransform{
         public FQuat Rotation;
         public FVector Translation;
         public FVector Scale3D;
@@ -48,20 +42,17 @@ namespace Klawr.UnrealEngine
 
     // TODO: Check the alignment is correct
     [StructLayout(LayoutKind.Sequential)]
-    public struct FColor
-    {
+    public struct FColor{
         public byte B, G, R, A;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct FLinearColor
-    {
+    public struct FLinearColor{
         public float B, G, R, A;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct FScriptName
-    {
+    public struct FScriptName{
         public int ComparisonIndex;
         public int DisplayIndex;
         public uint Number;

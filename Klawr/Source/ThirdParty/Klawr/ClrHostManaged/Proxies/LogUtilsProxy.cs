@@ -25,16 +25,14 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Contains delegates encapsulating native logging functions.
     /// </summary>
     [ComVisible(true)]
     [Guid("40D06EA1-0EC2-4B01-951C-ED5081FCBCB8")]
     [StructLayout(LayoutKind.Sequential)]
-    public struct LogUtilsProxy
-    {
+    public struct LogUtilsProxy{
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         public delegate void LogAction(string text);
 

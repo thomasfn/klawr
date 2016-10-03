@@ -30,55 +30,50 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using NativClass = System.String;
+using InstanceId = System.Int64;
 
-namespace Klawr.ClrHost.Managed
-{
+namespace Klawr.ClrHost.Managed{
     /// <summary>
     /// Manager for engine app domains (that can be unloaded).
     /// </summary>
-    public sealed class EngineAppDomainManager : AppDomainManager, IEngineAppDomainManager
-    {
-        public struct ScriptObjectInfo
-        {
+    public sealed class EngineAppDomainManager : AppDomainManager, IEngineAppDomainManager{
+        public struct ScriptObjectInfo{
             public IScriptObject Instance;
             public ScriptObjectInstanceInfo.BeginPlayAction BeginPlay;
             public ScriptObjectInstanceInfo.TickAction Tick;
             public ScriptObjectInstanceInfo.DestroyAction Destroy;
         }
 
-        public struct ScriptComponentInfo
-        {
+        public struct ScriptComponentInfo{
             public IDisposable Instance;
             public ScriptComponentProxy Proxy;
         }
 
         private delegate void SetProxyDelegateAction(ref ScriptComponentProxy proxy, Delegate value);
 
-        private struct ScriptComponentProxyMethodInfo
-        {
+        private struct ScriptComponentProxyMethodInfo{
             public string Name;
             public Type DelegateType;
             public Type[] ParameterTypes;
             public SetProxyDelegateAction BindToProxy;
         }
 
-        private struct ScriptComponentMethodInfo
-        {
+        private struct ScriptComponentMethodInfo{
             public Type DelegateType;
             public MethodInfo Method;
             public SetProxyDelegateAction BindToProxy;
         }
 
-        private struct ScriptComponentTypeInfo
-        {
+        private struct ScriptComponentTypeInfo{
             public ConstructorInfo Constructor;
             public ScriptComponentMethodInfo[] Methods;
         }
 
         // only set for the engine app domain manager
-        private Dictionary<string /*Native Class*/, IntPtr[]> _nativeFunctionPointers = new Dictionary<string, IntPtr[]>();
+        private Dictionary<NativClass, IntPtr[]> _nativeFunctionPointers = new Dictionary<string, IntPtr[]>();
         // all currently registered script objects
-        private Dictionary<long /*Instance ID*/, ScriptObjectInfo> _scriptObjects = new Dictionary<long, ScriptObjectInfo>();
+        private Dictionary<InstanceId, ScriptObjectInfo> _scriptObjects = new Dictionary<long, ScriptObjectInfo>();
         // identifier of the most recently registered ScriptObject instance
         private long _lastScriptObjectID = 0;
         // cache of previously created script object types
@@ -91,51 +86,40 @@ namespace Klawr.ClrHost.Managed
         private Dictionary<string /*Full Type Name*/, ScriptComponentTypeInfo> _scriptComponentTypeCache = new Dictionary<string, ScriptComponentTypeInfo>();
 
         // NOTE: the base implementation of this method does nothing, so no need to call it
-        public override void InitializeNewDomain(AppDomainSetup appDomainInfo)
-        {
+        public override void InitializeNewDomain(AppDomainSetup appDomainInfo){
             // register the custom domain manager with the unmanaged host
-            this.InitializationFlags = AppDomainManagerInitializationOptions.RegisterWithHost;
+            InitializationFlags = AppDomainManagerInitializationOptions.RegisterWithHost;
         }
 
-        public void SetNativeFunctionPointers(string nativeClassName, long[] functionPointers)
-        {
+        public void SetNativeFunctionPointers(string nativeClassName, long[] functionPointers){
             // the function pointers are passed in as long to avoid pointer truncation on a 
             // 64-bit platform when this method is called via COM, but to actually use them
             // they need to be converted to IntPtr
             var unboxedFunctionPointers = new IntPtr[functionPointers.Length];
-            for (var i = 0; i < functionPointers.Length; ++i)
-            {
-                unboxedFunctionPointers[i] = (IntPtr)(functionPointers[i]);
+            for (var i = 0; i < functionPointers.Length; ++i){
+                unboxedFunctionPointers[i] = (IntPtr) (functionPointers[i]);
             }
             _nativeFunctionPointers[nativeClassName] = unboxedFunctionPointers;
         }
 
-        public IntPtr[] GetNativeFunctionPointers(string nativeClassName)
-        {
+        public IntPtr[] GetNativeFunctionPointers(string nativeClassName){
             return _nativeFunctionPointers[nativeClassName];
         }
 
-        public void LoadUnrealEngineWrapperAssembly()
-        {
+        public void LoadUnrealEngineWrapperAssembly(){
             // TODO: this may not be the best place to call it
             CacheScriptComponentProxyInfo();
 
-            var wrapperAssembly = new AssemblyName();
-            wrapperAssembly.Name = GlobalStrings.KlawrUnrealEngineNamespace;
+            var wrapperAssembly = new AssemblyName{Name = GlobalStrings.KlawrUnrealEngineNamespace};
             Assembly.Load(wrapperAssembly);
         }
 
-        public bool LoadAssembly(string assemblyName)
-        {
-            var assembly = new AssemblyName();
-            assembly.Name = assemblyName;
+        public bool LoadAssembly(string assemblyName){
+            var assembly = new AssemblyName{Name = assemblyName};
 
-            try
-            {
+            try{
                 Assembly.Load(assembly);
-            }
-            catch (Exception except)
-            {
+            } catch (Exception except){
                 Console.WriteLine(except.ToString());
                 return false;
             }
@@ -143,22 +127,19 @@ namespace Klawr.ClrHost.Managed
             return true;
         }
 
-        public bool CreateScriptObject(string className, IntPtr nativeObject, ref ScriptObjectInstanceInfo info)
-        {
+        public bool CreateScriptObject(string className, IntPtr nativeObject, ref ScriptObjectInstanceInfo info){
             var objType = FindScriptObjectTypeByName(className);
-            if (objType != null)
-            {
-                var constructor = objType.GetConstructor(new Type[] { typeof(long), typeof(UObjectHandle) });
-                if (constructor != null)
-                {
+            if (objType != null){
+                var constructor = objType.GetConstructor(new[]{typeof(long), typeof(UObjectHandle)});
+                if (constructor != null){
                     var instanceID = GenerateScriptObjectID();
                     // The handle created here is set not to release the native object when the
                     // handle is disposed because that object is actually the owner of the script 
                     // object created here, and no additional references are created to owners at
                     // the moment so there is no reference to remove.
                     var objectHandle = new UObjectHandle(nativeObject, false);
-                    var obj = (IScriptObject)constructor.Invoke(
-                        new object[] { instanceID, objectHandle }
+                    var obj = (IScriptObject) constructor.Invoke(
+                        new object[]{instanceID, objectHandle}
                     );
                     var objInfo = RegisterScriptObject(obj);
                     info.InstanceID = instanceID;
@@ -172,20 +153,18 @@ namespace Klawr.ClrHost.Managed
             return false;
         }
 
-        public void DestroyScriptObject(long scriptObjectInstanceID)
-        {
+        public void DestroyScriptObject(long scriptObjectInstanceID){
             var instance = UnregisterScriptObject(scriptObjectInstanceID);
             instance.Dispose();
         }
-        
+
         /// <summary>
         /// Note that the identifier returned by this method is only unique amongst all ScriptObject 
         /// instances registered with this manager instance. The returned identifier can be used to 
         /// uniquely identify a ScriptObject instance within the app domain it was created in.
         /// </summary>
         /// <returns>Unique identifier.</returns>
-        public long GenerateScriptObjectID()
-        {
+        public long GenerateScriptObjectID(){
             return Interlocked.Increment(ref _lastScriptObjectID);
         }
 
@@ -196,13 +175,12 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         /// <param name="scriptObject"></param>
         /// <returns></returns>
-        public ScriptObjectInfo RegisterScriptObject(IScriptObject scriptObject)
-        {
+        public ScriptObjectInfo RegisterScriptObject(IScriptObject scriptObject){
             ScriptObjectInfo info;
             info.Instance = scriptObject;
-            info.BeginPlay = new ScriptObjectInstanceInfo.BeginPlayAction(scriptObject.BeginPlay);
-            info.Tick = new ScriptObjectInstanceInfo.TickAction(scriptObject.Tick);
-            info.Destroy = new ScriptObjectInstanceInfo.DestroyAction(scriptObject.Destroy);
+            info.BeginPlay = scriptObject.BeginPlay;
+            info.Tick = scriptObject.Tick;
+            info.Destroy = scriptObject.Destroy;
             _scriptObjects.Add(scriptObject.InstanceID, info);
             return info;
         }
@@ -214,8 +192,7 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         /// <param name="scriptObjectInstanceID">ID of a registered IScriptObject instance.</param>
         /// <returns>The script object matching the given ID.</returns>
-        public IScriptObject UnregisterScriptObject(long scriptObjectInstanceID)
-        {
+        public IScriptObject UnregisterScriptObject(long scriptObjectInstanceID){
             var instance = _scriptObjects[scriptObjectInstanceID].Instance;
             _scriptObjects.Remove(scriptObjectInstanceID);
             return instance;
@@ -227,21 +204,18 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         /// <param name="typeName">The full name of a type (including the namespace).</param>
         /// <returns>Matching Type instance, or null if no match was found.</returns>
-        private Type FindScriptObjectTypeByName(string typeName)
-        {
+        private Type FindScriptObjectTypeByName(string typeName){
             Type objType = null;
-            if (!_scriptObjectTypeCache.TryGetValue(typeName, out objType))
-            {
+            if (!_scriptObjectTypeCache.TryGetValue(typeName, out objType)){
                 objType = AppDomain.CurrentDomain.GetAssemblies()
-                    .Where(assembly => !assembly.IsDynamic)
-                    .SelectMany(assembly => assembly.GetTypes())
-                    .FirstOrDefault(
-                        t => t.FullName.Equals(typeName) 
-                            && t.GetInterfaces().Contains(typeof(IScriptObject))
-                    );
+                                   .Where(assembly => !assembly.IsDynamic)
+                                   .SelectMany(assembly => assembly.GetTypes())
+                                   .FirstOrDefault(
+                                       t => t.FullName.Equals(typeName)
+                                            && t.GetInterfaces().Contains(typeof(IScriptObject))
+                                   );
 
-                if (objType != null)
-                {
+                if (objType != null){
                     // cache the result to speed up future searches
                     _scriptObjectTypeCache.Add(typeName, objType);
                 }
@@ -254,49 +228,37 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         /// <param name="typeName">The full name of a type (including the namespace).</param>
         /// <returns>Matching Type instance, or null if no match was found.</returns>
-        private static Type FindTypeByName(string typeName)
-        {
+        private static Type FindTypeByName(string typeName){
             return AppDomain.CurrentDomain.GetAssemblies()
-                .Where(assembly => !assembly.IsDynamic)
-                .SelectMany(assembly => assembly.GetTypes())
-                .FirstOrDefault(t => t.FullName.Equals(typeName));
+                            .Where(assembly => !assembly.IsDynamic)
+                            .SelectMany(assembly => assembly.GetTypes())
+                            .FirstOrDefault(t => t.FullName.Equals(typeName));
         }
 
-        public void BindUtils(
-            ref ObjectUtilsProxy objectUtilsProxy,
-            ref LogUtilsProxy logUtilsProxy,
-            ref ArrayUtilsProxy arrayUtilsProxy
-        )
-        {
+        public void BindUtils(ref ObjectUtilsProxy objectUtilsProxy, ref LogUtilsProxy logUtilsProxy, ref ArrayUtilsProxy arrayUtilsProxy){
             new ObjectUtils(ref objectUtilsProxy);
             new LogUtils(ref logUtilsProxy);
             // redirect output to the UE console and log file (needs LogUtils)
-            System.Console.SetOut(new UELogWriter());
+            Console.SetOut(new UELogWriter());
             new ArrayUtils(ref arrayUtilsProxy);
         }
 
-        public bool CreateScriptComponent(
-            string className, IntPtr nativeComponent, ref ScriptComponentProxy proxy
-        )
-        {
+        public bool CreateScriptComponent(string className, IntPtr nativeComponent, ref ScriptComponentProxy proxy){
             ScriptComponentTypeInfo componentTypeInfo;
-            if (FindScriptComponentTypeByName(className, out componentTypeInfo))
-            {
-                if (componentTypeInfo.Constructor != null)
-                {
+            if (FindScriptComponentTypeByName(className, out componentTypeInfo)){
+                if (componentTypeInfo.Constructor != null){
                     var instanceID = GenerateScriptObjectID();
                     // The handle created here is set not to release the native object when the
                     // handle is disposed because that object is actually the owner of the script 
                     // object created here, and no additional references are created to owners at
                     // the moment so there is no reference to remove.
                     var objectHandle = new UObjectHandle(nativeComponent, false);
-                    var component = (IDisposable)componentTypeInfo.Constructor.Invoke(
-                        new object[] { instanceID, objectHandle }
-                    );
+                    var component = (IDisposable) componentTypeInfo.Constructor.Invoke(
+                                                                       new object[]{instanceID, objectHandle}
+                                                                   );
                     // initialize the script component proxy
                     proxy.InstanceID = instanceID;
-                    foreach (var methodInfo in componentTypeInfo.Methods)
-                    {
+                    foreach (var methodInfo in componentTypeInfo.Methods){
                         methodInfo.BindToProxy(
                             ref proxy,
                             Delegate.CreateDelegate(
@@ -313,24 +275,19 @@ namespace Klawr.ClrHost.Managed
             return false;
         }
 
-        public void DestroyScriptComponent(long instanceID)
-        {
+        public void DestroyScriptComponent(long instanceID){
             var instance = UnregisterScriptComponent(instanceID);
             instance.Dispose();
         }
 
-        private void RegisterScriptComponent(
-            long instanceID, IDisposable scriptComponent, ScriptComponentProxy proxy
-        )
-        {
+        private void RegisterScriptComponent(long instanceID, IDisposable scriptComponent, ScriptComponentProxy proxy){
             ScriptComponentInfo componentInfo;
             componentInfo.Instance = scriptComponent;
             componentInfo.Proxy = proxy;
             _scriptComponents.Add(instanceID, componentInfo);
         }
 
-        private IDisposable UnregisterScriptComponent(long instanceID)
-        {
+        private IDisposable UnregisterScriptComponent(long instanceID){
             var instance = _scriptComponents[instanceID].Instance;
             _scriptComponents.Remove(instanceID);
             return instance;
@@ -343,33 +300,23 @@ namespace Klawr.ClrHost.Managed
         /// <param name="typeName">The full name of a type (including the namespace).</param>
         /// <param name="componentTypeInfo">Structure to be filled in with type information.</param>
         /// <returns>true if type information matching the given type name was found, false otherwise</returns>
-        private bool FindScriptComponentTypeByName(
-            string typeName, out ScriptComponentTypeInfo componentTypeInfo
-        )
-        {
-            if (!_scriptComponentTypeCache.TryGetValue(typeName, out componentTypeInfo))
-            {
+        private bool FindScriptComponentTypeByName(string typeName, out ScriptComponentTypeInfo componentTypeInfo){
+            if (!_scriptComponentTypeCache.TryGetValue(typeName, out componentTypeInfo)){
                 var componentType = FindTypeByName(typeName);
-                if (componentType != null)
-                {
+                if (componentType != null){
                     componentTypeInfo = GetComponentTypeInfo(componentType);
                     // cache the result to speed up future searches
                     _scriptComponentTypeCache.Add(typeName, componentTypeInfo);
-                }
-                else
-                {
+                } else{
                     return false;
                 }
             }
             return true;
         }
 
-        private ScriptComponentTypeInfo GetComponentTypeInfo(Type componentType)
-        {
+        private ScriptComponentTypeInfo GetComponentTypeInfo(Type componentType){
             ScriptComponentTypeInfo typeInfo;
-            typeInfo.Constructor = componentType.GetConstructor(
-                new Type[] { typeof(long), typeof(UObjectHandle) }
-            );
+            typeInfo.Constructor = componentType.GetConstructor(new[]{typeof(long), typeof(UObjectHandle)});
 
             // Currently all script component classes must directly subclass UKlawScriptComponent, 
             // they cannot subclass another script component. The virtual methods in 
@@ -380,20 +327,16 @@ namespace Klawr.ClrHost.Managed
             // this will have to be revisited if script classes are allowed to subclass other
             // script classes in the future.
             BindingFlags bindingFlags = BindingFlags.DeclaredOnly
-                | BindingFlags.Instance
-                | BindingFlags.Public
-                | BindingFlags.NonPublic;
+                                        | BindingFlags.Instance
+                                        | BindingFlags.Public
+                                        | BindingFlags.NonPublic;
 
             var implementedMethodList = new List<ScriptComponentMethodInfo>();
-            foreach (var proxyMethod in _scriptComponentProxyMethods)
-            {
+            foreach (var proxyMethod in _scriptComponentProxyMethods){
                 // FIXME: catch and log exceptions
-                ScriptComponentMethodInfo methodInfo;
-                var method = componentType.GetMethod(
-                    proxyMethod.Name, bindingFlags, null, proxyMethod.ParameterTypes, null
-                );
-                if (method != null)
-                {
+                var method = componentType.GetMethod(proxyMethod.Name, bindingFlags, null, proxyMethod.ParameterTypes, null);
+                if (method != null){
+                    ScriptComponentMethodInfo methodInfo;
                     methodInfo.DelegateType = proxyMethod.DelegateType;
                     methodInfo.Method = method;
                     methodInfo.BindToProxy = proxyMethod.BindToProxy;
@@ -404,8 +347,7 @@ namespace Klawr.ClrHost.Managed
             return typeInfo;
         }
 
-        private void CacheScriptComponentProxyInfo()
-        {
+        private void CacheScriptComponentProxyInfo(){
             // grab all the public delegate instance fields
             var fields = typeof(ScriptComponentProxy)
                 .GetFields(BindingFlags.Public | BindingFlags.Instance)
@@ -414,8 +356,7 @@ namespace Klawr.ClrHost.Managed
 
             // store the info that will be useful later on
             _scriptComponentProxyMethods = new ScriptComponentProxyMethodInfo[fields.Length];
-            for (int i = 0; i < fields.Length; i++)
-            {
+            for (int i = 0; i < fields.Length; i++){
                 var fieldInfo = fields[i];
                 var methodInfo = fieldInfo.FieldType.GetMethod("Invoke");
                 var parameters = methodInfo.GetParameters();
@@ -424,8 +365,7 @@ namespace Klawr.ClrHost.Managed
                 info.Name = fieldInfo.Name;
                 info.DelegateType = fieldInfo.FieldType;
                 info.ParameterTypes = new Type[parameters.Length];
-                for (int j = 0; j < parameters.Length; j++)
-                {
+                for (int j = 0; j < parameters.Length; j++){
                     info.ParameterTypes[j] = parameters[j].ParameterType;
                 }
                 info.BindToProxy = BuildProxyDelegateSetter(fieldInfo);
@@ -441,8 +381,7 @@ namespace Klawr.ClrHost.Managed
         /// </summary>
         /// <param name="field">The field whose value the delegate should set when invoked.</param>
         /// <returns>A delegate.</returns>
-        private SetProxyDelegateAction BuildProxyDelegateSetter(FieldInfo field)
-        {
+        private SetProxyDelegateAction BuildProxyDelegateSetter(FieldInfo field){
             var proxyExpr = Expression.Parameter(typeof(ScriptComponentProxy).MakeByRefType());
             var valueExpr = Expression.Parameter(typeof(Delegate), "value");
             var lambdaExpr = Expression.Lambda<SetProxyDelegateAction>(
@@ -455,21 +394,19 @@ namespace Klawr.ClrHost.Managed
             return lambdaExpr.Compile();
         }
 
-        public string[] GetScriptComponentTypes()
-        {
+        public string[] GetScriptComponentTypes(){
             // this type is defined in the UE4 wrappers assembly
             var scriptComponentType = FindTypeByName($"{GlobalStrings.KlawrUnrealEngineNamespace}.UKlawrScriptComponent");
-            if (scriptComponentType == null)
-            {
-                return new string[] { };
+            if (scriptComponentType == null){
+                return new string[]{};
             }
 
             return AppDomain.CurrentDomain.GetAssemblies()
-                .Where(assembly => !assembly.IsDynamic)
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => t.IsSubclassOf(scriptComponentType))
-                .Select(t => t.FullName)
-                .ToArray();
+                            .Where(assembly => !assembly.IsDynamic)
+                            .SelectMany(assembly => assembly.GetTypes())
+                            .Where(t => t.IsSubclassOf(scriptComponentType))
+                            .Select(t => t.FullName)
+                            .ToArray();
         }
     }
 }
