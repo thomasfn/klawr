@@ -121,7 +121,7 @@ namespace Klawr.ClrHost.Managed
             CacheScriptComponentProxyInfo();
 
             var wrapperAssembly = new AssemblyName();
-            wrapperAssembly.Name = "Klawr.UnrealEngine";
+            wrapperAssembly.Name = GlobalStrings.KlawrUnrealEngineNamespace;
             Assembly.Load(wrapperAssembly);
         }
 
@@ -458,7 +458,7 @@ namespace Klawr.ClrHost.Managed
         public string[] GetScriptComponentTypes()
         {
             // this type is defined in the UE4 wrappers assembly
-            var scriptComponentType = FindTypeByName("Klawr.UnrealEngine.UKlawrScriptComponent");
+            var scriptComponentType = FindTypeByName($"{GlobalStrings.KlawrUnrealEngineNamespace}.UKlawrScriptComponent");
             if (scriptComponentType == null)
             {
                 return new string[] { };

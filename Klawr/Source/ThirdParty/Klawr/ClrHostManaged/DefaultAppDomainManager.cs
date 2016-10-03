@@ -51,7 +51,7 @@ namespace Klawr.ClrHost.Managed
             {
                 AppDomainManagerAssembly = "Klawr.ClrHost.Managed",
                 AppDomainManagerType = "Klawr.ClrHost.Managed.EngineAppDomainManager",
-                ApplicationName = "Klawr.UnrealEngine",
+                ApplicationName = $"{GlobalStrings.KlawrUnrealEngineNamespace}",
                 ApplicationBase = (
                     String.IsNullOrEmpty(applicationBase) ? 
                     currentSetup.ApplicationBase : applicationBase
