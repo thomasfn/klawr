@@ -25,7 +25,7 @@ Check the [Wiki](https://github.com/enlight/klawr/wiki) for additional details.
 Prerequisites
 =============
 - Windows 7 or later
-- Unreal Engine 4.10 or later (you'll need the source from GitHub)
+- Unreal Engine 4.13 or later (you'll need the source from GitHub)
 - Visual Studio 2015
 - .NET Framework 4.5.2 or later
 
@@ -69,24 +69,6 @@ create the necessary directory junctions.
 Now everything should be in the right place, from here on any paths are relative to the UE4 source
 checkout.
 
-Customizing the Unreal Header Tool
-----------------------------------
-To ensure that the Klawr code generator plugin is built before UHT is executed you'll need to
-modify `Engine/Source/Programs/UnrealHeaderTool/UnrealHeaderTool.Target.cs` in the engine source.
-A patch file (`UnrealHeaderToolPatch.diff`) with the relevant one-line change is provided in this
-repository. However, since it is a one-liner you may find it quicker to make the change by hand,
-all you have to do is replace the following line in `UnrealHeaderTool.Target.cs`
-
-``` cpp
-AdditionalPlugins.Add("ScriptGeneratorPlugin");
-```
-
-with
-
-``` cpp
-AdditionalPlugins.Add("KlawrCodeGeneratorPlugin");
-```
-
 Libraries
 ---------
 1. Open `Engine\Source\ThirdParty\Klawr\Klawr.ClrHost.sln` in VS2015.
@@ -96,31 +78,19 @@ Libraries
 
 Assuming that the build finished with no errors you can move on to phase two.
 
-Plugins
+Custom configuration (Optionally)
 -------
-1. Configure UHT to use the Klawr code generator plugin, to do so add/edit the `Plugins` section in
-   `Engine\Programs\UnrealHeaderTool\Saved\Config\Windows\Engine.ini` (if the file doesn't exist,
-   create it):
+1. Optionaly Configure Klawr code generator plugin to include and exclude modules or files from beeing processed.
+   You will find the config file at "Engine/Plugins/Klawr/Klawr/Resources/Config.ini".
+   This is how this file might look like.
    
-    ```
-    [Plugins]
-    ProgramEnabledPlugins=KlawrCodeGeneratorPlugin
+    [Config]
     ScriptExcludedModules=ScriptPlugin
     ScriptExcludedModules=ScriptEditorPlugin
     ScriptExcludedModules=ScriptGeneratorPlugin
     ScriptExcludedModules=KlawrRuntimePlugin
     ScriptSupportedModules=CoreUObject
     ScriptSupportedModules=Engine
-    ```
-2. Run `GenerateProjectFiles.bat` in your UE4 source checkout.
-3. Open `UE4.sln` in VS2015.
-4. Set the `Solution Configuration` to `Debug Editor` or `Development Editor`.
-5. Set the `Solution Platform` to `Win64` (this is very important, Win32 builds are not supported yet).
-6. Select `Build Solution` to build everything.
-
-During the build you may see a bunch of console windows popup briefly, don't panic, this is just
-the Klawr code generator plugin building the UE4 C# wrappers assembly. The wrappers assembly can be
-rebuilt manually by running `Engine\Intermediate\ProjectFiles\Klawr\Build.bat` from the console.
 
 Using
 =====
