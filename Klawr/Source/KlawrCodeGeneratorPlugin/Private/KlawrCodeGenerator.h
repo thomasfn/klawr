@@ -36,16 +36,9 @@ class FCodeFormatter;
 class FCodeGenerator
 {
 public:
-	FCodeGenerator(
-		const FString& InRootLocalPath, const FString& InRootBuildPath, 
-		const FString& InOutputDirectory, const FString& InIncludeBase
-	);
+	FCodeGenerator(const FString& InRootLocalPath, const FString& InRootBuildPath, const FString& InOutputDirectory, const FString& InIncludeBase);
 
-	void ExportClass(
-		UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename,
-		bool bHasChanged
-	);
-
+    void ExportClass(UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename, bool bHasChanged);
 	void FinishExport();
 
 	static FString GetPropertyCPPType(const UProperty* Property);
@@ -56,6 +49,29 @@ public:
     inline static FString const & GetConfigFilePath() {
         static auto const path = FPaths::ConvertRelativePathToFull(FPaths::EnginePluginsDir() / TEXT("Klawr/Klawr/Resources/Config.ini"));
         return path;
+    }
+
+    struct FConfig {
+        TArray<FString> Excluded;
+        TArray<FString> SupportedModules;
+        TArray<FString> ExcludedModules;
+        FString WrapperProjectTemplatePath;
+        FString WrapperProjectCopyPath;
+
+        FConfig() {
+            WrapperProjectTemplatePath = FPaths::ConvertRelativePathToFull(FPaths::EnginePluginsDir() / TEXT("Klawr/Klawr/Resources/WrapperProjectTemplate"));
+            WrapperProjectCopyPath = FPaths::ConvertRelativePathToFull(FPaths::EnginePluginsDir() / TEXT("Klawr/Klawr/Project"));
+
+            auto configFile = GetConfigFilePath();
+            GConfig->GetArray(TEXT("Config"), TEXT("ScriptExcludedNames"), Excluded, configFile);
+            GConfig->GetArray(TEXT("Config"), TEXT("ScriptSupportedModules"), SupportedModules, configFile);
+            GConfig->GetArray(TEXT("Config"), TEXT("ScriptExcludedModules"), ExcludedModules, configFile);
+        }
+    };
+
+    inline static FConfig const & GetConig() {
+        static FConfig config;
+        return config;
     }
 
 private:

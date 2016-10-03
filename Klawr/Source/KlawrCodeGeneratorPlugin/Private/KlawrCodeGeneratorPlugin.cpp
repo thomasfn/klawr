@@ -56,17 +56,7 @@ namespace Klawr {
             bool bCanExport = (ModuleType == EBuildModuleType::EngineRuntime || ModuleType == EBuildModuleType::GameRuntime);
             if(bCanExport) {
                 // only export functions from selected modules
-                static struct FConfig {
-                    TArray<FString> SupportedModules;
-                    TArray<FString> ExcludedModules;
-
-                    FConfig() {
-                        auto configFile = FCodeGenerator::GetConfigFilePath();
-                        GConfig->GetArray(TEXT("Config"), TEXT("ScriptSupportedModules"), SupportedModules, configFile);
-                        GConfig->GetArray(TEXT("Config"), TEXT("ScriptExcludedModules"), ExcludedModules, configFile);
-                    }
-                } config;
-
+                auto config = FCodeGenerator::GetConig();
                 bCanExport = !config.ExcludedModules.Contains(ModuleName)
                         && ((config.SupportedModules.Num() == 0) || config.SupportedModules.Contains(ModuleName));
             }

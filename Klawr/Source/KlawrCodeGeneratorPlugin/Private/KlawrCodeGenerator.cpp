@@ -278,14 +278,7 @@ void FCodeGenerator::ExportClass(UClass* Class, const FString& SourceHeaderFilen
 		return;
 	}
 
-    static struct FConfig {
-        TArray<FString> Excluded;
-
-        FConfig() {
-            auto configFile = GetConfigFilePath();
-            GConfig->GetArray(TEXT("Config"), TEXT("ScriptExcludedNames"), Excluded, configFile);
-        }
-    } config;
+    auto config = GetConig();
 
     if(config.Excluded.Contains(FPaths::GetCleanFilename(SourceHeaderFilename))) {
         return;
@@ -410,10 +403,11 @@ void FCodeGenerator::ExportClass(UClass* Class, const FString& SourceHeaderFilen
 	WriteToFile(managedGlueFilename, managedGlueCode.Content);
 }
 
-bool FCodeGenerator::GenerateManagedWrapperProject()
-{
-    const FString resourcesBasePath = FPaths::ConvertRelativePathToFull(FPaths::EnginePluginsDir() / TEXT("Klawr/Klawr/Resources/WrapperProjectTemplate"));
-	const FString projectBasePath = FPaths::ConvertRelativePathToFull(FPaths::GameDir() / TEXT("Klawr"));
+bool FCodeGenerator::GenerateManagedWrapperProject(){
+    auto config = GetConig();
+
+    const FString resourcesBasePath = config.WrapperProjectTemplatePath;
+	const FString projectBasePath = config.WrapperProjectCopyPath;
 
     UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Start generating wrapper project! From: %s To: %s"), *resourcesBasePath, *projectBasePath);
 	IPlatformFile& platformFile = FPlatformFileManager::Get().GetPlatformFile();
@@ -508,20 +502,19 @@ bool FCodeGenerator::GenerateManagedWrapperProject()
 void FCodeGenerator::BuildManagedWrapperProject()
 {
     UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Start building wrapper project"));
+    auto config = GetConig();
 
-    FString buildFilename = FPaths::EngineIntermediateDir() / TEXT("ProjectFiles/Klawr/Build.bat");
+    FString buildFilename = config.WrapperProjectCopyPath / TEXT("Build.bat");
 	FPaths::CollapseRelativeDirectories(buildFilename);
 	FPaths::MakePlatformFilename(buildFilename);
 	int32 returnCode = 0;
 	FString stdOut;
 	FString stdError;
 
-	FPlatformProcess::ExecProcess(
-		*buildFilename, TEXT(""), &returnCode, &stdOut, &stdError
-	);
+	FPlatformProcess::ExecProcess(*buildFilename, TEXT(""), &returnCode, &stdOut, &stdError);
 
 	if (returnCode != 0){
-        UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Failed to build Klawr.UnrealEngine assembly!"));
+        UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Failed to build Klawr.UnrealEngine assembly! STDOUT: %s STDERROR: %s ERRORCODE: %d"), *stdOut, *stdError, returnCode);
         return;
 	}
 
