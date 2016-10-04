@@ -53,3 +53,4 @@ Engine/Source/ThirdParty/Klawr/.vs/
 *.opendb
 obj
 *.idb
+/Klawr/Project

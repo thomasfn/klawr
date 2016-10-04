@@ -59,9 +59,7 @@ public: // UActorComponent interface
 	virtual void InitializeComponent() override;
 	
 	/** Update the state of the component. */
-	virtual void TickComponent(
-		float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction
-	) override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
 	void CreateScriptComponentProxy();

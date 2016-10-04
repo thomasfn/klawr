@@ -42,7 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="KlawrScriptComponent.cs" />
+    <Compile Include="UKlawrScriptComponent.cs" />
     <Compile Include="TestActor.cs" />
     <Compile Include="TestComponent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

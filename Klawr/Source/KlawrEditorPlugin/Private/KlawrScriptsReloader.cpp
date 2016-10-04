@@ -27,8 +27,30 @@
 #include "KlawrGameProjectBuilder.h"
 #include "DirectoryWatcherModule.h"
 #include "IKlawrRuntimePlugin.h"
-
+//#include "UnrealEd.h"
+//#include "GlobalEditorNotification.h"
+//
 namespace Klawr {
+//
+///** Notification class for asynchronous shader compiling. */
+//class FRelodedNotificationImpl : public FGlobalEditorNotification {
+//protected:
+//    /** FGlobalEditorNotification interface */
+//    virtual bool ShouldShowNotification(const bool bIsNotificationAlreadyActive) const override {
+//        return (bIsNotificationAlreadyActive);
+//    }
+//
+//    virtual void SetNotificationText(const TSharedPtr<SNotificationItem>& InNotificationItem) const override {
+////            FFormatNamedArguments Args;
+////            Args.Add(TEXT("ShaderJobs"), FText::AsNumber(GShaderCompilingManager->GetNumRemainingJobs()));
+////            const FText ProgressMessage = FText::Format(NSLOCTEXT("ShaderCompile", "ShaderCompileInProgressFormat", "Compiling Shaders ({ShaderJobs})"), Args);
+//
+//        InNotificationItem->SetText(TEXT("C# Scripts reloaded!"));
+//    }
+//};
+//
+///** Global notification object. */
+//FRelodedNotificationImpl NotificationObject;
 
 FScriptsReloader* FScriptsReloader::Singleton = nullptr;
 
@@ -230,6 +252,7 @@ bool FScriptsReloader::ReloadScripts()
 			return false;
 		}
 	}
+
 	return true;
 }
 

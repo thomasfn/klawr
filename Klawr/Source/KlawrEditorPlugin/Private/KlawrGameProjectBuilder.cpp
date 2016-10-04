@@ -147,9 +147,7 @@ bool FGameProjectBuilder::GenerateProject()
 
 	for (const FString& SourceFilename : SourceFiles)
 	{
-		FGameProjectBuilderInternal::AddSourceFileToProject(
-			Project.ToSharedRef(), SourceFilename, SourceDirs
-		);
+		FGameProjectBuilderInternal::AddSourceFileToProject(Project.ToSharedRef(), SourceFilename, SourceDirs);
 	}
 
 	return Project->SaveAs(ProjectFilename);
