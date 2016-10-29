@@ -42,14 +42,8 @@ const FName FCodeGenerator::Name_Color("Color");
 
 const FString FCodeGenerator::ClrHostManagedAssemblyName = TEXT("Klawr.ClrHost.Managed");
 
-FCodeGenerator::FCodeGenerator(
-	const FString& InRootLocalPath, const FString& InRootBuildPath, 
-	const FString& InOutputDirectory, const FString& InIncludeBase
-)
-	: GeneratedCodePath(InOutputDirectory)
-	, RootLocalPath(InRootLocalPath)
-	, RootBuildPath(InRootBuildPath)
-	, IncludeBase(InIncludeBase)
+FCodeGenerator::FCodeGenerator(const FString& InRootLocalPath, const FString& InRootBuildPath, const FString& InOutputDirectory, const FString& InIncludeBase)
+	: GeneratedCodePath(InOutputDirectory), RootLocalPath(InRootLocalPath), RootBuildPath(InRootBuildPath), IncludeBase(InIncludeBase)
 {
 	 
 }

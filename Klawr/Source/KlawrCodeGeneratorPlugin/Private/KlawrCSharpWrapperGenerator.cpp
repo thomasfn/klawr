@@ -35,19 +35,11 @@ const FString FCSharpWrapperGenerator::UnmanagedFunctionPointerAttribute =
 #else
 	TEXT("[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]");
 #endif // UNICODE
-
-const FString FCSharpWrapperGenerator::MarshalReturnedBoolAsUint8Attribute =
-	TEXT("[return: MarshalAs(UnmanagedType.U1)]");
-
-const FString FCSharpWrapperGenerator::MarshalBoolParameterAsUint8Attribute =
-	TEXT("[MarshalAs(UnmanagedType.U1)]");
-
+const FString FCSharpWrapperGenerator::MarshalReturnedBoolAsUint8Attribute = TEXT("[return: MarshalAs(UnmanagedType.U1)]");
+const FString FCSharpWrapperGenerator::MarshalBoolParameterAsUint8Attribute = 	TEXT("[MarshalAs(UnmanagedType.U1)]");
 const FString FCSharpWrapperGenerator::NativeThisPointer = TEXT("(UObjectHandle)this");
 
-FCSharpWrapperGenerator::FCSharpWrapperGenerator(
-	const UClass* Class, const UClass* InWrapperSuperClass, FCodeFormatter& CodeFormatter)
-	: WrapperSuperClass(InWrapperSuperClass)
-	, GeneratedGlue(CodeFormatter)
+FCSharpWrapperGenerator::FCSharpWrapperGenerator(const UClass* Class, const UClass* InWrapperSuperClass, FCodeFormatter& CodeFormatter) : WrapperSuperClass(InWrapperSuperClass), GeneratedGlue(CodeFormatter)
 {
 	Class->GetName(FriendlyClassName);
 	NativeClassName = FString::Printf(TEXT("%s%s"), Class->GetPrefixCPP(), *FriendlyClassName);
@@ -55,19 +47,17 @@ FCSharpWrapperGenerator::FCSharpWrapperGenerator(
 	bShouldGenerateScriptObjectClass = ShouldGenerateScriptObjectClass(Class);
 }
 
-const UClass* FCSharpWrapperGenerator::GetWrapperSuperClass(
-	const UClass* Class, const TArray<const UClass*>& ExportedClasses
-)
+const UClass* FCSharpWrapperGenerator::GetWrapperSuperClass(const UClass* Class, const TArray<const UClass*>& ExportedClasses)
 {
 	// mirror the inheritance in the managed wrapper class while skipping base classes that haven't
 	// been exported (this may change in the future)
 	UClass* superClass = nullptr;
-	// find the top-most exported ancestor in the inheritance hierarchy
 	for (UClass* currentAncestor = Class->GetSuperClass(); currentAncestor;)
 	{
 		if (ExportedClasses.Contains(currentAncestor))
 		{
 			superClass = currentAncestor;
+            break;
 		}
 		currentAncestor = currentAncestor->GetSuperClass();
 	}
