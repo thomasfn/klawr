@@ -298,12 +298,12 @@ bool FGameProjectBuilder::BuildProject(FFeedbackContext* Warn)
 	}
 
 	FString EnvironmentSetupFilename;
-	if (!FPlatformMisc::GetVSComnTools(12 /* VS 2013 */, EnvironmentSetupFilename))
+	if (!FPlatformMisc::GetVSComnTools(15 /* VS 2017 */, EnvironmentSetupFilename))
 	{
 		// TODO: log error
 		return false;
 	}
-	EnvironmentSetupFilename /= TEXT("../../VC/bin/x86_amd64/vcvarsx86_amd64.bat");
+	EnvironmentSetupFilename /= TEXT("../../VC/Auxiliary/Build/vcvarsx86_amd64.bat");
 	FPaths::CollapseRelativeDirectories(EnvironmentSetupFilename);
 	FPaths::MakePlatformFilename(EnvironmentSetupFilename);
 

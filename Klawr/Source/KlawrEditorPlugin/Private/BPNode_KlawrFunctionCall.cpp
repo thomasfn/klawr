@@ -464,6 +464,13 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 	UK2Node_CallFunction* CallFunction = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
 	UFunction* function = UKlawrScriptComponent::StaticClass()->FindFunctionByName(*RawFunctionName);
 
+	if (function == NULL)
+	{
+		UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Function Name %s not found!"), *(RawFunctionName));
+		BreakAllNodeLinks();
+		return;
+	}
+
 	CallFunction->SetFromFunction(function);
 	CallFunction->AllocateDefaultPins();
 
