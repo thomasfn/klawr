@@ -31,7 +31,7 @@
 #pragma comment(lib, "mscoree.lib")
 
 namespace {
-
+	 
 SAFEARRAY* CreateSafeArrayOfWrapperFunctions(void** wrapperFunctions, int numFunctions)
 {
 	SAFEARRAY* safeArray = SafeArrayCreateVector(VT_I8, 0, numFunctions);
@@ -57,7 +57,7 @@ SAFEARRAY* CreateSafeArrayOfWrapperFunctions(void** wrapperFunctions, int numFun
  * This only works if TSafeArrayElement can be implicitly converted to TVectorElement.
  */
 template<typename TSafeArrayElement, typename TVectorElement>
-void SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
+void __cdecl SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
 {
 	LONG lowerBound, upperBound;
 	HRESULT hr = SafeArrayGetLBound(input, 1, &lowerBound);
@@ -86,7 +86,57 @@ void SafeArrayToVector(SAFEARRAY* input, std::vector<TVectorElement>& output)
 	}
 }
 
+
+template <class vectorType, VARTYPE safeArrayType>
+void CreateSafeArray
+(
+	vectorType* lpT,
+	ULONG ulSize,
+	SAFEARRAY** ppSafeArrayReceiver
+	)
+{
+	if ((lpT == NULL) || (ppSafeArrayReceiver == NULL))
+	{
+		// lpT and ppSafeArrayReceiver each cannot be NULL.
+		return;
+	}
+
+	HRESULT hrRetTemp = S_OK;
+	SAFEARRAYBOUND rgsabound[1];
+	ULONG	ulIndex = 0;
+	long lRet = 0;
+
+	// Initialise receiver.
+	*ppSafeArrayReceiver = NULL;
+
+	rgsabound[0].lLbound = 0;
+	rgsabound[0].cElements = ulSize;
+
+	*ppSafeArrayReceiver = (SAFEARRAY*)SafeArrayCreate
+		(
+			(VARTYPE)safeArrayType,
+			(unsigned int)1,
+			(SAFEARRAYBOUND*)rgsabound
+			);
+
+	for (ulIndex = 0; ulIndex < ulSize; ulIndex++)
+	{
+		long lIndexVector[1];
+
+		lIndexVector[0] = ulIndex;
+
+		SafeArrayPutElement
+			(
+				(SAFEARRAY*)(*ppSafeArrayReceiver),
+				(long*)lIndexVector,
+				(void*)(&(lpT[ulIndex]))
+				);
+	}
+
+	return;
+}
 } // unnamed namespace
+
 
 namespace Klawr {
 
@@ -114,7 +164,7 @@ struct ProxySizeChecks
 
 };
 
-bool ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScriptsAssemblyName)
+bool __cdecl ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScriptsAssemblyName)
 {
 	_COM_SMARTPTR_TYPEDEF(ICLRMetaHost, IID_ICLRMetaHost);
 	_COM_SMARTPTR_TYPEDEF(ICLRRuntimeInfo, IID_ICLRRuntimeInfo);
@@ -180,7 +230,7 @@ bool ClrHost::Startup(const TCHAR* engineAppDomainAppBase, const TCHAR* gameScri
 	return SUCCEEDED(hr);
 }
 
-void ClrHost::Shutdown()
+void __cdecl ClrHost::Shutdown()
 {
 	_hostControl->Shutdown();
 	
@@ -197,8 +247,7 @@ void ClrHost::Shutdown()
 		_hostControl = nullptr;
 	}
 }
-
-bool ClrHost::CreateEngineAppDomain(int& outAppDomainID)
+bool __cdecl ClrHost::CreateEngineAppDomain(int& outAppDomainID)
 {
 	outAppDomainID = _hostControl->GetDefaultAppDomainManager()->CreateEngineAppDomain(
 		_engineAppDomainAppBase.c_str()
@@ -206,7 +255,7 @@ bool ClrHost::CreateEngineAppDomain(int& outAppDomainID)
 	return _hostControl->GetEngineAppDomainManager(outAppDomainID) != nullptr;
 }
 
-bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtils)
+bool __cdecl ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtils)
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -252,12 +301,12 @@ bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtil
 	return appDomainManager != nullptr;
 }
 
-bool ClrHost::DestroyEngineAppDomain(int appDomainID)
+bool __cdecl ClrHost::DestroyEngineAppDomain(int appDomainID)
 {
 	return _hostControl->DestroyEngineAppDomain(appDomainID);
 }
 
-bool ClrHost::CreateScriptObject(
+bool __cdecl ClrHost::CreateScriptObject(
 	int appDomainID, const TCHAR* className, class UObject* owner, ScriptObjectInstanceInfo& info
 )
 {
@@ -273,7 +322,7 @@ bool ClrHost::CreateScriptObject(
 	);
 	if (created)
 	{
-		info.InstanceID = srcInfo.InstanceID;
+		info.InstanceID = srcInfo.instanceID;
 		info.BeginPlay = reinterpret_cast<ScriptObjectInstanceInfo::BeginPlayAction>(srcInfo.BeginPlay);
 		info.Tick = reinterpret_cast<ScriptObjectInstanceInfo::TickAction>(srcInfo.Tick);
 		info.Destroy = reinterpret_cast<ScriptObjectInstanceInfo::DestroyAction>(srcInfo.Destroy);
@@ -281,7 +330,7 @@ bool ClrHost::CreateScriptObject(
 	return created;
 }
 
-void ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
+void __cdecl ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -290,7 +339,7 @@ void ClrHost::DestroyScriptObject(int appDomainID, __int64 instanceID)
 	}
 }
 
-bool ClrHost::CreateScriptComponent(
+bool __cdecl ClrHost::CreateScriptComponent(
 	int appDomainID, const TCHAR* className, class UObject* nativeComponent, ScriptComponentProxy& proxy
 )
 {
@@ -306,7 +355,7 @@ bool ClrHost::CreateScriptComponent(
 	);
 }
 
-void ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
+void __cdecl ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -315,7 +364,7 @@ void ClrHost::DestroyScriptComponent(int appDomainID, __int64 instanceID)
 	}
 }
 
-void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const
+void __cdecl ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& types) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
@@ -326,6 +375,351 @@ void ClrHost::GetScriptComponentTypes(int appDomainID, std::vector<tstring>& typ
 			SafeArrayToVector<BSTR>(safeArray, types);
 		}
 	}
+}
+
+bool __cdecl ClrHost::GetScriptComponentPropertyIsAdvancedDisplay(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return (appDomainManager->GetScriptComponentPropertyIsAdvancedDisplay(typeName, propertyName) & 1) == 1;
+	}
+	return false;
+}
+
+bool __cdecl ClrHost::GetScriptComponentPropertyIsSaveGame(int appDomainID, const TCHAR* typeName, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return (appDomainManager->GetScriptComponentPropertyIsSaveGame(typeName, propertyName) & 1) == 1;
+	}
+	return false;
+}
+
+float __cdecl ClrHost::GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetFloat(instanceID, propertyName);
+	}
+	return 0.0f;
+}
+
+int __cdecl ClrHost::GetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetInt(instanceID, propertyName);
+	}
+	return 0;
+}
+
+bool __cdecl ClrHost::GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetBool(instanceID, propertyName) == 1;
+	}
+	return false;
+}
+
+const TCHAR* __cdecl ClrHost::GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetStr(instanceID, propertyName);
+	}
+	return TEXT("");
+}
+
+UObject* __cdecl ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return (UObject*)(appDomainManager->GetObj(instanceID, propertyName));
+	}
+	return NULL;
+}
+
+void __cdecl ClrHost::SetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, float value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetFloat(instanceID, propertyName, value);
+	}
+}
+
+void __cdecl ClrHost::SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int32 value) const
+{
+		auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+		if (appDomainManager)
+		{
+			appDomainManager->SetInt(instanceID, propertyName, value);
+		}
+}
+
+void __cdecl ClrHost::SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetBool(instanceID, propertyName, value);
+	}
+}
+
+void __cdecl ClrHost::SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetStr(instanceID, propertyName, value);
+	}
+}
+
+void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		appDomainManager->SetObj(instanceID, propertyName, (long long)value);
+	}
+}
+
+float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		return appDomainManager->CallCSFunctionFloat(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+	}
+	return 0.0f;
+}
+
+int __cdecl ClrHost::CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		return appDomainManager->CallCSFunctionInt(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+	}
+	return 0;
+}
+
+bool __cdecl ClrHost::CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		return appDomainManager->CallCSFunctionBool(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+	}
+
+	return false;
+}
+
+const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		return appDomainManager->CallCSFunctionString(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+	}
+
+	return NULL;
+}
+
+UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		UObject* ptr;
+		ptr = (UObject*)(appDomainManager->CallCSFunctionObject(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray));
+		return ptr;
+	}
+
+	return NULL;
+}
+
+void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* floatsArray = NULL;
+		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
+		SAFEARRAY* intsArray = NULL;
+		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
+		SAFEARRAY* boolsArray = NULL;
+		CreateSafeArrayBool(&bools, &boolsArray);
+		SAFEARRAY* stringsArray = NULL;
+		CreateSafeArrayString(&strings, &stringsArray);
+		SAFEARRAY* objectsArray = NULL;
+		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
+
+		appDomainManager->CallCSFunctionVoid(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+	}
+}
+
+const TCHAR* __cdecl ClrHost::GetAssemblyInfo(int appDomainID) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetAssemblyInfo();
+	}
+	return NULL;
+}
+
+void ClrHost::CreateSafeArrayBool(std::vector<bool>* bools, SAFEARRAY** boolsArray) const
+{
+	if (boolsArray == NULL)
+	{
+		// lpT and ppSafeArrayReceiver each cannot be NULL.
+		return;
+	}
+
+	HRESULT hrRetTemp = S_OK;
+	SAFEARRAYBOUND rgsabound[1];
+	ULONG	ulIndex = 0;
+	long lRet = 0;
+
+	// Initialise receiver.
+	*boolsArray = NULL;
+
+	rgsabound[0].lLbound = 0;
+	rgsabound[0].cElements = bools->size();
+
+	*boolsArray = (SAFEARRAY*)SafeArrayCreate
+		(
+			VT_BOOL,
+			(unsigned int)1,
+			(SAFEARRAYBOUND*)rgsabound
+			);
+
+	ulIndex = 0;
+	for (std::vector<bool>::iterator it = bools->begin(); it != bools->end(); it++)
+	{
+		long lIndexVector[1];
+
+		lIndexVector[0] = ulIndex;
+		bool temp = *it;
+		SafeArrayPutElement
+			(
+				(SAFEARRAY*)(*boolsArray),
+				(long*)lIndexVector,
+				(void*)(&(temp))
+				);
+		ulIndex++;
+	}
+
+	return;
+}
+
+void ClrHost::CreateSafeArrayString(std::vector<const TCHAR*>* strings, SAFEARRAY** stringsArray) const
+{
+	if (stringsArray == NULL)
+	{
+		// lpT and ppSafeArrayReceiver each cannot be NULL.
+		return;
+	}
+
+	HRESULT hrRetTemp = S_OK;
+	SAFEARRAYBOUND rgsabound[1];
+	ULONG	ulIndex = 0;
+	long lRet = 0;
+
+	// Initialise receiver.
+	*stringsArray = NULL;
+
+	rgsabound[0].lLbound = 0;
+	rgsabound[0].cElements = strings->size();
+
+	*stringsArray = (SAFEARRAY*)SafeArrayCreate
+		(
+			VT_BSTR,
+			(unsigned int)1,
+			(SAFEARRAYBOUND*)rgsabound
+			);
+
+	ulIndex = 0;
+	for (std::vector<const TCHAR*>::iterator it = strings->begin(); it != strings->end(); it++)
+	{
+		long lIndexVector[1];
+
+		lIndexVector[0] = ulIndex;
+		BSTR temp = SysAllocString(*it);
+		SafeArrayPutElement
+			(
+				(SAFEARRAY*)(*stringsArray),
+				(long*)lIndexVector,
+				(void*)(temp)
+				);
+		ulIndex++;
+	}
+
+	return;
 }
 
 } // namespace Klawr

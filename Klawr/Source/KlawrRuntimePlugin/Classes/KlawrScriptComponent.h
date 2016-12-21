@@ -33,7 +33,7 @@ namespace Klawr
 /**
  * A component whose functionality is implemented in C# or any other CLI language.
  */
-UCLASS(BlueprintType)
+UCLASS(Blueprintable, hidecategories = (Object, ActorComponent), editinlinenew, meta = (BlueprintSpawnableComponent), ClassGroup = Script, Abstract)
 class KLAWRRUNTIMEPLUGIN_API UKlawrScriptComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -61,10 +61,26 @@ public: // UActorComponent interface
 	/** Update the state of the component. */
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+
+	UFUNCTION(meta = (BlueprintInternalUseOnly="true"), BlueprintCallable, Category="Klawr")
+	virtual float CallCSFunctionFloat(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual int32 CallCSFunctionInt(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual bool CallCSFunctionBool(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual FString CallCSFunctionString(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual UObject* CallCSFunctionObject(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual void CallCSFunctionVoid(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+
+
 private:
 	void CreateScriptComponentProxy();
 	void DestroyScriptComponentProxy();
 
+	int appDomainId = 0;
 private:
 	// a proxy that represents the managed counterpart of this script component
 	Klawr::ScriptComponentProxy* Proxy;

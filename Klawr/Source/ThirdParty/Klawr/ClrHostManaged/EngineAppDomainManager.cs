@@ -30,6 +30,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using System.Runtime.InteropServices;
+using Klawr.ClrHost.Managed.Attributes;
+using Klawr.ClrHost.Managed.Wrappers;
+using Klawr.UnrealEngine;
+using System.IO;
+using System.Text;
 using NativClass = System.String;
 using InstanceId = System.Int64;
 
@@ -155,9 +161,9 @@ namespace Klawr.ClrHost.Managed{
 
         public void DestroyScriptObject(long scriptObjectInstanceID){
             var instance = UnregisterScriptObject(scriptObjectInstanceID);
-            instance?.Dispose();
+            instance.Dispose();
         }
-
+        
         /// <summary>
         /// Note that the identifier returned by this method is only unique amongst all ScriptObject 
         /// instances registered with this manager instance. The returned identifier can be used to 
@@ -192,10 +198,11 @@ namespace Klawr.ClrHost.Managed{
         /// </summary>
         /// <param name="scriptObjectInstanceID">ID of a registered IScriptObject instance.</param>
         /// <returns>The script object matching the given ID.</returns>
-        public IScriptObject UnregisterScriptObject(long scriptObjectInstanceID){
-            if (!_scriptObjects.TryGetValue(scriptObjectInstanceID, out ScriptObjectInfo info)) return null;
+        public IScriptObject UnregisterScriptObject(long scriptObjectInstanceID)
+        {
+            var instance = _scriptObjects[scriptObjectInstanceID].Instance;
             _scriptObjects.Remove(scriptObjectInstanceID);
-            return info.Instance;
+            return instance;
         }
 
         /// <summary>
@@ -208,12 +215,12 @@ namespace Klawr.ClrHost.Managed{
             Type objType = null;
             if (!_scriptObjectTypeCache.TryGetValue(typeName, out objType)){
                 objType = AppDomain.CurrentDomain.GetAssemblies()
-                                   .Where(assembly => !assembly.IsDynamic)
-                                   .SelectMany(assembly => assembly.GetTypes())
-                                   .FirstOrDefault(
-                                       t => t.FullName.Equals(typeName)
-                                            && t.GetInterfaces().Contains(typeof(IScriptObject))
-                                   );
+                    .Where(assembly => !assembly.IsDynamic)
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .FirstOrDefault(
+                        t => t.FullName.Equals(typeName) 
+                            && t.GetInterfaces().Contains(typeof(IScriptObject))
+                    );
 
                 if (objType != null){
                     // cache the result to speed up future searches
@@ -277,7 +284,7 @@ namespace Klawr.ClrHost.Managed{
 
         public void DestroyScriptComponent(long instanceID){
             var instance = UnregisterScriptComponent(instanceID);
-            instance?.Dispose();
+            instance.Dispose();
         }
 
         private void RegisterScriptComponent(long instanceID, IDisposable scriptComponent, ScriptComponentProxy proxy){
@@ -287,10 +294,11 @@ namespace Klawr.ClrHost.Managed{
             _scriptComponents.Add(instanceID, componentInfo);
         }
 
-        private IDisposable UnregisterScriptComponent(long instanceID){
-            if (!_scriptComponents.TryGetValue(instanceID, out ScriptComponentInfo info)) return null;
+        private IDisposable UnregisterScriptComponent(long instanceID)
+        {
+            var instance = _scriptComponents[instanceID].Instance;
             _scriptComponents.Remove(instanceID);
-            return info.Instance;
+            return instance;
         }
 
         /// <summary>
@@ -407,6 +415,747 @@ namespace Klawr.ClrHost.Managed{
                             .Where(t => t.IsSubclassOf(scriptComponentType))
                             .Select(t => t.FullName)
                             .ToArray();
+        }
+
+        public string[] GetScriptComponentPropertyNames(string componentName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+            return scriptComponentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()).Select(x => x.Name).ToArray();
+        }
+
+        public string[] GetScriptComponentPropertyMetadata(string componentName, string propertyName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+            PropertyInfo pi = scriptComponentType.GetProperty(propertyName);
+            if (pi == null)
+            {
+                LogUtils.LogError("Component " + componentName + " Property " + propertyName + " NOT FOUND!");
+                return new string[0];
+            }
+
+            // Don't inherit for Meta-Data
+            UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
+            if (upa != null)
+            {
+                return upa.GetMetas();
+            }
+            return new string[0];
+        }
+
+        public bool GetScriptComponentPropertyIsAdvancedDisplay(string componentName, string propertyName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return false;
+            }
+            PropertyInfo pi = scriptComponentType.GetProperty(propertyName);
+            if (pi == null)
+            {
+                LogUtils.LogError("Component " + componentName + " Property " + propertyName + " NOT FOUND!");
+                return false;
+            }
+
+            // Don't inherit for Meta-Data
+            UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
+            if (upa != null)
+            {
+                return upa.AdvancedDisplay;
+            }
+            return false;
+        }
+
+        public bool GetScriptComponentPropertyIsSaveGame(string componentName, string propertyName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return false;
+            }
+            PropertyInfo pi = scriptComponentType.GetProperty(propertyName);
+            if (pi == null)
+            {
+                LogUtils.LogError("Component " + componentName + " Property " + propertyName + " NOT FOUND!");
+                return false;
+            }
+
+            // Don't inherit for Meta-Data
+            UPROPERTYAttribute upa = pi.GetCustomAttribute<UPROPERTYAttribute>(false);
+            if (upa != null)
+            {
+                return upa.SaveGame;
+            }
+            return false;
+        }
+        public string[] GetScriptComponentFunctionNames(string componentName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+            return scriptComponentType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(function => function.GetCustomAttributes<UFUNCTIONAttribute>(true).Any()).Select(x => x.Name).ToArray();
+        }
+
+        public int GetScriptComponentFunctionReturnType(string componentName, string functionName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return -2;
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            if (mi.ReturnType == typeof(float))
+            { return 0; }
+            else if (mi.ReturnType == typeof(int))
+            { return 1; }
+            else if (mi.ReturnType == typeof(bool))
+            { return 2; }
+            else if (mi.ReturnType == typeof(string))
+            { return 3; }
+            else if (mi.ReturnType.IsSubclassOf(typeof(UObject)))
+            { return 4; }
+            // Unknown type??
+            return -1;
+        }
+
+        public string[] GetScriptComponentFunctionParameterNames(string componentName, string functionName)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return new string[0];
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            return mi.GetParameters().Select(x => x.Name).ToArray();
+        }
+
+        public int GetScriptComponentFunctionParameterType(string componentName, string functionName, int parameterCount)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return -2;
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            Type parameterType;
+            if (parameterCount == -1)
+            {
+                parameterType = mi.ReturnType;
+            }
+            else
+            {
+                parameterType = mi.GetParameters()[parameterCount].ParameterType;
+            }
+            if (parameterType == typeof(float))
+            { return 0; }
+            else if (parameterType == typeof(int))
+            { return 1; }
+            else if (parameterType == typeof(bool))
+            { return 2; }
+            else if (parameterType == typeof(string))
+            { return 3; }
+            else if (parameterType.IsSubclassOf(typeof(UObject)))
+            { return 4; }
+            else if (parameterType == typeof(void))
+            { return 5; }
+            return -1;
+        }
+
+        public string GetScriptComponentFunctionParameterTypeObjectClass(string componentName, string functionName, int parameterCount)
+        {
+            var scriptComponentType = FindTypeByName(componentName);
+            if (scriptComponentType == null)
+            {
+                LogUtils.LogError("Component " + componentName + " NOT FOUND!");
+                return "";
+            }
+
+            MethodInfo mi = scriptComponentType.GetMethod(functionName);
+            Type parameterType = mi.GetParameters()[parameterCount].ParameterType;
+
+            bool removeFirstChar = parameterType.GetCustomAttribute<ConvertClassNameAttribute>() != null;
+            if (removeFirstChar)
+            {
+                return parameterType.Name.Substring(1);
+            }
+            return parameterType.Name;
+        }
+
+        public int GetScriptComponentPropertyType(string componentName, string propertyName)
+        {
+            PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
+            if (pi.PropertyType == typeof(float))
+            { return 0; }
+            else if (pi.PropertyType == typeof(int))
+            { return 1; }
+            else if (pi.PropertyType == typeof(bool))
+            { return 2; }
+            else if (pi.PropertyType == typeof(string))
+            { return 3; }
+            else if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
+            { return 4; }
+
+            // Unknown type??
+            return -1;
+        }
+
+
+        public string GetScriptComponentPropertyClassType(string componentName, string propertyName)
+        {
+            PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
+            if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
+            {
+                Type tp = pi.PropertyType;
+                bool removeFirstChar = pi.PropertyType.GetCustomAttribute<ConvertClassNameAttribute>() != null;
+                if (removeFirstChar)
+                {
+                    return tp.Name.Substring(1);
+                }
+                return tp.Name;
+            }
+            return "";
+        }
+
+        public void SetFloat(long instanceID, string propertyName, float value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetInt(long instanceID, string propertyName, int value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetBool(long instanceID, string propertyName, bool value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetStr(long instanceID, string propertyName, string value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public void SetObj(long instanceID, string propertyName, IntPtr value)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            var nativeObject = new UObjectHandle(value, false);
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            Type propType = pi.PropertyType;
+            var constructor = propType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+            var idisp = constructor.Invoke(new object[] { nativeObject });
+            pi.SetValue(_scriptComponents[instanceID].Instance, idisp);
+        }
+
+        public float GetFloat(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (float)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public int GetInt(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (int)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public bool GetBool(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (bool)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public string GetStr(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            return (string)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+        }
+
+        public IntPtr GetObj(long instanceID, string propertyName)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            Type propType = pi.PropertyType;
+            UObject uobject = (UObject)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            if (uobject == null)
+            {
+                return IntPtr.Zero;
+            }
+            return uobject.NativeObject.Handle;
+        }
+
+        public float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            int cObjects = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+                    }
+                }
+
+                return (float)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+            return 0.0f;
+        }
+        public int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            int cObjects = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+
+                    }
+                }
+
+                return (int)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+            return 0;
+        }
+        public bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            int cObjects = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+
+                    }
+                }
+
+                return (bool)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+            return false;
+        }
+        public string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            int cObjects = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+
+                    }
+                }
+
+                return (string)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+            return "";
+        }
+        public IntPtr CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            int cObjects = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+                    }
+                }
+
+                return ((UObject)(mi.Invoke(_scriptComponents[instanceID].Instance, parameters))).NativeObject.Handle;
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+            return IntPtr.Zero;
+        }
+
+        public void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        {
+            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
+            MethodInfo mi = instanceType.GetMethod(functionName);
+            int cFloats = 0;
+            int cInts = 0;
+            int cBools = 0;
+            int cStrings = 0;
+            int cObjects = 0;
+            try
+            {
+                object[] parameters = new object[mi.GetParameters().Length];
+                for (int i = 0; i < mi.GetParameters().Length; i++)
+                {
+                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
+                    switch (paramType)
+                    {
+                        case 0: parameters[i] = floats[cFloats++]; break;
+                        case 1: parameters[i] = ints[cInts++]; break;
+                        case 2: parameters[i] = bools[cBools++]; break;
+                        case 3: parameters[i] = strings[cStrings++]; break;
+                        case 4:
+                            if (objects[cObjects] != IntPtr.Zero)
+                            {
+                                Type parameterType = mi.GetParameters()[i].ParameterType;
+                                var nativeObject = new UObjectHandle(objects[cObjects], false);
+                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                                var idisp = constructor.Invoke(new object[] { nativeObject });
+                                parameters[i] = idisp;
+                            }
+                            else
+                            {
+                                parameters[i] = null;
+                            }
+                            cObjects++;
+                            break;
+                    }
+                }
+
+                mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+            }
+            catch (Exception ee)
+            {
+                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+            }
+        }
+
+        private string Quoted(string str)
+        {
+            return "\"" + str + "\"";
+        }
+
+        public string GetAssemblyInfo()
+        {
+            // this type is defined in the UE4 wrappers assembly
+            var scriptComponentType = FindTypeByName("Klawr.UnrealEngine.UKlawrScriptComponent");
+            if (scriptComponentType == null)
+            {
+                return "";
+            }
+            StringBuilder result = new StringBuilder();
+            try
+            {
+                result.Append("{ " + Quoted("classInfos") + ": [ ");
+                bool firstClass = true;
+                foreach (var componentTypeName in AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(assembly => !assembly.IsDynamic)
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(t => t.IsSubclassOf(scriptComponentType))
+                    .Select(t => t.FullName))
+                {
+                    Type componentType = FindTypeByName(componentTypeName);
+                    if (!firstClass)
+                    {
+                        result.Append(",");
+                    }
+                    firstClass = false;
+                    result.Append("{" + Quoted("name") + ": " + Quoted(componentType.FullName) + "," + Quoted("methodInfos") + ": [ ");
+                    // Get method infos
+                    bool first = true;
+                    foreach (MethodInfo methodInfo in componentType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(function => function.GetCustomAttributes<UFUNCTIONAttribute>(true).Any()))
+                    {
+                        if (!first)
+                        {
+                            result.Append(",");
+                        }
+                        first = false;
+                        result.Append("{" + Quoted("name") + ": " + Quoted(methodInfo.Name) + "," + Quoted("returnType") + ": " + TranslateReturnType(methodInfo.ReturnType) + ",");
+                        result.Append(Quoted("className") + ":" + Quoted(GetClassName(methodInfo.ReturnType)) + ",");
+                        result.Append(Quoted("parameters") + ": [");
+                        bool firstParam = true;
+                        foreach (ParameterInfo parameterInfo in methodInfo.GetParameters())
+                        {
+                            if (!firstParam)
+                            {
+                                result.Append(",");
+                            }
+                            firstParam = false;
+                            result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
+                            result.Append(Quoted(GetClassName(parameterInfo.ParameterType)) + "," + Quoted("metaData") + ":[]");
+                            result.Append("}");
+                        }
+
+                        result.Append("],");
+                        result.Append(Quoted("metaData") + ":[");
+                        bool firstMeta = true;
+                        // Can not be NULL
+                        UFUNCTIONAttribute ufa = (UFUNCTIONAttribute)methodInfo.GetCustomAttribute(typeof(UFUNCTIONAttribute));
+                        string[] tempMetas = ufa.GetMetas();
+                        for (int i = 0; i < tempMetas.Length; i += 2)
+                        {
+                            if (!firstMeta)
+                            {
+                                result.Append(",");
+                            }
+                            firstMeta = false;
+                            result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
+                            result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
+                        }
+                        result.Append("]");
+                        result.Append("}");
+                    }
+
+                    result.Append("]," + Quoted("propertyInfos") + ": [");
+                    bool firstProperty = true;
+                    // Get property infos
+                    foreach (PropertyInfo propertyInfo in componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()))
+                    {
+                        if (!firstProperty)
+                        {
+                            result.Append(",");
+                        }
+                        firstProperty = false;
+                        result.Append("{" + Quoted("name") + ": " + Quoted(propertyInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(propertyInfo.PropertyType) + "," + Quoted("className") + ":");
+
+                        result.Append(Quoted(GetClassName(propertyInfo.PropertyType)) + ",");
+                        result.Append(Quoted("metaData") + ":[");
+                        bool firstMeta = true;
+                        UPROPERTYAttribute upa = propertyInfo.GetCustomAttribute<UPROPERTYAttribute>();
+                        string[] tempMetas = upa.GetMetas();
+                        for (int i = 0; i < tempMetas.Length; i += 2)
+                        {
+                            if (!firstMeta)
+                            {
+                                result.Append(",");
+                            }
+                            firstMeta = false;
+                            result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
+                            result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
+                        }
+                        result.Append("]");
+
+                        result.Append("}");
+                    }
+                    result.Append("]}");
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Append(ex.StackTrace + " " + ex.Message);
+            }
+            result.Append("]}");
+
+            return result.ToString();
+        }
+
+        private string GetClassName(Type type)
+        {
+            string typeName = "";
+            if ((type == typeof(UObject)) || (type.IsSubclassOf(typeof(UObject))))
+            {
+                typeName = type.Name;
+                if (type.GetCustomAttribute<ConvertClassNameAttribute>() != null)
+                {
+                    typeName = typeName.Substring(1);
+                }
+            }
+            return typeName;
+        }
+
+        private int TranslateReturnType(Type inputType)
+        {
+            if (inputType == typeof(void))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeVoid;
+            }
+            else if (inputType == typeof(int))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeInt;
+            }
+            else if (inputType == typeof(float))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeFloat;
+            }
+            else if (inputType == typeof(bool))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeBool;
+            }
+            else if (inputType == typeof(string))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeString;
+            }
+            else if ((inputType == typeof(UObject)) || (inputType.IsSubclassOf(typeof(UObject))))
+            {
+                return (int)ParameterTypeTranslation.ParametertypeObject;
+            }
+
+            // Nothing of the above applied, return negative
+            return -1;
         }
     }
 }

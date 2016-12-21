@@ -27,6 +27,7 @@
 #include "KlawrBlueprint.h"
 #include "KlawrBlueprintGeneratedClass.h"
 #include "KlawrScriptComponent.h"
+#include "KlawrScriptsReloader.h"
 #include "IKlawrRuntimePlugin.h"
 #include "Widgets/SScriptTypeSelectionDialog.h"
 
@@ -78,6 +79,12 @@ UObject* UKlawrBlueprintFactory::FactoryCreateNew(
 	
 	FKismetEditorUtilities::CompileBlueprint(newBlueprint);
 	FEditorDelegates::OnAssetPostImport.Broadcast(this, newBlueprint);
+
+	// Disable and re-enable Scripts Reloader 
+	// Fixes issue when you add a blueprint for the first time
+	
+	Klawr::FScriptsReloader::Get().Disable();
+	Klawr::FScriptsReloader::Get().Enable();
 	return newBlueprint;
 }
 

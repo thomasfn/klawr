@@ -25,6 +25,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Klawr.ClrHost.Managed;
+using Klawr.UnrealEngine;
 
 namespace Klawr.ClrHost.Interfaces{
     /// <summary>
@@ -93,5 +94,36 @@ namespace Klawr.ClrHost.Interfaces{
         /// </summary>
         /// <returns>Script component type names.</returns>
         string[] GetScriptComponentTypes();
+    
+        bool GetScriptComponentPropertyIsAdvancedDisplay(string componentName, string propertyName);
+
+        bool GetScriptComponentPropertyIsSaveGame(string componentName, string propertyName);
+
+        void SetFloat(long instanceID, string propertyName, float value);
+        void SetInt(long instanceID, string propertyName, int value);
+        void SetBool(long instanceID, string propertyName, bool value);
+        void SetStr(long instanceID, string propertyName, string value);
+        void SetObj(long instanceID, string propertyName, IntPtr value);
+
+        float GetFloat(long instanceID, string propertyName);
+        int GetInt(long instanceID, string propertyName);
+        bool GetBool(long instanceID, string propertyName);
+        string GetStr(long instanceID, string propertyName);
+        IntPtr GetObj(long instanceID, string propertyName);
+
+        float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
+        int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
+        bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
+        string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
+        IntPtr CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
+        void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools,
+            string[] strings, IntPtr[] objects);
+
+        string GetAssemblyInfo();
     }
 }

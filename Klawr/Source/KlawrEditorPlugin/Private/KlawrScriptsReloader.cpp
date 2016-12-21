@@ -163,8 +163,14 @@ void FScriptsReloader::OnEndPIE(const bool bIsSimulating)
 
 void FScriptsReloader::Enable()
 {
-	FEditorDelegates::BeginPIE.AddRaw(this, &FScriptsReloader::OnBeginPIE);
-	FEditorDelegates::EndPIE.AddRaw(this, &FScriptsReloader::OnEndPIE);
+	if (!OnBeginPIEDelegate.IsValid())
+	{
+		OnBeginPIEDelegate = FEditorDelegates::BeginPIE.AddRaw(this, &FScriptsReloader::OnBeginPIE);
+	}
+	if (!OnEndPIEDelegate.IsValid())
+	{
+		OnEndPIEDelegate = FEditorDelegates::EndPIE.AddRaw(this, &FScriptsReloader::OnEndPIE);
+	}
 
 	LastScriptsAssemblyTimeStamp = IFileManager::Get().GetTimeStamp(
 		*FGameProjectBuilder::GetProjectAssemblyFilename()
@@ -237,9 +243,10 @@ void FScriptsReloader::Disable()
 		FGameProjectBuilder::GetOutputDir(),
 		OnBinaryDirChangedDelegateHandle
 	);
-
-	FEditorDelegates::BeginPIE.RemoveAll(this);
-	FEditorDelegates::EndPIE.RemoveAll(this);
+	FEditorDelegates::BeginPIE.Remove(OnBeginPIEDelegate);
+	FEditorDelegates::EndPIE.Remove(OnEndPIEDelegate);
+	OnBeginPIEDelegate.Reset();
+	OnEndPIEDelegate.Reset();
 }
 
 bool FScriptsReloader::ReloadScripts()
@@ -294,7 +301,8 @@ void FScriptsReloader::Tick(float DeltaTime)
 	
 	if (NewScriptFiles.Num())
 	{
-		bProjectModified = FGameProjectBuilder::AddSourceFilesToProject(NewScriptFiles);
+		bProjectModified = true;
+		FGameProjectBuilder::AddSourceFilesToProject(NewScriptFiles);
 		NewScriptFiles.Reset();
 	}
 

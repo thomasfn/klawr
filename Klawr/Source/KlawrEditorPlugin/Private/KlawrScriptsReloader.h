@@ -100,6 +100,9 @@ private:
 	// handle to the registered OnBinaryDirChanged delegate
 	FDelegateHandle OnBinaryDirChangedDelegateHandle;
 
+	FDelegateHandle OnBeginPIEDelegate;
+	FDelegateHandle OnEndPIEDelegate;
+
 	static FScriptsReloader* Singleton;
 };
 

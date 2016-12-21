@@ -27,17 +27,17 @@
 
 namespace Klawr {
 
-FScriptContext::FScriptContext()
+FKlawrScriptContext::FKlawrScriptContext()
 {
 	ScriptObjectInfo.InstanceID = 0;
 }
 
-FScriptContext::~FScriptContext()
+FKlawrScriptContext::~FKlawrScriptContext()
 {
 	DestroyScriptObject();
 }
 
-bool FScriptContext::Initialize(const FString& Code, UObject* Owner)
+bool FKlawrScriptContext::Initialize(const FString& Code, UObject* Owner)
 {
 	// TODO:
 	// [editor-only] save the code out to a file
@@ -52,7 +52,7 @@ bool FScriptContext::Initialize(const FString& Code, UObject* Owner)
 	return false;
 }
 
-void FScriptContext::DestroyScriptObject()
+void FKlawrScriptContext::DestroyScriptObject()
 {
 	if (ScriptObjectInfo.InstanceID != 0)
 	{
@@ -61,7 +61,7 @@ void FScriptContext::DestroyScriptObject()
 	}
 }
 
-void FScriptContext::BeginPlay()
+void FKlawrScriptContext::BeginPlay()
 {
 	if (ScriptObjectInfo.BeginPlay)
 	{
@@ -69,7 +69,7 @@ void FScriptContext::BeginPlay()
 	}
 }
 
-void FScriptContext::Tick(float DeltaTime)
+void FKlawrScriptContext::Tick(float DeltaTime)
 {
 	if (ScriptObjectInfo.Tick)
 	{
@@ -77,7 +77,7 @@ void FScriptContext::Tick(float DeltaTime)
 	}
 }
 
-void FScriptContext::Destroy()
+void FKlawrScriptContext::Destroy()
 {
 	// clean up anything created in BeginPlay/Tick
 	if (ScriptObjectInfo.Destroy)
@@ -88,18 +88,19 @@ void FScriptContext::Destroy()
 	DestroyScriptObject();
 }
 
-bool FScriptContext::CanTick()
+bool FKlawrScriptContext::CanTick()
 {
 	return ScriptObjectInfo.Tick != nullptr;
 }
 
-bool FScriptContext::CallFunction(const FString& FunctionName)
+bool FKlawrScriptContext::CallFunction(const FString& FunctionName)
 {
+
 	// TODO:
 	return false;
 }
 
-void FScriptContext::InvokeScriptFunction(FFrame& Stack, RESULT_DECL)
+void FKlawrScriptContext::InvokeScriptFunction(FFrame& Stack, RESULT_DECL)
 {
 	P_FINISH;
 	CallFunction(Stack.CurrentNativeFunction->GetName());

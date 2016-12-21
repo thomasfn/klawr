@@ -25,24 +25,32 @@
 
 #include "KismetCompiler.h"
 #include "KlawrBlueprint.h"
+#include "KlawrBlueprintGeneratedClass.h"
 
 namespace Klawr {
 
 /**
  * Compiles Klawr Blueprints.
  */
-class FBlueprintCompiler : public FKismetCompilerContext
+class FKlawrBlueprintCompiler : public FKismetCompilerContext
 {
 public:
-	FBlueprintCompiler(
+	FKlawrBlueprintCompiler(
 		UKlawrBlueprint* Source, FCompilerResultsLog& OutResultsLog, 
 		const FKismetCompilerOptions& CompilerOptions, TArray<UObject*>* ObjLoaded
 	);
 
-	virtual ~FBlueprintCompiler();
+	virtual ~FKlawrBlueprintCompiler();
 
 public: // FKismetCompilerContext interface
 	virtual void Compile() override;
+	virtual void KlawrCreateClassVariablesFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void KlawrCreateFunctionListFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void KlawrCreateFunction(FScriptFunction function, UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void CreateClassVariablesFromBlueprint() override;
+	virtual void CreateFunctionList() override;
+
+	UKlawrBlueprint* KlawrBlueprint() const { return Cast<UKlawrBlueprint>(Blueprint); }
 
 protected: // FKismetCompilerContext interface
 	virtual void SpawnNewClass(const FString& NewClassName) override;
@@ -66,6 +74,11 @@ protected: // FKismetCompilerContext interface
 
 private:
 	typedef FKismetCompilerContext Super;
+	void CreateScriptContextProperty();
+	
+	TArray<FScriptField> ScriptDefinedFields;
+	TArray<FScriptFunction> ScriptDefinedFunctions;
+	UObjectProperty* ContextProperty;
 };
 
 } // namespace Klawr

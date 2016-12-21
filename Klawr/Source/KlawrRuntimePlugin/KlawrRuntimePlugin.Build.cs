@@ -29,6 +29,8 @@ namespace UnrealBuildTool.Rules
 					"Engine",
 					"InputCore",
 					"SlateCore",
+					"Json",
+					"JsonUtilities"
                     // ... add other public dependencies that you statically link with here ...
 				}
 			);

@@ -84,6 +84,7 @@ void FCSharpWrapperGenerator::GenerateHeader()
 		<< TEXT("using Klawr.ClrHost.Managed;")
 		<< TEXT("using Klawr.ClrHost.Managed.SafeHandles;")
 		<< TEXT("using Klawr.ClrHost.Managed.Collections;")
+		<< TEXT("using Klawr.ClrHost.Managed.Attributes;")
 		<< FCodeFormatter::LineTerminator()
 
 		// declare namespace
@@ -93,6 +94,7 @@ void FCSharpWrapperGenerator::GenerateHeader()
 	if (bShouldGenerateManagedWrapper)
 	{ 
 		GeneratedGlue
+			<< TEXT("[ConvertClassName()]")
 			// declare class
 			<< classDecl 
 			<< FCodeFormatter::OpenBrace()

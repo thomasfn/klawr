@@ -29,7 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -42,6 +42,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GlobalStrings.cs" />
+    <Compile Include="Attributes\ConvertClassNameAttribute.cs" />
+    <Compile Include="Attributes\UFUNCTIONAttribute.cs" />
+    <Compile Include="Attributes\UPROPERTYAttribute.cs" />
     <Compile Include="SafeHandles\ArrayHandle.cs" />
     <Compile Include="SafeHandles\ObjectHandle.cs" />
     <Compile Include="Collections\NativeArray.cs" />
@@ -62,10 +65,10 @@
     <Compile Include="Proxies\ObjectUtilsProxy.cs" />
     <Compile Include="Proxies\ScriptComponentProxy.cs" />
     <Compile Include="Proxies\ScriptObjectInstanceInfo.cs" />
+    <Compile Include="Wrappers\TypeTranslatorEnum.cs" />
     <Compile Include="Wrappers\UE4Structs.cs" />
     <Compile Include="UELogWriter.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>call "$(DevEnvDir)..\..\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64

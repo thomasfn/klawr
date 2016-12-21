@@ -12,7 +12,7 @@ public class KlawrClrHostNative : ModuleRules
 
         var moduleName = this.GetType().Name;
         // path to directory containing this Build.cs file
-//        var basePath = Path.GetDirectoryName(RulesCompiler.GetModuleFilename(moduleName));
+        // var basePath = Path.GetDirectoryName(RulesCompiler.GetModuleFilename(moduleName));
         var basePath = Path.GetDirectoryName(ModuleDirectory);
 		
         string architecture = null;
@@ -46,10 +46,11 @@ public class KlawrClrHostNative : ModuleRules
         {
             PublicIncludePaths.Add(Path.Combine(basePath, "Public"));
             var libName = "Klawr.ClrHost.Native-" + architecture + "-" + configuration + ".lib";
+            Console.WriteLine("Klawr libnamakesme: " + libName);
             PublicLibraryPaths.Add(Path.Combine(basePath, "..", "Build"));
             PublicAdditionalLibraries.Add(libName);
         }
-                
+
         // copy the CLR host assembly (assumed to have been built previously) to the engine binaries 
         // directory so that it can be found and loaded at runtime by the unmanaged CLR host
 
@@ -58,24 +59,21 @@ public class KlawrClrHostNative : ModuleRules
         string hostAssemblyPDB = hostAssemblyName + ".pdb";
         string hostAssemblySourceDir = Path.Combine(basePath, Path.Combine("ClrHostManaged", "bin", configuration));
         Utils.CollapseRelativeDirectories(ref hostAssemblySourceDir);
-        
+
         string binariesDir = Path.Combine(
             BuildConfiguration.RelativeEnginePath, "Binaries", Target.Platform.ToString()
         );
 
         bool bOverwrite = true;
-
-        var from = Path.Combine(hostAssemblySourceDir, hostAssemblyDLL);
-        var to = Path.Combine(binariesDir, hostAssemblyDLL);
-        if (!File.Exists(to)){
-            var msg = "Copy: " + from + "\nTo: " + to;
- 		    Log.TraceInformation(msg);
-            File.Copy(from, to, bOverwrite);
-        }
-        from = Path.Combine(hostAssemblySourceDir, hostAssemblyPDB);
-        to = Path.Combine(binariesDir, hostAssemblyPDB);
-        if (!File.Exists(to)){
-            File.Copy(from, to, bOverwrite);
-        }
+        File.Copy(
+            Path.Combine(hostAssemblySourceDir, hostAssemblyDLL),
+            Path.Combine(binariesDir, hostAssemblyDLL), 
+            bOverwrite
+        );
+        File.Copy(
+            Path.Combine(hostAssemblySourceDir, hostAssemblyPDB),
+            Path.Combine(binariesDir, hostAssemblyPDB),
+            bOverwrite
+        );
     }
 }

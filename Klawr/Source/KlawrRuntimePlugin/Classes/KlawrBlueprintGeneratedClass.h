@@ -26,12 +26,137 @@
 #include "Engine/BlueprintGeneratedClass.h"
 #include "KlawrBlueprintGeneratedClass.generated.h"
 
+
+/**
+* Script-defined field (variable or function)
+*/
+struct KLAWRRUNTIMEPLUGIN_API FScriptField
+{
+	/** Field name */
+	FName Name;
+	/** Field type */
+	UClass* Class;
+
+	UClass* innerClass;
+
+	TMap<FString, FString> metas;
+
+	FScriptField()
+		: Class(NULL)
+	{
+	}
+	FScriptField(FName InName, UClass* InClass)
+		: Name(InName)
+		, Class(InClass)
+	{
+	}
+};
+
+
+struct KLAWRRUNTIMEPLUGIN_API FScriptFunction
+{
+	FName Name;
+	TMap<FString, FString> metas;
+	TMap<FString, int> Parameters;
+	TArray<UClass*> parameterClasses;
+	int ResultType;
+	UClass* ResultClass;
+
+	FScriptFunction()
+	{
+	}
+
+	FScriptFunction(FName InName)
+		:Name(InName)
+	{
+	}
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRMeta
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString MetaKey;
+
+	UPROPERTY()
+	FString MetaValue;
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRTypeInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	int32 TypeId;
+
+	UPROPERTY()
+	FString ClassName;
+
+	UPROPERTY()
+	TArray<FCLRMeta> MetaData;
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRMethodInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	int32 ReturnType;
+
+	UPROPERTY()
+	FString ClassName;
+
+	UPROPERTY()
+	TArray<FCLRTypeInfo> Parameters;
+
+	UPROPERTY()
+	TArray<FCLRMeta> MetaData;
+};
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRClassInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FString Name;
+
+	UPROPERTY()
+	TArray<FCLRMethodInfo> MethodInfos;
+
+	UPROPERTY()
+	TArray<FCLRTypeInfo> PropertyInfos;
+};
+
+
+USTRUCT()
+struct KLAWRRUNTIMEPLUGIN_API FCLRAssemblyInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	TArray<FCLRClassInfo> ClassInfos;
+};
+
+
 UCLASS()
 class KLAWRRUNTIMEPLUGIN_API UKlawrBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
 	GENERATED_BODY()
 
 public:
+	
+	UKlawrBlueprintGeneratedClass(const FObjectInitializer& objectInitializer);
 	/** 
 	 * The fully qualified name of the type defined in the script associated with an instance of
 	 * this class.
@@ -39,13 +164,29 @@ public:
 	UPROPERTY()
 	FString ScriptDefinedType;
 
+	UPROPERTY()
+	TArray<UProperty*> ScriptProperties;
+
+	UPROPERTY()
+	TArray<UFunction*> ScriptFunctions;
+
+	TArray<FScriptFunction> ScriptDefinedFunctions;
+
+	int appDomainId = 0;
+
 public:
+
+	void GetScriptDefinedFields(TArray<FScriptField>& OutFields);
+	void GetScriptDefinedFunctions(TArray<FScriptFunction>& OutFunctions);
+
+	bool GetAdvancedDisplay(const TCHAR* propertyName);
+	bool GetSaveGame(const TCHAR* propertyName);
 	/**
 	 * Get the UKlawrBlueprintGeneratedClass from the inheritance hierarchy of the given class.
 	 * @return UKlawrBlueprintGeneratedClass instance, or nullptr if the given class is not derived
 	 *         from UKlawrBlueprintGeneratedClass
 	 */
-	static UKlawrBlueprintGeneratedClass* GetBlueprintGeneratedClass(UClass* Class)
+	FORCEINLINE static UKlawrBlueprintGeneratedClass* GetBlueprintGeneratedClass(UClass* Class)
 	{
 		UKlawrBlueprintGeneratedClass* GeneratedClass = nullptr;
 		for (auto CurrentClass = Class; CurrentClass; CurrentClass = CurrentClass->GetSuperClass())
@@ -55,4 +196,5 @@ public:
 		}
 		return GeneratedClass;
 	}
+	void TestJSon();
 };
