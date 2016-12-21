@@ -21,7 +21,7 @@
 //Undo/Redo
 #include "ScopedTransaction.h"
 
-#include "../../../ThirdParty/Klawr/ClrHostManaged/Wrappers/TypeTranslatorEnum.cs"
+#include "../ThirdParty/Klawr/ClrHostManaged/Wrappers/TypeTranslatorEnum.cs"
 
 
 #define LOCTEXT_NAMESPACE "BPNode_KlawrFunctionCall"
