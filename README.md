@@ -25,8 +25,8 @@ Check the [Wiki](https://github.com/enlight/klawr/wiki) for additional details.
 Prerequisites
 =============
 - Windows 7 or later
-- Unreal Engine 4.13 or later (you'll need the source from GitHub)
-- Visual Studio 2015
+- Unreal Engine 4.14 or later (you'll need the source from GitHub)
+- Visual Studio 2017
 - .NET Framework 4.5.2 or later
 
 Overview
