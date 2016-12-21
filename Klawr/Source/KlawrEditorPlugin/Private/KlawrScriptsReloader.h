@@ -91,6 +91,8 @@ private:
 	TArray<FString> NewScriptFiles;
 	// source files user has modified in the script source directories since last refresh
 	TArray<FString> ModifiedScriptFiles;
+	// source files user has removed in the script source directories since last refresh
+	TArray<FString> RemovedScriptFiles;
 	// time stamp of the game scripts assembly at the time it was last loaded
 	FDateTime LastScriptsAssemblyTimeStamp;
 	// handles of all registered OnSourceDirChanged delegates

@@ -728,7 +728,11 @@ FString FCSharpWrapperGenerator::GetArrayPropertyWrapperType(const UArrayPropert
 	}
 	else
 	{
-		return FString::Printf(TEXT("%sArrayProperty"), *elementProperty->GetCPPType());
+		// Convert "int32" to "Int32"
+		FString rawTypeName = elementProperty->GetCPPType();
+		rawTypeName.ToLowerInline();
+		rawTypeName[0] = towupper(rawTypeName[0]);
+		return FString::Printf(TEXT("%sArrayProperty"), *rawTypeName);
 	}
 }
 

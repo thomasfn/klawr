@@ -239,8 +239,15 @@ bool ClrHost::InitEngineAppDomain(int appDomainID, const NativeUtils& nativeUtil
 		);
 
 		// now that everything the engine wrapper assembly needs is in place it can be loaded
-		appDomainManager->LoadUnrealEngineWrapperAssembly();
-		appDomainManager->LoadAssembly(_gameScriptsAssemblyName.c_str());
+		try
+		{
+			appDomainManager->LoadUnrealEngineWrapperAssembly();
+			appDomainManager->LoadAssembly(_gameScriptsAssemblyName.c_str());
+		}
+		catch (_com_error& err)
+		{
+			return false;
+		}
 	}
 	return appDomainManager != nullptr;
 }

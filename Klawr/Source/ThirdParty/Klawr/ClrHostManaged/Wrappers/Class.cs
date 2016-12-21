@@ -60,6 +60,14 @@ namespace Klawr.UnrealEngine{
         }
 
         /// <summary>
+        /// </summary>
+        /// <param name="nativeObject"></param>
+        protected UClass(UObjectHandle nativeObject) : base(nativeObject)
+        {
+            Name = ObjectUtils.GetClassName(nativeObject);
+        }
+
+        /// <summary>
         ///     Convert a UObject-derived type to a UClass.
         /// </summary>
         /// <exception cref="InvalidCastException">

@@ -54,3 +54,4 @@ Engine/Source/ThirdParty/Klawr/.vs/
 obj
 *.idb
 /Klawr/Project
+*.pdb

@@ -155,7 +155,7 @@ namespace Klawr.ClrHost.Managed{
 
         public void DestroyScriptObject(long scriptObjectInstanceID){
             var instance = UnregisterScriptObject(scriptObjectInstanceID);
-            instance.Dispose();
+            instance?.Dispose();
         }
 
         /// <summary>
@@ -193,9 +193,9 @@ namespace Klawr.ClrHost.Managed{
         /// <param name="scriptObjectInstanceID">ID of a registered IScriptObject instance.</param>
         /// <returns>The script object matching the given ID.</returns>
         public IScriptObject UnregisterScriptObject(long scriptObjectInstanceID){
-            var instance = _scriptObjects[scriptObjectInstanceID].Instance;
+            if (!_scriptObjects.TryGetValue(scriptObjectInstanceID, out ScriptObjectInfo info)) return null;
             _scriptObjects.Remove(scriptObjectInstanceID);
-            return instance;
+            return info.Instance;
         }
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace Klawr.ClrHost.Managed{
 
         public void DestroyScriptComponent(long instanceID){
             var instance = UnregisterScriptComponent(instanceID);
-            instance.Dispose();
+            instance?.Dispose();
         }
 
         private void RegisterScriptComponent(long instanceID, IDisposable scriptComponent, ScriptComponentProxy proxy){
@@ -288,9 +288,9 @@ namespace Klawr.ClrHost.Managed{
         }
 
         private IDisposable UnregisterScriptComponent(long instanceID){
-            var instance = _scriptComponents[instanceID].Instance;
+            if (!_scriptComponents.TryGetValue(instanceID, out ScriptComponentInfo info)) return null;
             _scriptComponents.Remove(instanceID);
-            return instance;
+            return info.Instance;
         }
 
         /// <summary>

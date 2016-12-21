@@ -93,7 +93,15 @@ void FScriptsReloader::OnSourceDirChanged(const TArray<FFileChangeData>& InFileC
 			switch (FileChange.Action)
 			{
 				case FFileChangeData::FCA_Added:
-					NewScriptFiles.AddUnique(Filename);
+					if (RemovedScriptFiles.Contains(Filename))
+					{
+						RemovedScriptFiles.Remove(Filename);
+						ModifiedScriptFiles.AddUnique(Filename);
+					}
+					else
+					{
+						NewScriptFiles.AddUnique(Filename);
+					}
 					TimeOfLastModification = TimeSinceLastRefresh;
 					break;
 
@@ -111,6 +119,7 @@ void FScriptsReloader::OnSourceDirChanged(const TArray<FFileChangeData>& InFileC
 				case FFileChangeData::FCA_Removed:
 					NewScriptFiles.RemoveSingle(Filename);
 					ModifiedScriptFiles.RemoveSingle(Filename);
+					RemovedScriptFiles.AddUnique(Filename);
 					break;
 
 				default:
