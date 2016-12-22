@@ -28,6 +28,29 @@
 namespace Klawr
 {
 	struct ScriptComponentProxy;
+
+	enum PropertyTrackerType { GetterSetter };
+
+	struct PropertyTracker
+	{
+		FString Name;
+		UProperty* Property;
+		PropertyTrackerType Type;
+
+		uint8 PreviousNative[8];
+		uint8 PreviousManaged[8];
+
+		template <typename T> T GetPreviousNative() const { return *(reinterpret_cast<const T*>(PreviousNative)); }
+		template <typename T> T GetPreviousManaged() const { return *(reinterpret_cast<const T*>(PreviousManaged)); }
+		template <typename T> void SetPreviousNative(T value) { *(reinterpret_cast<T*>(PreviousNative)) = value; }
+		template <typename T> void SetPreviousManaged(T value) { *(reinterpret_cast<T*>(PreviousManaged)) = value; }
+
+		void ResetPrevious()
+		{
+			ZeroMemory(PreviousNative, 8);
+			ZeroMemory(PreviousManaged, 8);
+		}
+	};
 } // namespace Klawr
 
 /**
@@ -80,8 +103,13 @@ private:
 	void CreateScriptComponentProxy();
 	void DestroyScriptComponentProxy();
 
+	void UpdatePropertyTracker(Klawr::PropertyTracker& tracker);
+
 	int appDomainId = 0;
 private:
 	// a proxy that represents the managed counterpart of this script component
 	Klawr::ScriptComponentProxy* Proxy;
+
+	// all property trackers for this component
+	TArray<Klawr::PropertyTracker> propertyTrackers;
 };

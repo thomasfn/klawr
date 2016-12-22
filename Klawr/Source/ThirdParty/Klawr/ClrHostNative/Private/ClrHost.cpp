@@ -422,7 +422,7 @@ bool __cdecl ClrHost::GetBool(const int appDomainID, const __int64 instanceID, c
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		return appDomainManager->GetBool(instanceID, propertyName) == 1;
+		return appDomainManager->GetBool(instanceID, propertyName) != 0; // for some reason, true = -1 sometimes
 	}
 	return false;
 }
