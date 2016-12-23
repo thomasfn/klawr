@@ -89,8 +89,26 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 					break;
 				case ParameterTypeTranslation::ParametertypeObject:
 					propertyInfo.Class = UObjectProperty::StaticClass();
-					const TCHAR* temp = *CLRProperty.ClassName;
-					propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, *CLRProperty.ClassName);
+					
+
+					FString className = CLRProperty.ClassName;
+					propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, *className);
+					if (propertyInfo.innerClass != nullptr) break;
+
+					className.RemoveFromStart(L"F", ESearchCase::CaseSensitive);
+
+					propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, *className);
+					if (propertyInfo.innerClass != nullptr) break;
+
+					className.RemoveFromStart(L"U", ESearchCase::CaseSensitive);
+
+					propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, *className);
+
+					if (propertyInfo.innerClass != nullptr) break;
+
+					UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("Could not locate UClass for name '%s' in class '%s'"),
+						*CLRProperty.ClassName, *CLRClass.Name);
+					
 					break;
 				}
 
