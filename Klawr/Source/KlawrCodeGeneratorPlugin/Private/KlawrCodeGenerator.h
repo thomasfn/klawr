@@ -79,6 +79,7 @@ private:
 	static const FName Name_Vector;
 	static const FName Name_Vector4;
 	static const FName Name_Quat;
+	static const FName Name_Rotator;
 	static const FName Name_Transform;
 	static const FName Name_LinearColor;
 	static const FName Name_Color;

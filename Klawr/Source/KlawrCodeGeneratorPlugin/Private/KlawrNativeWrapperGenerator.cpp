@@ -393,6 +393,7 @@ void FNativeWrapperGenerator::GenerateFunctionDispatch(const UFunction* Function
 	if (bHasParamsOrReturnValue)
 	{
 		GeneratedGlue
+			<< TEXT("#pragma pack(push, 1)")
 			<< TEXT("struct FDispatchParams")
 			<< FCodeFormatter::OpenBrace();
 
@@ -406,6 +407,7 @@ void FNativeWrapperGenerator::GenerateFunctionDispatch(const UFunction* Function
 
 		GeneratedGlue
 			<< FCodeFormatter::CloseBrace()
+			<< TEXT("#pragma pack(pop)")
 			<< TEXT("Params =")
 			<< FCodeFormatter::OpenBrace();
 

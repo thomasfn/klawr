@@ -33,6 +33,15 @@ namespace Klawr.UnrealEngine{
         public float W;
     }
 
+    // TODO: Check the alignment is correct
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FRotator
+    {
+        public float Pitch;
+        public float Yaw;
+        public float Roll;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct FTransform{
         public FQuat Rotation;

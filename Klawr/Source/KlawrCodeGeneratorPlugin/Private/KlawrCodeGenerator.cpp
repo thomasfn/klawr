@@ -36,6 +36,7 @@ const FName FCodeGenerator::Name_Vector2D("Vector2D");
 const FName FCodeGenerator::Name_Vector("Vector");
 const FName FCodeGenerator::Name_Vector4("Vector4");
 const FName FCodeGenerator::Name_Quat("Quat");
+const FName FCodeGenerator::Name_Rotator("Rotator");
 const FName FCodeGenerator::Name_Transform("Transform");
 const FName FCodeGenerator::Name_LinearColor("LinearColor");
 const FName FCodeGenerator::Name_Color("Color");
@@ -236,6 +237,7 @@ bool FCodeGenerator::IsStructPropertyTypeSupported(const UStructProperty* Proper
 		|| (Property->Struct->GetFName() == Name_Vector) 
 		|| (Property->Struct->GetFName() == Name_Vector4) 
 		|| (Property->Struct->GetFName() == Name_Quat) 
+		|| (Property->Struct->GetFName() == Name_Rotator)
 		|| (Property->Struct->GetFName() == Name_LinearColor) 
 		|| (Property->Struct->GetFName() == Name_Color) 
 		|| (Property->Struct->GetFName() == Name_Transform);
