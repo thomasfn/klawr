@@ -335,6 +335,23 @@ UEdGraphPin* UBPNode_KlawrFunctionCall::GetThenPin() const
 	return Pin;
 }
 
+void AddArrayInput(UK2Node_MakeArray* arrayNode, UEdGraphPin* inputPin)
+{
+	UEdGraphPin* newPin = arrayNode->Pins.Last();
+	if (inputPin->LinkedTo.Num() > 0)
+	{
+		inputPin->LinkedTo.Last()->MakeLinkTo(newPin);
+		arrayNode->NotifyPinConnectionListChanged(inputPin);
+	}
+	else
+	{
+		newPin->PinType.PinCategory = inputPin->PinType.PinCategory;
+		newPin->DefaultValue = inputPin->DefaultValue;
+		arrayNode->PinDefaultValueChanged(newPin);
+	}
+	arrayNode->AddInputPin();
+}
+
 
 void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
 {
@@ -371,43 +388,19 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 		{
 			if (pin->PinType.PinCategory == K2Schema->PC_Float)
 			{
-				UEdGraphPin* newPin = arrayFloat->Pins.Last();
-				if (pin->LinkedTo.Num() > 0)
-				{
-					pin->LinkedTo.Last()->MakeLinkTo(newPin);
-				}
-				arrayFloat->NotifyPinConnectionListChanged(pin);
-				arrayFloat->AddInputPin();
+				AddArrayInput(arrayFloat, pin);
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_Int)
 			{
-				UEdGraphPin* newPin = arrayInt->Pins.Last();
-				if (pin->LinkedTo.Num() > 0)
-				{
-					pin->LinkedTo.Last()->MakeLinkTo(newPin);
-				}
-				arrayInt->NotifyPinConnectionListChanged(pin);
-				arrayInt->AddInputPin();
+				AddArrayInput(arrayInt, pin);
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_Boolean)
 			{
-				UEdGraphPin* newPin = arrayBool->Pins.Last();
-				if (pin->LinkedTo.Num() > 0)
-				{
-					pin->LinkedTo.Last()->MakeLinkTo(newPin);
-				}
-				arrayBool->NotifyPinConnectionListChanged(pin);
-				arrayBool->AddInputPin();
+				AddArrayInput(arrayBool, pin);
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_String)
 			{
-				UEdGraphPin* newPin = arrayString->Pins.Last();
-				if (pin->LinkedTo.Num() > 0)
-				{
-					pin->LinkedTo.Last()->MakeLinkTo(newPin);
-				}
-				arrayString->NotifyPinConnectionListChanged(pin);
-				arrayString->AddInputPin();
+				AddArrayInput(arrayString, pin);
 			}
 			else if (pin->PinType.PinCategory == K2Schema->PC_Object)
 			{
@@ -415,8 +408,14 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 				if (pin->LinkedTo.Num() > 0)
 				{
 					pin->LinkedTo.Last()->MakeLinkTo(newPin);
+					arrayObject->NotifyPinConnectionListChanged(pin);
 				}
-				arrayObject->NotifyPinConnectionListChanged(pin);
+				else
+				{
+					newPin->PinType.PinCategory = pin->PinType.PinCategory;
+					newPin->DefaultValue = pin->DefaultValue;
+					arrayObject->PinDefaultValueChanged(newPin);
+				}
 				arrayObject->AddInputPin();
 			}
 		}
