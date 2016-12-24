@@ -708,290 +708,70 @@ namespace Klawr.ClrHost.Managed{
             return uobject.NativeObject.Handle;
         }
 
-        public float CallCSFunctionFloat(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        private T DoCSFunctionCall<T>(long instanceID, string functionName, object[] args)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             MethodInfo mi = instanceType.GetMethod(functionName);
-            int cFloats = 0;
-            int cInts = 0;
-            int cBools = 0;
-            int cStrings = 0;
-            int cObjects = 0;
+
             try
             {
-                object[] parameters = new object[mi.GetParameters().Length];
-                for (int i = 0; i < mi.GetParameters().Length; i++)
+                // Translate args
+                for (int i = 0; i < args.Length; i++)
                 {
-                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
-                    switch (paramType)
+                    if (args[i] is IntPtr)
                     {
-                        case 0: parameters[i] = floats[cFloats++]; break;
-                        case 1: parameters[i] = ints[cInts++]; break;
-                        case 2: parameters[i] = bools[cBools++]; break;
-                        case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4:
-                            if (objects[cObjects] != IntPtr.Zero)
-                            {
-                                Type parameterType = mi.GetParameters()[i].ParameterType;
-                                var nativeObject = new UObjectHandle(objects[cObjects], false);
-                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                                var idisp = constructor.Invoke(new object[] { nativeObject });
-                                parameters[i] = idisp;
-                            }
-                            else
-                            {
-                                parameters[i] = null;
-                            }
-                            cObjects++;
-                            break;
+                        var ptr = (IntPtr)args[i];
+                        if (ptr == IntPtr.Zero)
+                        {
+                            args[i] = null;
+                        }
+                        else
+                        {
+                            Type parameterType = mi.GetParameters()[i].ParameterType;
+                            var nativeObject = new UObjectHandle(ptr, false);
+                            var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                            var idisp = constructor.Invoke(new object[] { nativeObject });
+                            args[i] = idisp;
+                        }
                     }
                 }
 
-                return (float)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
+                // Perform call
+                return (T)mi.Invoke(_scriptComponents[instanceID].Instance, args);
             }
             catch (Exception ee)
             {
                 LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
+                return default(T);
             }
-            return 0.0f;
-        }
-        public int CallCSFunctionInt(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
-        {
-            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            MethodInfo mi = instanceType.GetMethod(functionName);
-            int cFloats = 0;
-            int cInts = 0;
-            int cBools = 0;
-            int cStrings = 0;
-            int cObjects = 0;
-            try
-            {
-                object[] parameters = new object[mi.GetParameters().Length];
-                for (int i = 0; i < mi.GetParameters().Length; i++)
-                {
-                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
-                    switch (paramType)
-                    {
-                        case 0: parameters[i] = floats[cFloats++]; break;
-                        case 1: parameters[i] = ints[cInts++]; break;
-                        case 2: parameters[i] = bools[cBools++]; break;
-                        case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4:
-                            if (objects[cObjects] != IntPtr.Zero)
-                            {
-                                Type parameterType = mi.GetParameters()[i].ParameterType;
-                                var nativeObject = new UObjectHandle(objects[cObjects], false);
-                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                                var idisp = constructor.Invoke(new object[] { nativeObject });
-                                parameters[i] = idisp;
-                            }
-                            else
-                            {
-                                parameters[i] = null;
-                            }
-                            cObjects++;
-                            break;
-
-                    }
-                }
-
-                return (int)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
-            }
-            catch (Exception ee)
-            {
-                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
-            }
-            return 0;
-        }
-        public bool CallCSFunctionBool(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
-        {
-            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            MethodInfo mi = instanceType.GetMethod(functionName);
-            int cFloats = 0;
-            int cInts = 0;
-            int cBools = 0;
-            int cStrings = 0;
-            int cObjects = 0;
-            try
-            {
-                object[] parameters = new object[mi.GetParameters().Length];
-                for (int i = 0; i < mi.GetParameters().Length; i++)
-                {
-                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
-                    switch (paramType)
-                    {
-                        case 0: parameters[i] = floats[cFloats++]; break;
-                        case 1: parameters[i] = ints[cInts++]; break;
-                        case 2: parameters[i] = bools[cBools++]; break;
-                        case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4:
-                            if (objects[cObjects] != IntPtr.Zero)
-                            {
-                                Type parameterType = mi.GetParameters()[i].ParameterType;
-                                var nativeObject = new UObjectHandle(objects[cObjects], false);
-                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                                var idisp = constructor.Invoke(new object[] { nativeObject });
-                                parameters[i] = idisp;
-                            }
-                            else
-                            {
-                                parameters[i] = null;
-                            }
-                            cObjects++;
-                            break;
-
-                    }
-                }
-
-                return (bool)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
-            }
-            catch (Exception ee)
-            {
-                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
-            }
-            return false;
-        }
-        public string CallCSFunctionString(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
-        {
-            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            MethodInfo mi = instanceType.GetMethod(functionName);
-            int cFloats = 0;
-            int cInts = 0;
-            int cBools = 0;
-            int cStrings = 0;
-            int cObjects = 0;
-            try
-            {
-                object[] parameters = new object[mi.GetParameters().Length];
-                for (int i = 0; i < mi.GetParameters().Length; i++)
-                {
-                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
-                    switch (paramType)
-                    {
-                        case 0: parameters[i] = floats[cFloats++]; break;
-                        case 1: parameters[i] = ints[cInts++]; break;
-                        case 2: parameters[i] = bools[cBools++]; break;
-                        case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4:
-                            if (objects[cObjects] != IntPtr.Zero)
-                            {
-                                Type parameterType = mi.GetParameters()[i].ParameterType;
-                                var nativeObject = new UObjectHandle(objects[cObjects], false);
-                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                                var idisp = constructor.Invoke(new object[] { nativeObject });
-                                parameters[i] = idisp;
-                            }
-                            else
-                            {
-                                parameters[i] = null;
-                            }
-                            cObjects++;
-                            break;
-
-                    }
-                }
-
-                return (string)mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
-            }
-            catch (Exception ee)
-            {
-                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
-            }
-            return "";
-        }
-        public IntPtr CallCSFunctionObject(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
-        {
-            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            MethodInfo mi = instanceType.GetMethod(functionName);
-            int cFloats = 0;
-            int cInts = 0;
-            int cBools = 0;
-            int cStrings = 0;
-            int cObjects = 0;
-            try
-            {
-                object[] parameters = new object[mi.GetParameters().Length];
-                for (int i = 0; i < mi.GetParameters().Length; i++)
-                {
-                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
-                    switch (paramType)
-                    {
-                        case 0: parameters[i] = floats[cFloats++]; break;
-                        case 1: parameters[i] = ints[cInts++]; break;
-                        case 2: parameters[i] = bools[cBools++]; break;
-                        case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4:
-                            if (objects[cObjects] != IntPtr.Zero)
-                            {
-                                Type parameterType = mi.GetParameters()[i].ParameterType;
-                                var nativeObject = new UObjectHandle(objects[cObjects], false);
-                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                                var idisp = constructor.Invoke(new object[] { nativeObject });
-                                parameters[i] = idisp;
-                            }
-                            else
-                            {
-                                parameters[i] = null;
-                            }
-                            cObjects++;
-                            break;
-                    }
-                }
-
-                return ((UObject)(mi.Invoke(_scriptComponents[instanceID].Instance, parameters))).NativeObject.Handle;
-            }
-            catch (Exception ee)
-            {
-                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
-            }
-            return IntPtr.Zero;
         }
 
-        public void CallCSFunctionVoid(long instanceID, string functionName, float[] floats, int[] ints, bool[] bools, string[] strings, IntPtr[] objects)
+        public float CallCSFunctionFloat(long instanceID, string functionName, object[] args)
         {
-            Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            MethodInfo mi = instanceType.GetMethod(functionName);
-            int cFloats = 0;
-            int cInts = 0;
-            int cBools = 0;
-            int cStrings = 0;
-            int cObjects = 0;
-            try
-            {
-                object[] parameters = new object[mi.GetParameters().Length];
-                for (int i = 0; i < mi.GetParameters().Length; i++)
-                {
-                    int paramType = GetScriptComponentFunctionParameterType(_scriptComponents[instanceID].Instance.GetType().FullName, functionName, i);
-                    switch (paramType)
-                    {
-                        case 0: parameters[i] = floats[cFloats++]; break;
-                        case 1: parameters[i] = ints[cInts++]; break;
-                        case 2: parameters[i] = bools[cBools++]; break;
-                        case 3: parameters[i] = strings[cStrings++]; break;
-                        case 4:
-                            if (objects[cObjects] != IntPtr.Zero)
-                            {
-                                Type parameterType = mi.GetParameters()[i].ParameterType;
-                                var nativeObject = new UObjectHandle(objects[cObjects], false);
-                                var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                                var idisp = constructor.Invoke(new object[] { nativeObject });
-                                parameters[i] = idisp;
-                            }
-                            else
-                            {
-                                parameters[i] = null;
-                            }
-                            cObjects++;
-                            break;
-                    }
-                }
-
-                mi.Invoke(_scriptComponents[instanceID].Instance, parameters);
-            }
-            catch (Exception ee)
-            {
-                LogUtils.Log(ee.StackTrace + "\r\n" + ee.Message);
-            }
+            return DoCSFunctionCall<float>(instanceID, functionName, args);
+        }
+        public int CallCSFunctionInt(long instanceID, string functionName, object[] args)
+        {
+            return DoCSFunctionCall<int>(instanceID, functionName, args);
+        }
+        public bool CallCSFunctionBool(long instanceID, string functionName, object[] args)
+        {
+            return DoCSFunctionCall<bool>(instanceID, functionName, args);
+        }
+        public string CallCSFunctionString(long instanceID, string functionName, object[] args)
+        {
+            return DoCSFunctionCall<string>(instanceID, functionName, args);
+        }
+        public IntPtr CallCSFunctionObject(long instanceID, string functionName, object[] args)
+        {
+            UObject obj = DoCSFunctionCall<UObject>(instanceID, functionName, args);
+            if (obj == null) return IntPtr.Zero;
+            if (obj.NativeObject == null) return IntPtr.Zero;
+            return obj.NativeObject.Handle;
+        }
+        public void CallCSFunctionVoid(long instanceID, string functionName, object[] args)
+        {
+            DoCSFunctionCall<object>(instanceID, functionName, args);
         }
 
         private string Quoted(string str)

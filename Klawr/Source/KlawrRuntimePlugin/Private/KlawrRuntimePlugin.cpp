@@ -238,29 +238,6 @@ public:
 		return bDestroyed;
 	}
 
-protected:
-
-	static void FillArgArrays(UKlawrArgArray* args, std::vector<float>& floats, std::vector<int>& ints, std::vector<bool>& bools, std::vector<const TCHAR*>& strings, std::vector<long long>& objects)
-	{
-		for (int i = 0; i < args->args.Num(); i++)
-		{
-			FKlawrVariantArg& vArg = args->args[i];
-			switch (vArg.Type)
-			{
-				case KlawrVariantArgType::Int: ints.push_back(vArg.Data[0]); break;
-				case KlawrVariantArgType::Bool: bools.push_back(vArg.Data[0] == 1); break;
-				case KlawrVariantArgType::Float: floats.push_back(*(reinterpret_cast<float*>(vArg.Data))); break;
-				case KlawrVariantArgType::String: strings.push_back(*(reinterpret_cast<const TCHAR**>(vArg.Data))); break;
-				case KlawrVariantArgType::Object:
-				{
-					UObject* obj = *(reinterpret_cast<UObject**>(vArg.Data));
-					objects.push_back(reinterpret_cast<long long>(obj));
-					break;
-				}
-			}
-		}
-	}
-
 public: // IModuleInterface interface
 	
 	virtual void StartupModule() override
@@ -368,69 +345,32 @@ public: // IModuleInterface interface
 
 	float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		std::vector<float> _floats;
-		std::vector<int> _ints;
-		std::vector<bool> _bools;
-		std::vector<const TCHAR*> _strings;
-		std::vector<long long> _objects;
-		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
-
-		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
 	}
 
 	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
-	{
-		std::vector<float> _floats;
-		std::vector<int> _ints;
-		std::vector<bool> _bools;
-		std::vector<const TCHAR*> _strings;
-		std::vector<long long> _objects;
-		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
-		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+	{;
+		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
 	}
 
 	bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		std::vector<float> _floats;
-		std::vector<int> _ints;
-		std::vector<bool> _bools;
-		std::vector<const TCHAR*> _strings;
-		std::vector<long long> _objects;
-		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
-		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
 	}
 
 	const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		std::vector<float> _floats;
-		std::vector<int> _ints;
-		std::vector<bool> _bools;
-		std::vector<const TCHAR*> _strings;
-		std::vector<long long> _objects;
-		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
-		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
 	}
 
 	UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		std::vector<float> _floats;
-		std::vector<int> _ints;
-		std::vector<bool> _bools;
-		std::vector<const TCHAR*> _strings;
-		std::vector<long long> _objects;
-		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
-		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
 	}
 
 	void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		std::vector<float> _floats;
-		std::vector<int> _ints;
-		std::vector<bool> _bools;
-		std::vector<const TCHAR*> _strings;
-		std::vector<long long> _objects;
-		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
-		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
+		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
 	}
 
 	const TCHAR* GetAssemblyInfo(int appDomainID) const

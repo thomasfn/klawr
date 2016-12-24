@@ -33,12 +33,13 @@ UKlawrArgArray* UKlawrArgArray::Create()
 void UKlawrArgArray::Clear()
 {
 	args.Empty();
+	refStrings.Empty();
 }
 
 void UKlawrArgArray::AddInt(int value)
 {
-	FKlawrVariantArg arg;
-	arg.Type = KlawrVariantArgType::Int;
+	Klawr::VariantArg arg;
+	arg.Type = Klawr::VariantArgType::Int;
 	arg.Data[0] = value;
 	arg.Data[1] = 0;
 	args.Add(arg);
@@ -46,8 +47,8 @@ void UKlawrArgArray::AddInt(int value)
 
 void UKlawrArgArray::AddFloat(float value)
 {
-	FKlawrVariantArg arg;
-	arg.Type = KlawrVariantArgType::Float;
+	Klawr::VariantArg arg;
+	arg.Type = Klawr::VariantArgType::Float;
 	*(reinterpret_cast<float*>(arg.Data)) = value;
 	arg.Data[1] = 0;
 	args.Add(arg);
@@ -55,8 +56,8 @@ void UKlawrArgArray::AddFloat(float value)
 
 void UKlawrArgArray::AddBool(bool value)
 {
-	FKlawrVariantArg arg;
-	arg.Type = KlawrVariantArgType::Bool;
+	Klawr::VariantArg arg;
+	arg.Type = Klawr::VariantArgType::Bool;
 	arg.Data[0] = value ? 1 : 0;
 	arg.Data[1] = 0;
 	args.Add(arg);
@@ -64,16 +65,18 @@ void UKlawrArgArray::AddBool(bool value)
 
 void UKlawrArgArray::AddString(FString value)
 {
-	FKlawrVariantArg arg;
-	arg.Type = KlawrVariantArgType::String;
-	*(reinterpret_cast<const TCHAR**>(arg.Data)) = *value;
+	// Store the string in refStrings, so that the buffer doesn't get deallocated while we're using it
+	int idx = refStrings.Add(value);
+	Klawr::VariantArg arg;
+	arg.Type = Klawr::VariantArgType::String;
+	*(reinterpret_cast<const TCHAR**>(arg.Data)) = *refStrings[idx];
 	args.Add(arg);
 }
 
 void UKlawrArgArray::AddObject(UObject* value)
 {
-	FKlawrVariantArg arg;
-	arg.Type = KlawrVariantArgType::Object;
+	Klawr::VariantArg arg;
+	arg.Type = Klawr::VariantArgType::Object;
 	*(reinterpret_cast<UObject**>(arg.Data)) = value;
 	args.Add(arg);
 }

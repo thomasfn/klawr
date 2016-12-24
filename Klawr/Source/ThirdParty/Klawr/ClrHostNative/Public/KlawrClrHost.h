@@ -42,6 +42,20 @@ namespace Klawr {
 
 namespace Klawr {
 
+	namespace VariantArgType
+	{
+		enum VariantArgType_t
+		{
+			Int, Float, Bool, String, Object
+		};
+	}
+
+struct VariantArg
+{
+	VariantArgType::VariantArgType_t Type;
+	int Data[2]; // ASSUMPTION - All types fit in 8 bytes, and an int is 4 bytes
+};
+
 /**
  * @brief Makes a copy of the given string, the resulting copy can be safely released by the CLR.
  *
@@ -207,12 +221,13 @@ public:
 	virtual bool GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
 	virtual const TCHAR* GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
 	virtual UObject* GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const = 0;
-	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const = 0;
-	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const = 0;
-	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const = 0;
-	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const = 0;
-	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const = 0;
-	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const = 0;
+
+	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const = 0;
+	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const = 0;
+	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const = 0;
+	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const = 0;
+	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const = 0;
+	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const = 0;
 
 	virtual const TCHAR* GetAssemblyInfo(int appDomainID) const = 0;
 public:

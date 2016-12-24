@@ -13,6 +13,7 @@ namespace UnrealBuildTool.Rules
 			PrivateIncludePaths.AddRange(
 				new string[] {
                     "KlawrEditorPlugin/Private",
+                    "ThirdParty/Klawr/ClrHostNative/Public"
 					// ... add other private include paths required here ...
 				}
 			);

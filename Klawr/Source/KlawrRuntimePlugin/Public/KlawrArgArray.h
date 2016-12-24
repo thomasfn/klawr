@@ -23,25 +23,8 @@
 //-------------------------------------------------------------------------------
 #pragma once
 
+#include "KlawrClrHost.h"
 #include "KlawrArgArray.generated.h"
-
-UENUM()
-enum KlawrVariantArgType
-{
-	Int, Float, Bool, String, Object
-};
-
-USTRUCT()
-struct FKlawrVariantArg
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TEnumAsByte<KlawrVariantArgType> Type;
-
-	UPROPERTY()
-	int Data[2]; // ASSUMPTION - All types fit in 8 bytes, and an int is 4 bytes
-};
 
 /**
 * 
@@ -53,8 +36,11 @@ class KLAWRRUNTIMEPLUGIN_API UKlawrArgArray : public UObject
 
 public:
 
-	UPROPERTY()
-	TArray<FKlawrVariantArg> args;
+	TArray<Klawr::VariantArg> args;
+
+protected:
+
+	TArray<FString> refStrings;
 
 public:
 

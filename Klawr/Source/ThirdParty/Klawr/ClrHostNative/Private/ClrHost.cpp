@@ -135,6 +135,73 @@ void CreateSafeArray
 
 	return;
 }
+void CreateSafeVariantArray
+(
+	VARIANT* lpT,
+	ULONG ulSize,
+	SAFEARRAY** ppSafeArrayReceiver
+)
+{
+	if ((lpT == NULL) || (ppSafeArrayReceiver == NULL))
+	{
+		// lpT and ppSafeArrayReceiver each cannot be NULL.
+		return;
+	}
+
+	HRESULT hrRetTemp = S_OK;
+	SAFEARRAYBOUND rgsabound[1];
+	ULONG	ulIndex = 0;
+	long lRet = 0;
+
+	// Initialise receiver.
+	*ppSafeArrayReceiver = NULL;
+
+	rgsabound[0].lLbound = 0;
+	rgsabound[0].cElements = ulSize;
+
+	*ppSafeArrayReceiver = (SAFEARRAY*)SafeArrayCreate
+	(
+		VT_VARIANT,
+		(unsigned int)1,
+		(SAFEARRAYBOUND*)rgsabound
+	);
+
+	for (ulIndex = 0; ulIndex < ulSize; ulIndex++)
+	{
+		long lIndexVector[1];
+
+		lIndexVector[0] = ulIndex;
+
+		VARIANT& item = lpT[ulIndex];
+
+		if (item.vt == VT_BSTR)
+		{
+			VARIANT tmpVar = item;
+			BSTR tmpStr = SysAllocStringLen(item.bstrVal, wcslen(item.bstrVal));
+			tmpVar.bstrVal = tmpStr;
+			SafeArrayPutElement
+			(
+				(SAFEARRAY*)(*ppSafeArrayReceiver),
+				(long*)lIndexVector,
+				(void*)(&tmpVar)
+			);
+			SysFreeString(tmpStr);
+		}
+		else
+		{
+			SafeArrayPutElement
+			(
+				(SAFEARRAY*)(*ppSafeArrayReceiver),
+				(long*)lIndexVector,
+				(void*)(&item)
+			);
+		}
+
+		
+	}
+
+	return;
+}
 } // unnamed namespace
 
 
@@ -492,133 +559,122 @@ void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, co
 	}
 }
 
-float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+SAFEARRAY* VariantArgsToSafeArray(VariantArg* args, int argCount)
+{
+	// Translate to an array of variants
+	VARIANT* varArr = new VARIANT[argCount];
+	ZeroMemory(varArr, sizeof(VARIANT) * argCount);
+	for (int i = 0; i < argCount; i++)
+	{
+		VariantArg& arg = args[i];
+		VARIANT& variant = varArr[i];
+		switch (arg.Type)
+		{
+		case VariantArgType::Int:
+		{
+			variant.vt = VT_I4;
+			variant.intVal = arg.Data[0];
+			break;
+		}
+		case VariantArgType::Bool:
+		{
+			variant.vt = VT_BOOL;
+			variant.boolVal = arg.Data[0] == 1;
+			break;
+		}
+		case VariantArgType::Float:
+		{
+			variant.vt = VT_R4;
+			variant.fltVal = *(reinterpret_cast<float*>(arg.Data));
+			break;
+		}
+		case VariantArgType::String:
+		{
+			variant.vt = VT_BSTR;
+			variant.bstrVal = *(reinterpret_cast<TCHAR**>(arg.Data));
+			break;
+		}
+		case VariantArgType::Object:
+		{
+			variant.vt = VT_INT;
+			variant.intVal = *(reinterpret_cast<long long*>(arg.Data));
+			break;
+		}
+		default:
+		{
+			variant.vt = VT_EMPTY;
+			break;
+		}
+		}
+	}
+	SAFEARRAY* argsArray = nullptr;
+	CreateSafeVariantArray(varArr, argCount, &argsArray);
+	delete[] varArr;
+	return argsArray;
+}
+
+float __cdecl ClrHost::CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		SAFEARRAY* floatsArray = NULL;
-		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
-		SAFEARRAY* intsArray = NULL;
-		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
-		SAFEARRAY* boolsArray = NULL;
-		CreateSafeArrayBool(&bools, &boolsArray);
-		SAFEARRAY* stringsArray = NULL;
-		CreateSafeArrayString(&strings, &stringsArray);
-		SAFEARRAY* objectsArray = NULL;
-		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
-
-		return appDomainManager->CallCSFunctionFloat(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		return appDomainManager->CallCSFunctionFloat(instanceID, functionName, argsArray);
 	}
 	return 0.0f;
 }
 
-int __cdecl ClrHost::CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+int __cdecl ClrHost::CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		SAFEARRAY* floatsArray = NULL;
-		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
-		SAFEARRAY* intsArray = NULL;
-		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
-		SAFEARRAY* boolsArray = NULL;
-		CreateSafeArrayBool(&bools, &boolsArray);
-		SAFEARRAY* stringsArray = NULL;
-		CreateSafeArrayString(&strings, &stringsArray);
-		SAFEARRAY* objectsArray = NULL;
-		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
-
-		return appDomainManager->CallCSFunctionInt(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		return appDomainManager->CallCSFunctionInt(instanceID, functionName, argsArray);
 	}
 	return 0;
 }
 
-bool __cdecl ClrHost::CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+bool __cdecl ClrHost::CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		SAFEARRAY* floatsArray = NULL;
-		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
-		SAFEARRAY* intsArray = NULL;
-		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
-		SAFEARRAY* boolsArray = NULL;
-		CreateSafeArrayBool(&bools, &boolsArray);
-		SAFEARRAY* stringsArray = NULL;
-		CreateSafeArrayString(&strings, &stringsArray);
-		SAFEARRAY* objectsArray = NULL;
-		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
-
-		return appDomainManager->CallCSFunctionBool(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		return appDomainManager->CallCSFunctionBool(instanceID, functionName, argsArray);
 	}
-
 	return false;
 }
 
-const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		SAFEARRAY* floatsArray = NULL;
-		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
-		SAFEARRAY* intsArray = NULL;
-		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
-		SAFEARRAY* boolsArray = NULL;
-		CreateSafeArrayBool(&bools, &boolsArray);
-		SAFEARRAY* stringsArray = NULL;
-		CreateSafeArrayString(&strings, &stringsArray);
-		SAFEARRAY* objectsArray = NULL;
-		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
-
-		return appDomainManager->CallCSFunctionString(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		return appDomainManager->CallCSFunctionString(instanceID, functionName, argsArray);
 	}
-
-	return NULL;
+	return nullptr;
 }
 
-UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		SAFEARRAY* floatsArray = NULL;
-		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
-		SAFEARRAY* intsArray = NULL;
-		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
-		SAFEARRAY* boolsArray = NULL;
-		CreateSafeArrayBool(&bools, &boolsArray);
-		SAFEARRAY* stringsArray = NULL;
-		CreateSafeArrayString(&strings, &stringsArray);
-		SAFEARRAY* objectsArray = NULL;
-		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
-
-		UObject* ptr;
-		ptr = (UObject*)(appDomainManager->CallCSFunctionObject(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray));
-		return ptr;
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		return (UObject*)appDomainManager->CallCSFunctionVoid(instanceID, functionName, argsArray);
 	}
-
-	return NULL;
+	return nullptr;
 }
 
-void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, std::vector<float> floats, std::vector<int> ints, std::vector<bool> bools, std::vector<const TCHAR*> strings, std::vector<LONGLONG> objects) const
+void __cdecl ClrHost::CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
 	if (appDomainManager)
 	{
-		SAFEARRAY* floatsArray = NULL;
-		CreateSafeArray<float, VT_R4>(&(floats[0]), floats.size(), &floatsArray);
-		SAFEARRAY* intsArray = NULL;
-		CreateSafeArray<int, VT_I4>(&(ints[0]), ints.size(), &intsArray);
-		SAFEARRAY* boolsArray = NULL;
-		CreateSafeArrayBool(&bools, &boolsArray);
-		SAFEARRAY* stringsArray = NULL;
-		CreateSafeArrayString(&strings, &stringsArray);
-		SAFEARRAY* objectsArray = NULL;
-		CreateSafeArray<LONGLONG, VT_I8>(&(objects[0]), objects.size(), &objectsArray);
-
-		appDomainManager->CallCSFunctionVoid(instanceID, functionName, floatsArray, intsArray, boolsArray, stringsArray, objectsArray);
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		appDomainManager->CallCSFunctionVoid(instanceID, functionName, argsArray);
 	}
 }
 
