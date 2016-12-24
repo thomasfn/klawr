@@ -345,32 +345,32 @@ public: // IModuleInterface interface
 
 	float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
+		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
 	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{;
-		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
+		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
 	bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
+		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
 	const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
+		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
 	UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
+		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
 	void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
-		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, &args->args[0], args->args.Num());
+		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
 	const TCHAR* GetAssemblyInfo(int appDomainID) const
