@@ -4,6 +4,7 @@
 #include "BPNode_KlawrFunctionCall.h"
 #include "BPNode_KlawrObjectArray.h"
 #include "KlawrScriptComponent.h"
+#include "KlawrArgArray.h"
 
 //BP
 #include "KismetCompiler.h"
@@ -335,168 +336,103 @@ UEdGraphPin* UBPNode_KlawrFunctionCall::GetThenPin() const
 	return Pin;
 }
 
-void AddArrayInput(UK2Node_MakeArray* arrayNode, UEdGraphPin* inputPin)
-{
-	UEdGraphPin* newPin = arrayNode->Pins.Last();
-	if (inputPin->LinkedTo.Num() > 0)
-	{
-		inputPin->LinkedTo.Last()->MakeLinkTo(newPin);
-		arrayNode->NotifyPinConnectionListChanged(inputPin);
-	}
-	else
-	{
-		newPin->PinType.PinCategory = inputPin->PinType.PinCategory;
-		newPin->DefaultValue = inputPin->DefaultValue;
-		arrayNode->PinDefaultValueChanged(newPin);
-	}
-	arrayNode->AddInputPin();
-}
-
 
 void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
 {
 	Super::ExpandNode(CompilerContext, SourceGraph);
 
 	const UEdGraphSchema_K2* K2Schema = GetDefault<UEdGraphSchema_K2>();
+	UEdGraphPin* currentExec = GetExecPin();
 
-	// Create the arrays which will hold the parameters
-	UK2Node_MakeArray* arrayFloat = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayFloat->AllocateDefaultPins();
-	arrayFloat->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Float;
-	UK2Node_MakeArray* arrayInt = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayInt->AllocateDefaultPins();
-	arrayInt->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Int;
-	UK2Node_MakeArray* arrayBool = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayBool->AllocateDefaultPins();
-	arrayBool->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Boolean;
-	UK2Node_MakeArray* arrayString = CompilerContext.SpawnIntermediateNode<UK2Node_MakeArray>(this, SourceGraph);
-	arrayString->AllocateDefaultPins();
-	arrayString->GetOutputPin()->PinType.PinCategory = K2Schema->PC_String;
-	UBPNode_KlawrObjectArray* arrayObject = CompilerContext.SpawnIntermediateNode<UBPNode_KlawrObjectArray>(this, SourceGraph);
-	arrayObject->AllocateDefaultPins();
-	arrayObject->GetOutputPin()->PinType.PinCategory = K2Schema->PC_Object;
-	arrayObject->GetOutputPin()->PinType.PinSubCategoryObject = UObject::StaticClass();
-	
-	UEdGraphPin* execStart = GetExecPin();
+	// Make an arg array
+	UK2Node_CallFunction* makeArgArray = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+	makeArgArray->SetFromFunction(UKlawrArgArray::StaticClass()->FindFunctionByName(L"Create"));
+	makeArgArray->AllocateDefaultPins();
+	CompilerContext.MovePinLinksToIntermediate(*currentExec, *makeArgArray->GetExecPin());
+	currentExec = makeArgArray->GetThenPin();
+	CompilerContext.MessageLog.NotifyIntermediateObjectCreation(makeArgArray, this);
 
-	// Create the array pins and link them to the parameter pins
-	TArray<UEdGraphPin*> parameterPins;
-	for (UEdGraphPin* pin : Pins)
+	// Iterate each parameter
+	for (UEdGraphPin* paramPin : Pins)
 	{
 		// Link only parameter pins
-		if (IsParameterPin(pin))
+		if (IsParameterPin(paramPin))
 		{
-			if (pin->PinType.PinCategory == K2Schema->PC_Float)
+			TCHAR* funcName = nullptr;
+			if (paramPin->PinType.PinCategory == K2Schema->PC_Float)
 			{
-				AddArrayInput(arrayFloat, pin);
+				funcName = L"AddFloat";
 			}
-			else if (pin->PinType.PinCategory == K2Schema->PC_Int)
+			else if (paramPin->PinType.PinCategory == K2Schema->PC_Int)
 			{
-				AddArrayInput(arrayInt, pin);
+				funcName = L"AddInt";
 			}
-			else if (pin->PinType.PinCategory == K2Schema->PC_Boolean)
+			else if (paramPin->PinType.PinCategory == K2Schema->PC_Boolean)
 			{
-				AddArrayInput(arrayBool, pin);
+				funcName = L"AddBool";
 			}
-			else if (pin->PinType.PinCategory == K2Schema->PC_String)
+			else if (paramPin->PinType.PinCategory == K2Schema->PC_String)
 			{
-				AddArrayInput(arrayString, pin);
+				funcName = L"AddString";
 			}
-			else if (pin->PinType.PinCategory == K2Schema->PC_Object)
+			else if (paramPin->PinType.PinCategory == K2Schema->PC_Object)
 			{
-				UEdGraphPin* newPin = arrayObject->Pins.Last();
-				if (pin->LinkedTo.Num() > 0)
+				funcName = L"AddObject";
+			}
+			if (funcName != nullptr)
+			{
+				// Call argArray->Add*
+				UK2Node_CallFunction* addArg = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+				addArg->SetFromFunction(UKlawrArgArray::StaticClass()->FindFunctionByName(funcName));
+				addArg->AllocateDefaultPins();
+				makeArgArray->GetReturnValuePin()->MakeLinkTo(addArg->FindPin(L"self"));
+				UEdGraphPin* argPin = addArg->FindPin(L"value");
+				if (paramPin->LinkedTo.Num() > 0)
 				{
-					pin->LinkedTo.Last()->MakeLinkTo(newPin);
-					arrayObject->NotifyPinConnectionListChanged(pin);
+					paramPin->LinkedTo.Last()->MakeLinkTo(argPin);
+					addArg->NotifyPinConnectionListChanged(argPin);
 				}
 				else
 				{
-					newPin->PinType.PinCategory = pin->PinType.PinCategory;
-					newPin->DefaultValue = pin->DefaultValue;
-					arrayObject->PinDefaultValueChanged(newPin);
+					argPin->PinType.PinCategory = paramPin->PinType.PinCategory;
+					argPin->DefaultValue = paramPin->DefaultValue;
+					addArg->PinDefaultValueChanged(argPin);
 				}
-				arrayObject->AddInputPin();
+				currentExec->MakeLinkTo(addArg->GetExecPin());
+				currentExec = addArg->GetThenPin();
+				CompilerContext.MessageLog.NotifyIntermediateObjectCreation(addArg, this);
 			}
 		}
 	}
 
-	// If any array has only 1 item, it means there was no parameter of that type
-	// To make the array node happy (not complaining) we have to 'fix' the type by adding a dummy value
-	if (arrayFloat->NumInputs == 1)
-	{
-		UEdGraphPin* newPin = arrayFloat->Pins.Last();
-		newPin->PinType.PinCategory = K2Schema->PC_Float;
-		newPin->DefaultValue = TEXT("0.0f");
-		arrayFloat->PinDefaultValueChanged(newPin);
-	}
-
-	if (arrayInt->NumInputs == 1)
-	{
-		UEdGraphPin* newPin = arrayInt->Pins.Last();
-		newPin->PinType.PinCategory = K2Schema->PC_Int;
-		newPin->DefaultValue = TEXT("0");
-		arrayInt->PinDefaultValueChanged(newPin);
-	}
-
-	if (arrayBool->NumInputs == 1)
-	{
-		UEdGraphPin* newPin = arrayBool->Pins.Last();
-		newPin->PinType.PinCategory = K2Schema->PC_Boolean;
-		newPin->DefaultValue = TEXT("false");
-	}
-
-	if (arrayString->NumInputs == 1)
-	{
-		UEdGraphPin* newPin = arrayString->Pins.Last();
-		newPin->PinType.PinCategory = K2Schema->PC_String;
-		newPin->DefaultValue = TEXT("");
-	}
-
-	if (arrayObject->NumInputs == 1)
-	{
-		UEdGraphPin* newPin = arrayObject->Pins.Last();
-		FindPin(FGetConfigNodeName::GetInputObjectPinName())->LinkedTo[0]->MakeLinkTo(newPin);
-		newPin->PinType.PinSubCategoryObject = UObject::StaticClass();
-	}
-	 
+	// Call function
 	UK2Node_CallFunction* CallFunction = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
 	UFunction* function = UKlawrScriptComponent::StaticClass()->FindFunctionByName(*RawFunctionName);
-
 	if (function == NULL)
 	{
 		UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Function Name %s not found!"), *(RawFunctionName));
 		BreakAllNodeLinks();
 		return;
 	}
-
 	CallFunction->SetFromFunction(function);
 	CallFunction->AllocateDefaultPins();
+	currentExec->MakeLinkTo(CallFunction->GetExecPin());
+	currentExec = CallFunction->GetThenPin();
 
 	UEdGraphPin* targetPin = CallFunction->Pins[2];
 	UEdGraphPin* functionPin = FindPin(FGetConfigNodeName::GetInputObjectPinName());
 	CompilerContext.MovePinLinksToIntermediate(*functionPin, *targetPin);
 
 	CompilerContext.MessageLog.NotifyIntermediateObjectCreation(CallFunction, this);
-	arrayFloat->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("floats")));
-	arrayInt->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("ints")));
-	arrayBool->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("bools")));
-	arrayObject->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("objects")));
-	arrayString->GetOutputPin()->MakeLinkTo(CallFunction->FindPin(TEXT("strings")));
+	makeArgArray->GetReturnValuePin()->MakeLinkTo(CallFunction->FindPin(TEXT("args")));
 
 	UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Function Name: %s"), *(this->FindPin(FGetConfigNodeName::GetFunctionNamePinName())->DefaultValue));
 	CallFunction->FindPin(TEXT("functionName"))->DefaultValue = this->FindPin(FGetConfigNodeName::GetFunctionNamePinName())->DefaultValue;
 
-	UEdGraphPin* SelfNodeExec = GetExecPin();							
-	UEdGraphPin* SelfNodeThen = FindPin(K2Schema->PN_Then);	
-
-															
-	UEdGraphPin* InternalBeginExec = CallFunction->GetExecPin();
-	CompilerContext.MovePinLinksToIntermediate(*SelfNodeExec, *InternalBeginExec);
+	UEdGraphPin* SelfNodeThen = FindPin(K2Schema->PN_Then);
 
 	//Connect End
-	UEdGraphPin* InternalFinishThen = CallFunction->GetThenPin();
-	CompilerContext.MovePinLinksToIntermediate(*SelfNodeThen, *InternalFinishThen);
+	CompilerContext.MovePinLinksToIntermediate(*SelfNodeThen, *currentExec);
 
 	// Connect Result Pin
 	if (FindPin(FGetConfigNodeName::GetResultPinName())->LinkedTo.Num() > 0)

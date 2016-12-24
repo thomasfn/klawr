@@ -238,6 +238,29 @@ public:
 		return bDestroyed;
 	}
 
+protected:
+
+	static void FillArgArrays(UKlawrArgArray* args, std::vector<float>& floats, std::vector<int>& ints, std::vector<bool>& bools, std::vector<const TCHAR*>& strings, std::vector<long long>& objects)
+	{
+		for (int i = 0; i < args->args.Num(); i++)
+		{
+			FKlawrVariantArg& vArg = args->args[i];
+			switch (vArg.Type)
+			{
+				case KlawrVariantArgType::Int: ints.push_back(vArg.Data[0]); break;
+				case KlawrVariantArgType::Bool: bools.push_back(vArg.Data[0] == 1); break;
+				case KlawrVariantArgType::Float: floats.push_back(*(reinterpret_cast<float*>(vArg.Data))); break;
+				case KlawrVariantArgType::String: strings.push_back(*(reinterpret_cast<const TCHAR**>(vArg.Data))); break;
+				case KlawrVariantArgType::Object:
+				{
+					UObject* obj = *(reinterpret_cast<UObject**>(vArg.Data));
+					objects.push_back(reinterpret_cast<long long>(obj));
+					break;
+				}
+			}
+		}
+	}
+
 public: // IModuleInterface interface
 	
 	virtual void StartupModule() override
@@ -341,214 +364,72 @@ public: // IModuleInterface interface
 		return returnValue;
 	}
 
-	float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+
+
+	float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
 		std::vector<float> _floats;
-		for (auto fl : floats)
-		{
-			_floats.push_back(fl);
-		}
-
 		std::vector<int> _ints;
-		for (auto It : ints)
-		{
-			_ints.push_back(It);
-		}
-
 		std::vector<bool> _bools;
-		for (auto bo : bools)
-		{
-			_bools.push_back(bo);
-		}
-
 		std::vector<const TCHAR*> _strings;
-		for (auto string : strings)
-		{
-			const TCHAR* temp = MakeStringCopyForCLR(*string);
-			_strings.push_back(temp);
-		}
-
 		std::vector<long long> _objects;
-		for (auto obj : objects)
-		{
-			long long temp = (long long)obj;
-			_objects.push_back(temp);
-		}
+		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
+
 		return IClrHost::Get()->CallCSFunctionFloat(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 
-	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
 		std::vector<float> _floats;
-		for (auto fl : floats)
-		{
-			_floats.push_back(fl);
-		}
-
 		std::vector<int> _ints;
-		for (auto It : ints)
-		{
-			_ints.push_back(It);
-		}
-
 		std::vector<bool> _bools;
-		for (auto bo : bools)
-		{
-			_bools.push_back(bo);
-		}
-
 		std::vector<const TCHAR*> _strings;
-		for (auto string : strings)
-		{
-			const TCHAR* temp = MakeStringCopyForCLR(*string);
-			_strings.push_back(temp);
-		}
-
-		std::vector<LONGLONG> _objects;
-		for (auto obj : objects)
-		{
-			_objects.push_back((long long)obj);
-		}
+		std::vector<long long> _objects;
+		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
 		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 
-	bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
 		std::vector<float> _floats;
-		for (auto fl : floats)
-		{
-			_floats.push_back(fl);
-		}
-
 		std::vector<int> _ints;
-		for (auto It : ints)
-		{
-			_ints.push_back(It);
-		}
-
 		std::vector<bool> _bools;
-		for (auto bo : bools)
-		{
-			_bools.push_back(bo);
-		}
-
 		std::vector<const TCHAR*> _strings;
-		for (auto string : strings)
-		{
-			const TCHAR* temp = MakeStringCopyForCLR(*string);
-			_strings.push_back(temp);
-		}
-
-		std::vector<LONGLONG> _objects;
-		for (auto obj : objects)
-		{
-			_objects.push_back((long long)obj);
-		}
+		std::vector<long long> _objects;
+		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
 		return IClrHost::Get()->CallCSFunctionBool(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 
-	const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
 		std::vector<float> _floats;
-		for (auto fl : floats)
-		{
-			_floats.push_back(fl);
-		}
-
 		std::vector<int> _ints;
-		for (auto It : ints)
-		{
-			_ints.push_back(It);
-		}
-
 		std::vector<bool> _bools;
-		for (auto bo : bools)
-		{
-			_bools.push_back(bo);
-		}
-
 		std::vector<const TCHAR*> _strings;
-		for (auto string : strings)
-		{
-			const TCHAR* temp = MakeStringCopyForCLR(*string);
-			_strings.push_back(temp);
-		}
-
-		std::vector<LONGLONG> _objects;
-		for (auto obj : objects)
-		{
-			_objects.push_back((long long)obj);
-		}
+		std::vector<long long> _objects;
+		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
 		return IClrHost::Get()->CallCSFunctionString(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 
-	UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
 		std::vector<float> _floats;
-		for (auto fl : floats)
-		{
-			_floats.push_back(fl);
-		}
-
 		std::vector<int> _ints;
-		for (auto It : ints)
-		{
-			_ints.push_back(It);
-		}
-
 		std::vector<bool> _bools;
-		for (auto bo : bools)
-		{
-			_bools.push_back(bo);
-		}
-
 		std::vector<const TCHAR*> _strings;
-		for (auto string : strings)
-		{
-			const TCHAR* temp = MakeStringCopyForCLR(*string);
-			_strings.push_back(temp);
-		}
-
-		std::vector<LONGLONG> _objects;
-		for (auto obj : objects)
-		{
-			_objects.push_back((long long)obj);
-		}
+		std::vector<long long> _objects;
+		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
 		return IClrHost::Get()->CallCSFunctionObject(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 
-	void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const
+	void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
 	{
 		std::vector<float> _floats;
-		for (auto fl : floats)
-		{
-			_floats.push_back(fl);
-		}
-
 		std::vector<int> _ints;
-		for (auto It : ints)
-		{
-			_ints.push_back(It);
-		}
-
 		std::vector<bool> _bools;
-		for (auto bo : bools)
-		{
-			_bools.push_back(bo);
-		}
-
 		std::vector<const TCHAR*> _strings;
-		for (auto string : strings)
-		{
-			const TCHAR* temp = MakeStringCopyForCLR(*string);
-			_strings.push_back(temp);
-		}
-
-		std::vector<LONGLONG> _objects;
-		for (auto obj : objects)
-		{
-			_objects.push_back((long long)obj);
-		}
+		std::vector<long long> _objects;
+		FillArgArrays(args, _floats, _ints, _bools, _strings, _objects);
 		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, _floats, _ints, _bools, _strings, _objects);
 	}
 

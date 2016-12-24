@@ -78,12 +78,12 @@ public:
 	virtual const TCHAR* GetStr(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
 	virtual UObject* GetObj(int appDomainID, __int64 instanceID, const TCHAR* propertyName) const = 0;
 
-	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
-	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
-	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
-	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
-	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
-	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, TArray<float> floats, TArray<int> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) const = 0;
+	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
+	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
+	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
+	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
+	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
+	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
 
 	virtual const TCHAR* GetAssemblyInfo(int appDomainID) const = 0;
 	/**

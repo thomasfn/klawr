@@ -308,15 +308,6 @@ void UKlawrScriptComponent::UpdatePropertyTracker(Klawr::PropertyTracker& tracke
 	else if (tracker.Property->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
 	{
 		UObjectProperty* propObject = Cast<UObjectProperty>(tracker.Property);
-		/*UObject* returnObject = GetObj(appDomainID, instanceID, propertyName);
-		if ((returnObject != NULL) && (returnObject != nullptr))
-		{
-			propObject->SetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object), returnObject);
-		}*/
-
-		/*UObjectProperty* propObject = Cast<UObjectProperty>(prop);
-		UObject* temp = propObject->GetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object));
-		SetObj(appDomainID, instanceID, propertyName, propObject->GetObjectPropertyValue(prop->ContainerPtrToValuePtr<UObject*>(object)));*/
 
 		// Did managed value change?
 		UObject* prevManagedValue = tracker.GetPreviousManaged<UObject*>();
@@ -346,35 +337,32 @@ void UKlawrScriptComponent::UpdatePropertyTracker(Klawr::PropertyTracker& tracke
 	}
 }
 
-float UKlawrScriptComponent::CallCSFunctionFloat(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+float UKlawrScriptComponent::CallCSFunctionFloat(FString functionName, UKlawrArgArray* args)
 {
-	return IKlawrRuntimePlugin::Get().CallCSFunctionFloat(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+	return IKlawrRuntimePlugin::Get().CallCSFunctionFloat(appDomainId, Proxy->InstanceID, *functionName, args);
 }
 
-int32 UKlawrScriptComponent::CallCSFunctionInt(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+int32 UKlawrScriptComponent::CallCSFunctionInt(FString functionName, UKlawrArgArray* args)
 {
-	return IKlawrRuntimePlugin::Get().CallCSFunctionInt(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+	return IKlawrRuntimePlugin::Get().CallCSFunctionInt(appDomainId, Proxy->InstanceID, *functionName, args);
 }
 
-bool UKlawrScriptComponent::CallCSFunctionBool(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+bool UKlawrScriptComponent::CallCSFunctionBool(FString functionName, UKlawrArgArray* args)
 {
-	return IKlawrRuntimePlugin::Get().CallCSFunctionBool(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+	return IKlawrRuntimePlugin::Get().CallCSFunctionBool(appDomainId, Proxy->InstanceID, *functionName, args);
 }
 
-FString UKlawrScriptComponent::CallCSFunctionString(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects) 
+FString UKlawrScriptComponent::CallCSFunctionString(FString functionName, UKlawrArgArray* args)
 {
-	return FString(IKlawrRuntimePlugin::Get().CallCSFunctionString(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects));
+	return FString(IKlawrRuntimePlugin::Get().CallCSFunctionString(appDomainId, Proxy->InstanceID, *functionName, args));
 }
 
-UObject* UKlawrScriptComponent::CallCSFunctionObject(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects)
+UObject* UKlawrScriptComponent::CallCSFunctionObject(FString functionName, UKlawrArgArray* args)
 {
-	return IKlawrRuntimePlugin::Get().CallCSFunctionObject(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+	return IKlawrRuntimePlugin::Get().CallCSFunctionObject(appDomainId, Proxy->InstanceID, *functionName, args);
 }
 
-void UKlawrScriptComponent::CallCSFunctionVoid(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects)
+void UKlawrScriptComponent::CallCSFunctionVoid(FString functionName, UKlawrArgArray* args)
 {
-	IKlawrRuntimePlugin::Get().CallCSFunctionVoid(appDomainId, Proxy->InstanceID, *functionName, floats, ints, bools, strings, objects);
+	IKlawrRuntimePlugin::Get().CallCSFunctionVoid(appDomainId, Proxy->InstanceID, *functionName, args);
 }
-
-
-

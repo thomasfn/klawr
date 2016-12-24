@@ -85,18 +85,18 @@ public: // UActorComponent interface
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
-	UFUNCTION(meta = (BlueprintInternalUseOnly="true"), BlueprintCallable, Category="Klawr")
-	virtual float CallCSFunctionFloat(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
 	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
-	virtual int32 CallCSFunctionInt(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	virtual float CallCSFunctionFloat(FString functionName, UKlawrArgArray* args);
 	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
-	virtual bool CallCSFunctionBool(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	virtual int32 CallCSFunctionInt(FString functionName, UKlawrArgArray* args);
 	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
-	virtual FString CallCSFunctionString(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	virtual bool CallCSFunctionBool(FString functionName, UKlawrArgArray* args);
 	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
-	virtual UObject* CallCSFunctionObject(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	virtual FString CallCSFunctionString(FString functionName, UKlawrArgArray* args);
 	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
-	virtual void CallCSFunctionVoid(FString functionName, TArray<float> floats, TArray<int32> ints, TArray<bool> bools, TArray<FString> strings, TArray<UObject*> objects);
+	virtual UObject* CallCSFunctionObject(FString functionName, UKlawrArgArray* args);
+	UFUNCTION(meta = (BlueprintInternalUseOnly = "true"), BlueprintCallable, Category = "Klawr")
+	virtual void CallCSFunctionVoid(FString functionName, UKlawrArgArray* args);
 
 
 private:
