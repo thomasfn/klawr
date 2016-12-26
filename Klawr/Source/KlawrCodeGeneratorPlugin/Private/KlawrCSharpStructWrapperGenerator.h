@@ -1,0 +1,76 @@
+//-------------------------------------------------------------------------------
+// The MIT License (MIT)
+//
+// Copyright (c) 2014 Vadim Macagon
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//-------------------------------------------------------------------------------
+#pragma once
+
+namespace Klawr {
+
+	/** Generates a C# struct for a UStruct. */
+	class FCSharpStructWrapperGenerator
+	{
+	public:
+		FCSharpStructWrapperGenerator(
+			const UScriptStruct* Struct, class FCodeFormatter& CodeFormatter
+		);
+
+		void GenerateHeader();
+		void GeneratePropertyWrapper(const UProperty* Property);
+		void GenerateFooter();
+
+		/** Get number of properties wrapped. */
+		int32 GetPropertyCount() const { return ExportedProperties.Num(); }
+
+	private:
+		struct FExportedProperty
+		{
+			FString FieldTypeName;
+			FString GetterDelegateName;
+			FString GetterDelegateTypeName;
+		};
+
+	private:
+		void GenerateStandardPropertyWrapper(const UProperty* Property);
+		void GenerateArrayPropertyWrapper(const UArrayProperty* Property);
+		static bool ShouldGenerateManagedWrapper(const UScriptStruct* Struct);
+		
+		static FString GetPropertyInteropType(const UProperty* Property);
+		static FString GetPropertyManagedType(const UProperty* Property);
+		static FString GetPropertyInteropTypeAttributes(const UProperty* Property);
+		static FString GetPropertyInteropTypeModifiers(const UProperty* Property);
+		static FString GetDelegateTypeName(const FString& FunctionName, bool bHasReturnValue);
+		static FString GetDelegateName(const FString& FunctionName);
+		static FString GetArrayPropertyWrapperType(const UArrayProperty* ArrayProperty);
+
+	private:
+		FString FriendlyStructName;
+		FString NativeStructName;
+		class FCodeFormatter& GeneratedGlue;
+		bool bShouldGenerateManagedWrapper;
+		TArray<FExportedProperty> ExportedProperties;
+
+		static const FString UnmanagedFunctionPointerAttribute;
+		static const FString MarshalReturnedBoolAsUint8Attribute;
+		static const FString MarshalBoolParameterAsUint8Attribute;
+	};
+
+} // namespace Klawr

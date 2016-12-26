@@ -39,6 +39,7 @@ public:
 	FCodeGenerator(const FString& InRootLocalPath, const FString& InRootBuildPath, const FString& InOutputDirectory, const FString& InIncludeBase);
 
     void ExportClass(UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename, bool bHasChanged);
+	void ExportStruct(UScriptStruct* Struct);
 	void FinishExport();
 
 	static FString GetPropertyCPPType(const UProperty* Property);
@@ -103,9 +104,12 @@ private:
 	/** Classes for which native wrappers were generated. */
 	TArray<const UClass*> ClassesWithNativeWrappers;
 	TArray<const UClass*> AllExportedClasses;
+	TArray<const UScriptStruct*> AllExportedStructs;
 
 	static bool CanExportClass(const UClass* Class);
+	static bool CanExportStruct(const UScriptStruct* Struct);
 	static bool CanExportProperty(const UClass* Class, const UProperty* Property);
+	static bool CanExportProperty(const UScriptStruct* Struct, const UProperty* Property);
 	static bool CanExportFunction(const UClass* Class, const UFunction* Function);
 
 	/** Generate a .csproj for the C# wrapper classes. */

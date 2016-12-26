@@ -28,6 +28,7 @@
 #include "pugixml.hpp"
 #include "KlawrNativeWrapperGenerator.h"
 #include "KlawrCSharpWrapperGenerator.h"
+#include "KlawrCSharpStructWrapperGenerator.h"
 
 namespace Klawr {
 
@@ -125,6 +126,20 @@ bool FCodeGenerator::CanExportClass(const UClass* Class)
 		bCanExport = bHasMembersToExport;
 	}
 	return bCanExport;
+}
+
+bool FCodeGenerator::CanExportStruct(const UScriptStruct* Struct)
+{
+	// ALL properties MUST be exportable for the struct to be exportable
+	TFieldIterator<UProperty> propertyIt(Struct, EFieldIteratorFlags::ExcludeSuper);
+	for (; propertyIt; ++propertyIt)
+	{
+		if (!CanExportProperty(Struct, *propertyIt))
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 bool FCodeGenerator::CanExportFunction(const UClass* Class, const UFunction* Function)
@@ -241,6 +256,19 @@ bool FCodeGenerator::IsStructPropertyTypeSupported(const UStructProperty* Proper
 		|| (Property->Struct->GetFName() == Name_LinearColor) 
 		|| (Property->Struct->GetFName() == Name_Color) 
 		|| (Property->Struct->GetFName() == Name_Transform);
+}
+
+bool FCodeGenerator::CanExportProperty(const UScriptStruct* Struct, const UProperty* Property)
+{
+	// only public, editable properties can be exported
+	if (!Property->HasAnyFlags(RF_Public) ||
+		(Property->GetPropertyFlags() & CPF_Protected) ||
+		!(Property->GetPropertyFlags() & CPF_Edit))
+	{
+		return false;
+	}
+
+	return IsPropertyTypeSupported(Property);
 }
 
 bool FCodeGenerator::CanExportProperty(const UClass* Class, const UProperty* Property)
@@ -395,6 +423,63 @@ void FCodeGenerator::ExportClass(UClass* Class, const FString& SourceHeaderFilen
     csharpWrapperGenerator.GenerateFooter();
 
 	const FString managedGlueFilename = GeneratedCodePath / (Class->GetName() + TEXT(".cs"));
+	AllManagedWrapperFiles.Add(managedGlueFilename);
+	WriteToFile(managedGlueFilename, managedGlueCode.Content);
+}
+
+void FCodeGenerator::ExportStruct(UScriptStruct* Struct) {
+	auto config = GetConig();
+
+
+	if (AllExportedStructs.Contains(Struct) || !CanExportStruct(Struct))
+	{
+		// already processed
+		return;
+	}
+
+	if (!Struct) {
+		return;
+	}
+
+	UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Exporting struct %s"), *Struct->GetName());
+
+	// even if a class can't be properly exported generate a C# wrapper for it, because it may 
+	// still be used as a function parameter in a function that is exported by another class
+	AllExportedStructs.Add(Struct);
+
+	// FCodeFormatter nativeGlueCode(TEXT('\t'), 1);
+	FCodeFormatter managedGlueCode(TEXT(' '), 4);
+	// FNativeWrapperGenerator nativeWrapperGenerator(Class, nativeGlueCode);
+	FCSharpStructWrapperGenerator csharpWrapperGenerator(
+		Struct,
+		managedGlueCode
+	);
+
+	csharpWrapperGenerator.GenerateHeader();
+
+	// export properties
+	TFieldIterator<UProperty> propertyIt(Struct);
+	for (; propertyIt; ++propertyIt)
+	{
+		UProperty* property = *propertyIt;
+
+		UE_LOG(
+			LogKlawrCodeGenerator, Log,
+			TEXT("  %s %s"), *property->GetClass()->GetName(), *property->GetName()
+		);
+
+		csharpWrapperGenerator.GeneratePropertyWrapper(property);
+	}
+
+	// nativeWrapperGenerator.GenerateFooter();
+
+	// const FString nativeGlueFilename = GeneratedCodePath / (Class->GetName() + TEXT(".klawr.h"));
+	// AllScriptHeaders.Add(nativeGlueFilename);
+	// WriteToFile(nativeGlueFilename, nativeGlueCode.Content);
+
+	csharpWrapperGenerator.GenerateFooter();
+
+	const FString managedGlueFilename = GeneratedCodePath / (Struct->GetName() + TEXT(".cs"));
 	AllManagedWrapperFiles.Add(managedGlueFilename);
 	WriteToFile(managedGlueFilename, managedGlueCode.Content);
 }

@@ -75,10 +75,19 @@ namespace Klawr {
         }
 
         virtual void ExportClass(UClass * Class, const FString & SourceHeaderFilename, const FString & GeneratedHeaderFilename, bool bHasChanged) override {
-            CodeGenerator->ExportClass(Class, SourceHeaderFilename, GeneratedHeaderFilename, bHasChanged);
+			
+			CodeGenerator->ExportClass(Class, SourceHeaderFilename, GeneratedHeaderFilename, bHasChanged);
+            
         }
 
         virtual void FinishExport() override {
+			TArray<UObject*> structs;
+			GetObjectsOfClass(UScriptStruct::StaticClass(), structs);
+			for (int i = 0; i < structs.Num(); i++)
+			{
+				UScriptStruct* Struct = CastChecked<UScriptStruct>(structs[i]);
+				// CodeGenerator->ExportStruct(Struct);
+			}
             CodeGenerator->FinishExport();
         }
 
