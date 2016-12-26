@@ -33,10 +33,12 @@ class UBPNode_KlawrFunctionCall : public UK2Node
 	// End UK2Node interface.
 
 	UEdGraphPin* GetThenPin() const;
+	void ChangeNodeToMethod(FString methodName);
+
 private:
 	FText NodeTooltip;
+	void ChangeNodeToMethod_CB(FText inPar);
 	void ChangePinType(UEdGraphPin* Pin);
-	void ChangeNodeToMethod(FText inPar);
 	void SetPinToolTip(UEdGraphPin& MutatablePin, const FText& PinDescription) const;
 	void SetPinToolTip(UEdGraphPin& MutatablePin, const FString PinDescription) const;
 	bool IsParameterPin(UEdGraphPin* Pin);

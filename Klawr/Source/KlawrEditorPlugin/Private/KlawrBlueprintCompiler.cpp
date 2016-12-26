@@ -30,7 +30,7 @@
 #include "IKlawrRuntimePlugin.h"
 #include "Kismet2NameValidators.h"
 #include "BlueprintEditorUtils.h"
-#include "BPNode_KlawrFunctionCall.h"
+#include "KlawrArgArray.h"
 
 namespace Klawr {
 
@@ -236,156 +236,180 @@ namespace Klawr {
 
 	void FKlawrBlueprintCompiler::CreateFunctionList()
 	{
-		Super::CreateFunctionList();
-
 		if (Super::Blueprint && Super::Blueprint->GeneratedClass)
 		{
-
 			UKlawrBlueprint* BP = CastChecked<UKlawrBlueprint>(Super::Blueprint);
-			if (BP->GeneratedClass != Super::Blueprint->SkeletonGeneratedClass)
+			if (!BP->ScriptDefinedType.IsEmpty())
 			{
-				if (!BP->ScriptDefinedType.IsEmpty())
-				{
-					UKlawrBlueprintGeneratedClass* generatedClass = CastChecked<UKlawrBlueprintGeneratedClass>(BP->GeneratedClass);
-					generatedClass->appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(generatedClass);
-					KlawrCreateFunctionListFromBlueprint(generatedClass);
-				}
+				UKlawrBlueprintGeneratedClass* generatedClass = CastChecked<UKlawrBlueprintGeneratedClass>(BP->GeneratedClass);
+				generatedClass->appDomainId = IKlawrRuntimePlugin::Get().GetObjectAppDomainID(generatedClass);
+				KlawrCreateFunctionListFromBlueprint(generatedClass);
 			}
 		}
-	}
 
-	void FKlawrBlueprintCompiler::KlawrCreateFunctionListFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass)
+		Super::CreateFunctionList();
+	}
+	
+	void FKlawrBlueprintCompiler::KlawrCreateFunctionListFromBlueprint(UKlawrBlueprintGeneratedClass* newScriptClass)
 	{
-		NewScripClass->GetScriptDefinedFunctions(ScriptDefinedFunctions);
-		NewScripClass->GetScriptDefinedFunctions(NewScripClass->ScriptDefinedFunctions);
+		newScriptClass->ScriptDefinedFunctions.Empty();
+		newScriptClass->GetScriptDefinedFunctions(ScriptDefinedFunctions);
 
 		for (auto function : ScriptDefinedFunctions)
 		{
-			KlawrCreateFunction(function, NewScripClass);
+			KlawrCreateFunction(newScriptClass, function);
 		}
 	}
 
-	void FKlawrBlueprintCompiler::KlawrCreateFunction(FScriptFunction function, UKlawrBlueprintGeneratedClass* NewScripClass)
+	void FKlawrBlueprintCompiler::KlawrCreateFunction(UKlawrBlueprintGeneratedClass* newScriptClass, FScriptFunction function)
 	{
-		return;
-		/*
-		UKlawrBlueprint* ScriptBlueprint = Cast<UKlawrBlueprint>(Blueprint);
-		const FString FunctionName = function.Name.ToString();
-		UEdGraph* ScriptFunctionGraph = FindObject<UEdGraph>(ScriptBlueprint, *FString::Printf(TEXT("%s_Graph"), *FunctionName));
+		UKlawrBlueprint* ScriptBP = KlawrBlueprint();
+		const FString functionName = function.Name.ToString();
 
-		if (ScriptFunctionGraph)
+		UEdGraph* oldGraph = FindObject<UEdGraph>(ScriptBP, *FString::Printf(TEXT("%s_Graph"), *functionName));
+		if (oldGraph != nullptr)
 		{
-			ScriptFunctionGraph->MarkPendingKill();
+			oldGraph->MarkPendingKill();
 		}
-		FName fn = FName(TEXT("K2NOdeBPKlawr"));
 
-		bool bReplaceNode = false;
+		UEdGraph* scriptFunctionGraph = NewObject<UEdGraph>(ScriptBP, *FString::Printf(TEXT("%s_Graph"), *functionName));
+		scriptFunctionGraph->Schema = UEdGraphSchema_K2::StaticClass();
+		scriptFunctionGraph->SetFlags(RF_Transient);
+		const UEdGraphSchema_K2* K2Schema = Cast<UEdGraphSchema_K2>(scriptFunctionGraph->GetSchema());
 
-		if (ScriptFunctionGraph)
-		{
-			bReplaceNode = true;
-		}
+		FKismetFunctionContext* functionContext = CreateFunctionContext();
+		functionContext->SourceGraph = scriptFunctionGraph;
+		functionContext->bCreateDebugData = false;
+
+		// Entry node
+		UK2Node_FunctionEntry* entryNode = SpawnIntermediateNode<UK2Node_FunctionEntry>(nullptr, scriptFunctionGraph);
+		entryNode->CustomGeneratedFunctionName = function.Name;
+		entryNode->AllocateDefaultPins();
+		UEdGraphPin* currentExec = K2Schema->FindExecutionPin(*entryNode, EGPD_Output);
 		
+		// Make an arg array
+		UK2Node_CallFunction* makeArgArray = SpawnIntermediateNode<UK2Node_CallFunction>(nullptr, scriptFunctionGraph);
+		makeArgArray->SetFromFunction(UKlawrArgArray::StaticClass()->FindFunctionByName(L"Create"));
+		makeArgArray->AllocateDefaultPins();
+		currentExec->MakeLinkTo(makeArgArray->GetExecPin());
+		currentExec = makeArgArray->GetThenPin();
+
+		// Iterate each parameter in the function
+		int fIndex = 0;
+		for (auto key : function.Parameters)
 		{
-			ScriptFunctionGraph = NewObject<UEdGraph>(ScriptBlueprint, *FString::Printf(TEXT("%s_Graph"), *FunctionName));
-			ScriptFunctionGraph->Schema = UEdGraphSchema_K2::StaticClass();
-			ScriptFunctionGraph->SetFlags(RF_Transient);
-		}
+			FString PCType = TEXT("");
+			UClass* innerClass = nullptr;
+			TCHAR* funcName = nullptr;
 
-		FKismetFunctionContext* FunctionContext = CreateFunctionContext();
-		FunctionContext->SourceGraph = ScriptFunctionGraph;
-		FunctionContext->bCreateDebugData = false;
-
-
-		const UEdGraphSchema* Schema = ScriptFunctionGraph->GetSchema();
-		const UEdGraphSchema_K2* K2Schema = Cast<const UEdGraphSchema_K2>(ScriptFunctionGraph->GetSchema());
-
-		UBPNode_KlawrFunctionCall* callFunction;
-		if (bReplaceNode)
-		{
-			callFunction = SpawnIntermediateNode<UBPNode_KlawrFunctionCall>(NULL, ScriptFunctionGraph);
-			callFunction->AllocateDefaultPins();
-			UEdGraphNode* temp = FindNodeByClass(ScriptFunctionGraph, UBPNode_KlawrFunctionCall::StaticClass(), true);
-			if (temp)
+			// What parameter type is it?
+			switch (key.Value)
 			{
-				UBPNode_KlawrFunctionCall* oldNode = CastChecked<UBPNode_KlawrFunctionCall>(temp);
-				oldNode->BreakAllNodeLinks();
-				oldNode->MarkPendingKill();
-
+			case ParameterTypeTranslation::ParametertypeFloat:
+				PCType = K2Schema->PC_Float;
+				funcName = L"AddFloat";
+				break;
+			case ParameterTypeTranslation::ParametertypeInt:
+				PCType = K2Schema->PC_Int;
+				funcName = L"AddInt";
+				break;
+			case ParameterTypeTranslation::ParametertypeBool:
+				PCType = K2Schema->PC_Boolean;
+				funcName = L"AddBool";
+				break;
+			case ParameterTypeTranslation::ParametertypeString:
+				PCType = K2Schema->PC_String;
+				funcName = L"AddString";
+				break;
+			case ParameterTypeTranslation::ParametertypeObject:
+				PCType = K2Schema->PC_Object; 
+				innerClass = function.parameterClasses[fIndex];
+				funcName = L"AddObject";
+				break;
 			}
-		}
-		else
-		{
-			callFunction = SpawnIntermediateNode<UBPNode_KlawrFunctionCall>(NULL, ScriptFunctionGraph);
+
+			// Did we find a valid pin type?
+			if (!PCType.IsEmpty())
+			{
+				// Create an output pin on the entry node for it
+				FString paramName = key.Key;
+				UEdGraphPin *entryPin = entryNode->CreatePin(EGPD_Output, *PCType, TEXT(""), innerClass, false, false, key.Key);
+
+				// Call argArray->Add*
+				UK2Node_CallFunction* addArg = SpawnIntermediateNode<UK2Node_CallFunction>(nullptr, scriptFunctionGraph);
+				addArg->SetFromFunction(UKlawrArgArray::StaticClass()->FindFunctionByName(funcName));
+				addArg->AllocateDefaultPins();
+				makeArgArray->GetReturnValuePin()->MakeLinkTo(addArg->FindPin(L"self"));
+				UEdGraphPin* argPin = addArg->FindPin(L"value");
+				entryPin->MakeLinkTo(argPin);
+				addArg->NotifyPinConnectionListChanged(argPin);
+				currentExec->MakeLinkTo(addArg->GetExecPin());
+				currentExec = addArg->GetThenPin();
+			}
+			fIndex++;
 		}
 
-		// callFunction->SetParameters(&function);
+		// Exit node
+		UK2Node_FunctionResult* exitNode = SpawnIntermediateNode<UK2Node_FunctionResult>(nullptr, scriptFunctionGraph);
+		exitNode->AllocateDefaultPins();
+
+		// Work out return type
+		TCHAR* rawFuncName = nullptr;
+		FString PCReturnType = TEXT("");
+		UClass* returnInnerClass = nullptr;
+		switch (function.ResultType)
+		{
+		case ParameterTypeTranslation::ParametertypeFloat:
+			PCReturnType = K2Schema->PC_Float;
+			rawFuncName = L"CallCSFunctionFloat";
+			break;
+		case ParameterTypeTranslation::ParametertypeInt:
+			PCReturnType = K2Schema->PC_Int;
+			rawFuncName = L"CallCSFunctionInt";
+			break;
+		case ParameterTypeTranslation::ParametertypeBool:
+			PCReturnType = K2Schema->PC_Boolean;
+			rawFuncName = L"CallCSFunctionBool";
+			break;
+		case ParameterTypeTranslation::ParametertypeString:
+			PCReturnType = K2Schema->PC_String;
+			rawFuncName = L"CallCSFunctionString";
+			break;
+		case ParameterTypeTranslation::ParametertypeObject:
+			PCReturnType = K2Schema->PC_Object;
+			rawFuncName = L"CallCSFunctionObject";
+			returnInnerClass = function.ResultClass;
+			break;
+		default:
+			rawFuncName = L"CallCSFunctionVoid";
+			break;
+		}
+
+		// Call function
+		UK2Node_CallFunction* callFunction = SpawnIntermediateNode<UK2Node_CallFunction>(nullptr, scriptFunctionGraph);
+		UFunction* callCSFunction = UKlawrScriptComponent::StaticClass()->FindFunctionByName(rawFuncName);
+		if (callCSFunction == nullptr)
+		{
+			UE_LOG(LogKlawrEditorPlugin, Warning, TEXT("Function Name %s not found!"), rawFuncName);
+			return;
+		}
+		callFunction->SetFromFunction(callCSFunction);
 		callFunction->AllocateDefaultPins();
+		callFunction->FindPinChecked(L"functionName")->DefaultValue = functionName;
+		makeArgArray->GetReturnValuePin()->MakeLinkTo(callFunction->FindPinChecked(L"args", EGPD_Input));
+		currentExec->MakeLinkTo(callFunction->GetExecPin());
+		currentExec = callFunction->GetThenPin();
 
-		UK2Node_FunctionEntry* EntryNode = SpawnIntermediateNode<UK2Node_FunctionEntry>(NULL, ScriptFunctionGraph);
-		EntryNode->CustomGeneratedFunctionName = function.Name;
-		EntryNode->AllocateDefaultPins();
 
-		UEdGraphPin* ExecPin = K2Schema->FindExecutionPin(*EntryNode, EGPD_Output);
-		UEdGraphPin* CallFunctionPin = K2Schema->FindExecutionPin(*callFunction, EGPD_Input);
-
-		ExecPin->MakeLinkTo(CallFunctionPin);
-		*/
-		
-
-		/*
-		UFunction* newFunction = NewObject<UFunction>(NewScripClass, *FunctionName);
-
-		int paramCount = 0;
-		for (auto& param : function.Parameters)
+		// Did we find a valid return pin type?
+		if (!PCReturnType.IsEmpty())
 		{
-			FString pinTypeName;
-			UClass* innerType = NULL;
-			if (param.Value == 0)
-			{
-				pinTypeName = Schema->PC_Float;
-			}
-			else if (param.Value == 1)
-			{
-				pinTypeName = Schema->PC_Int;
-			}
-			else if (param.Value == 2)
-			{
-				pinTypeName = Schema->PC_Boolean;
-			}
-			else if (param.Value == 3)
-			{
-				pinTypeName = Schema->PC_String;
-			}
-			else if (param.Value == 4)
-			{
-				pinTypeName = Schema->PC_Object;
-				innerType = function.parameterClasses[paramCount];
-			}
-
-			if (!pinTypeName.IsEmpty())
-			{
-				FEdGraphPinType ScriptPinType(pinTypeName, TEXT(""), innerType, false, false);
-				FString parameterName = FString::Printf(TEXT("%s.%s"), *FunctionName, *param.Key);
-				UProperty* ScriptProperty = CreateVariable(*parameterName, ScriptPinType);
-				
-				ScriptProperty->SetPropertyFlags(CPF_Parm | CPF_BlueprintVisible);
-
-				newFunction->AddCppProperty(ScriptProperty);
-				if (!newFunction->FirstPropertyToInit)
-				{
-					newFunction->FirstPropertyToInit = ScriptProperty;
-				}
-			}
-			paramCount++;
+			// Create an input pin on the exit node for it
+			UEdGraphPin *exitPin = exitNode->CreatePin(EGPD_Input, *PCReturnType, TEXT(""), returnInnerClass, false, false, L"result");
+			callFunction->GetReturnValuePin()->MakeLinkTo(exitPin);
 		}
-		newFunction->Rename(*FunctionName);
-		for (auto xnode : ScriptFunctionGraph->Nodes)
-		{
-			xnode->
-		}
-		FBlueprintEditorUtils::AddFunctionGraph(ScriptBlueprint, ScriptFunctionGraph, true, newFunction);
-		*/
 
+		// Exit
+		currentExec->MakeLinkTo(exitNode->GetExecPin());
 	}
 } // namespace Klawr

@@ -316,11 +316,11 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 		// Let the graph know to refresh
 		GetGraph()->NotifyGraphChanged();
 
-		UBlueprint* Blueprint = GetBlueprint();
-		if (!Blueprint->bBeingCompiled)
+		UBlueprint* blueprint = FBlueprintEditorUtils::FindBlueprintForNode(this);
+		if (blueprint != nullptr && !blueprint->bBeingCompiled)
 		{
-			FBlueprintEditorUtils::MarkBlueprintAsModified(Blueprint);
-			Blueprint->BroadcastChanged();
+			FBlueprintEditorUtils::MarkBlueprintAsModified(blueprint);
+			blueprint->BroadcastChanged();
 		}
 	}
 
@@ -447,7 +447,12 @@ void UBPNode_KlawrFunctionCall::ExpandNode(class FKismetCompilerContext& Compile
 	BreakAllNodeLinks();	
 }
 
-void UBPNode_KlawrFunctionCall::ChangeNodeToMethod(FText inPar)
+void UBPNode_KlawrFunctionCall::ChangeNodeToMethod_CB(FText inPar)
+{
+	ChangeNodeToMethod(inPar.ToString());
+}
+
+void UBPNode_KlawrFunctionCall::ChangeNodeToMethod(FString methodName)
 {
 	FScopedTransaction Transaction(LOCTEXT("ResetToDefaultsTx", "ResetToDefaults"));
 	Modify();
@@ -456,7 +461,7 @@ void UBPNode_KlawrFunctionCall::ChangeNodeToMethod(FText inPar)
 	UEdGraphPin* FunctionNamePin = FindPin(FGetConfigNodeName::GetFunctionNamePinName());
 
 	// Set all to defaults and break links
-	FunctionNamePin->DefaultValue = *(inPar.ToString());
+	FunctionNamePin->DefaultValue = *methodName;
 	FunctionNamePin->BreakAllPinLinks();
 
 	// Do the rest of the work, we will not recompile because the wildcard pins will prevent it
@@ -473,7 +478,7 @@ void UBPNode_KlawrFunctionCall::GetContextMenuActions(const FGraphNodeContextMen
 		Context.MenuBuilder->BeginSection("BPNode_KlawrFunctionCall", LOCTEXT("ContextMenuHeader", "Choose Function"));
 		for (auto fName : CSFunctionNames)
 		{
-			Context.MenuBuilder->AddMenuEntry(fName, fName, FSlateIcon(), FUIAction(FExecuteAction::CreateUObject(this, &UBPNode_KlawrFunctionCall::ChangeNodeToMethod, fName)));
+			Context.MenuBuilder->AddMenuEntry(fName, fName, FSlateIcon(), FUIAction(FExecuteAction::CreateUObject(this, &UBPNode_KlawrFunctionCall::ChangeNodeToMethod_CB, fName)));
 		}
 		Context.MenuBuilder->EndSection();
 	}

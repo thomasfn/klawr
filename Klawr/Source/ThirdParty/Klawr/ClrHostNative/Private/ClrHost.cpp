@@ -663,7 +663,7 @@ UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instance
 	if (appDomainManager)
 	{
 		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
-		return (UObject*)appDomainManager->CallCSFunctionVoid(instanceID, functionName, argsArray);
+		return (UObject*)appDomainManager->CallCSFunctionObject(instanceID, functionName, argsArray);
 	}
 	return nullptr;
 }

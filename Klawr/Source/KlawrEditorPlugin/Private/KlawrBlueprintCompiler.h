@@ -46,7 +46,7 @@ public: // FKismetCompilerContext interface
 	virtual void Compile() override;
 	virtual void KlawrCreateClassVariablesFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
 	virtual void KlawrCreateFunctionListFromBlueprint(UKlawrBlueprintGeneratedClass* NewScripClass);
-	virtual void KlawrCreateFunction(FScriptFunction function, UKlawrBlueprintGeneratedClass* NewScripClass);
+	virtual void KlawrCreateFunction(UKlawrBlueprintGeneratedClass* newScriptClass, FScriptFunction function);
 	virtual void CreateClassVariablesFromBlueprint() override;
 	virtual void CreateFunctionList() override;
 
