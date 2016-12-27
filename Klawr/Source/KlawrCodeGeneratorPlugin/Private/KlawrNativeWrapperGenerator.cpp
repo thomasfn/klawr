@@ -174,7 +174,7 @@ FString FNativeWrapperGenerator::GetPropertyType(const UProperty* Property)
 
 	if (Property->IsA<UObjectPropertyBase>())
 	{
-		return TEXT("void*");
+		typeName = TEXT("void*");
 	}
 	else if (Property->IsA<UBoolProperty>())
 	{
@@ -247,6 +247,13 @@ FString FNativeWrapperGenerator::GetFunctionDispatchParamInitializer(const UProp
 		}
 		else if (Param->IsA<UObjectPropertyBase>())
 		{
+			// reference params are passed into a native wrapper function via a pointer,
+			// so dereference the pointer so that the value can be copied into FDispatchParams
+			if (Param->HasAnyPropertyFlags(CPF_OutParm | CPF_ReferenceParm))
+			{
+				paramName = FString::Printf(TEXT("(*%s)"), *paramName);
+			}
+
 			initializer = FString::Printf(
 				TEXT("static_cast<%s>(%s)"), *FCodeGenerator::GetPropertyCPPType(Param), *paramName
 			);
@@ -393,15 +400,16 @@ void FNativeWrapperGenerator::GenerateFunctionDispatch(const UFunction* Function
 	if (bHasParamsOrReturnValue)
 	{
 		GeneratedGlue
-			<< TEXT("#pragma pack(push, 1)")
+			<< TEXT("#pragma pack(push, 4)")
 			<< TEXT("struct FDispatchParams")
 			<< FCodeFormatter::OpenBrace();
 
 		for (TFieldIterator<UProperty> paramIt(Function); paramIt; ++paramIt)
 		{
 			UProperty* param = *paramIt;
+			FString typeName = FCodeGenerator::GetPropertyCPPType(param);
 			GeneratedGlue << FString::Printf(
-				TEXT("%s %s;"), *FCodeGenerator::GetPropertyCPPType(param), *param->GetName()
+				TEXT("%s %s;"), *typeName, *param->GetName()
 			);
 		}
 
@@ -432,7 +440,7 @@ void FNativeWrapperGenerator::GenerateFunctionDispatch(const UFunction* Function
 	if (bHasParamsOrReturnValue)
 	{
 		GeneratedGlue
-			<< TEXT("check(Function->ParmsSize == sizeof(FDispatchParams));")
+			<< TEXT("check(Function->PropertiesSize == sizeof(FDispatchParams));")
 			<< TEXT("Obj->ProcessEvent(Function, &Params);");
 	}
 	else

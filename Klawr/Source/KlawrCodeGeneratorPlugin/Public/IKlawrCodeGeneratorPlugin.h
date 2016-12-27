@@ -56,6 +56,9 @@ namespace Klawr {
 	    static inline bool IsAvailable(){
              return FModuleManager::Get().IsModuleLoaded("KlawrCodeGeneratorPlugin");
 	    }
+
+
+		virtual bool ShouldExportFromPackage(const UPackage* package) = 0;
     };
 
 } // namespace Klawr

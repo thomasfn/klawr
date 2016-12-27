@@ -62,6 +62,7 @@ namespace Klawr {
 		static FString GetArrayPropertyWrapperType(const UArrayProperty* ArrayProperty);
 
 	private:
+		const UScriptStruct* Struct;
 		FString FriendlyStructName;
 		FString NativeStructName;
 		class FCodeFormatter& GeneratedGlue;

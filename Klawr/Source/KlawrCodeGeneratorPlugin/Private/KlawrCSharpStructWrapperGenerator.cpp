@@ -38,7 +38,8 @@ namespace Klawr {
 	const FString FCSharpStructWrapperGenerator::MarshalReturnedBoolAsUint8Attribute = TEXT("[return: MarshalAs(UnmanagedType.U1)]");
 	const FString FCSharpStructWrapperGenerator::MarshalBoolParameterAsUint8Attribute = TEXT("[MarshalAs(UnmanagedType.U1)]");
 
-	FCSharpStructWrapperGenerator::FCSharpStructWrapperGenerator(const UScriptStruct* Struct, FCodeFormatter& CodeFormatter) : GeneratedGlue(CodeFormatter)
+	FCSharpStructWrapperGenerator::FCSharpStructWrapperGenerator(const UScriptStruct* Struct, FCodeFormatter& CodeFormatter)
+		: Struct(Struct), GeneratedGlue(CodeFormatter)
 	{
 		Struct->GetName(FriendlyStructName);
 		NativeStructName = FString::Printf(TEXT("%s%s"), Struct->GetPrefixCPP(), *FriendlyStructName);
@@ -65,8 +66,10 @@ namespace Klawr {
 
 		if (bShouldGenerateManagedWrapper)
 		{
+			const FString packageName = Struct->GetOutermost()->GetName();
 			GeneratedGlue
-				// declare class
+				<< FString::Printf(TEXT("// Package: %s"), *packageName)
+				// declare struct
 				<< TEXT("[StructLayout(LayoutKind.Sequential)]")
 				<< FString::Printf(TEXT("public struct %s"), *NativeStructName)
 				<< FCodeFormatter::OpenBrace();
@@ -104,37 +107,63 @@ namespace Klawr {
 	{
 		const bool bIsBoolProperty = Property->IsA<UBoolProperty>();
 		const FString interopTypeName = GetPropertyInteropType(Property);
-		const FString managedTypeName = GetPropertyManagedType(Property);
-		FString setterParamType = interopTypeName;
-		if (bIsBoolProperty)
+		FString managedTypeName = GetPropertyManagedType(Property);
+		if (Property->IsA<UClassProperty>())
 		{
-			setterParamType = FString::Printf(
-				TEXT("%s %s"), *MarshalBoolParameterAsUint8Attribute, *interopTypeName
-			);
+			// TODO: Handle this properly!
+			GeneratedGlue
+				<< FString::Printf(TEXT("public IntPtr %s; // UClass*"), *Property->GetName());
 		}
-		FString fieldType;
-		if (Property->IsA<UObjectProperty>())
+		else if (Property->IsA<UObjectProperty>())
 		{
 			GeneratedGlue
 				<< FString::Printf(TEXT("private IntPtr _%s;"), *Property->GetName())
-				<< FCodeFormatter::LineTerminator()
 				<< FString::Printf(TEXT("public %s %s"), *managedTypeName, *Property->GetName())
 				<< FCodeFormatter::OpenBrace()
 				<< TEXT("get")
 				<< FCodeFormatter::OpenBrace()
+				<< FString::Printf(TEXT("if (_%s == IntPtr.Zero) return null;"), *Property->GetName())
 				<< FString::Printf(
-					TEXT("return new %s(new UObjectHandle(this._%s, false));"),
+					TEXT("return new %s(new UObjectHandle(_%s, false));"),
 					*managedTypeName, *Property->GetName())
 				<< FCodeFormatter::CloseBrace()
-				// TODO: Setter
+				<< TEXT("set")
+				<< FCodeFormatter::OpenBrace()
+				<< FString::Printf(
+					TEXT("_%s = value != null ? value.NativeObject.Handle : IntPtr.Zero;"),
+					*Property->GetName())
 				<< FCodeFormatter::CloseBrace()
-				<< FCodeFormatter::LineTerminator();
+				<< FCodeFormatter::CloseBrace();
 		}
 		else if (Property->IsA<UBoolProperty>())
 		{
 			GeneratedGlue
 				<< MarshalBoolParameterAsUint8Attribute
 				<< FString::Printf(TEXT("public %s %s;"), *interopTypeName, *Property->GetName());
+		}
+		else if (Property->IsA<UWeakObjectProperty>())
+		{
+			FString typeName = FCodeGenerator::GetPropertyCPPType(Property);
+			typeName.RemoveFromStart(L"TWeakObjectPtr<");
+			typeName.RemoveFromEnd(L">");
+			GeneratedGlue
+				<< FString::Printf(TEXT("private IntPtr _%s;"), *Property->GetName())
+				<< FString::Printf(TEXT("public %s %s // UWeakObjectPtr"), *typeName, *Property->GetName())
+				<< FCodeFormatter::OpenBrace()
+				<< TEXT("get")
+				<< FCodeFormatter::OpenBrace()
+				<< FString::Printf(TEXT("if (_%s == IntPtr.Zero) return null;"), *Property->GetName())
+				<< FString::Printf(
+					TEXT("return new %s(new UObjectHandle(_%s, false));"),
+					*typeName, *Property->GetName())
+				<< FCodeFormatter::CloseBrace()
+				<< TEXT("set")
+				<< FCodeFormatter::OpenBrace()
+				<< FString::Printf(
+					TEXT("_%s = value != null ? value.NativeObject.Handle : IntPtr.Zero;"),
+					*Property->GetName())
+				<< FCodeFormatter::CloseBrace()
+				<< FCodeFormatter::CloseBrace();
 		}
 		else
 		{
@@ -195,7 +224,22 @@ namespace Klawr {
 		}
 		else
 		{
-			return FCodeGenerator::GetPropertyCPPType(Property);
+			FString type = FCodeGenerator::GetPropertyCPPType(Property);
+			while (type.Contains(L"::"))
+			{
+				// Assume it's an enum, pick the entry starting with E
+				FString left, right;
+				type.Split(L"::", &left, &right, ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+				if (right[0] == L'E')
+				{
+					return right;
+				}
+				else
+				{
+					type = left;
+				}
+			}
+			return type;
 		}
 	}
 

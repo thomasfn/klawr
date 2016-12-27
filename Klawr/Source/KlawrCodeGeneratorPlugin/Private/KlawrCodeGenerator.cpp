@@ -29,18 +29,22 @@
 #include "KlawrNativeWrapperGenerator.h"
 #include "KlawrCSharpWrapperGenerator.h"
 #include "KlawrCSharpStructWrapperGenerator.h"
+#include "KlawrCSharpEnumWrapperGenerator.h"
 
 namespace Klawr {
 
-// Names of structs that can be used for interop (they have a corresponding struct type in managed code)
-const FName FCodeGenerator::Name_Vector2D("Vector2D");
-const FName FCodeGenerator::Name_Vector("Vector");
-const FName FCodeGenerator::Name_Vector4("Vector4");
-const FName FCodeGenerator::Name_Quat("Quat");
-const FName FCodeGenerator::Name_Rotator("Rotator");
-const FName FCodeGenerator::Name_Transform("Transform");
-const FName FCodeGenerator::Name_LinearColor("LinearColor");
-const FName FCodeGenerator::Name_Color("Color");
+
+	const TArray<FName> FCodeGenerator::SpecialStructs  =
+	{
+		FName("Vector2D"),
+		FName("Vector"),
+		FName("Vector4"),
+		FName("Quat"),
+		FName("Rotator"),
+		FName("Transform"),
+		FName("LinearColor"),
+		FName("Color")
+	};
 
 const FString FCodeGenerator::ClrHostManagedAssemblyName = TEXT("Klawr.ClrHost.Managed");
 
@@ -130,15 +134,28 @@ bool FCodeGenerator::CanExportClass(const UClass* Class)
 
 bool FCodeGenerator::CanExportStruct(const UScriptStruct* Struct)
 {
+	if (SpecialStructs.Contains(Struct->GetFName())) return false;
+
+	if (Struct->GetName() == L"HitResult")
+	{
+		UE_LOG(LogKlawrCodeGenerator, Log, TEXT("BLAH"));
+	}
+
 	// ALL properties MUST be exportable for the struct to be exportable
-	TFieldIterator<UProperty> propertyIt(Struct, EFieldIteratorFlags::ExcludeSuper);
+	TFieldIterator<UProperty> propertyIt(Struct);
 	for (; propertyIt; ++propertyIt)
 	{
-		if (!CanExportProperty(Struct, *propertyIt))
+		UProperty* property = *propertyIt;
+		if (!CanExportProperty(Struct, property))
 		{
 			return false;
 		}
 	}
+	return true;
+}
+
+bool FCodeGenerator::CanExportEnum(const UEnum* Enum)
+{
 	return true;
 }
 
@@ -199,6 +216,12 @@ bool FCodeGenerator::IsPropertyTypeSupported(const UProperty* Property)
 		else
 		{
 			bSupported = IsPropertyTypeSupported(arrayProp->Inner);
+
+			// For now, we don't support arrays of structs
+			if (arrayProp->Inner->IsA<UStructProperty>())
+			{
+				bSupported = false;
+			}
 		}
 	}
 	else if (Property->IsA<UStructProperty>())
@@ -237,6 +260,23 @@ bool FCodeGenerator::IsPropertyTypeSupported(const UProperty* Property)
 	{
 		bSupported = false;
 	}
+	
+	// Check that the referenced object is known
+	if (Property->IsA<UObjectProperty>())
+	{
+		static FString pointer(TEXT("*"));
+		FString typeName = FCodeGenerator::GetPropertyCPPType(Property);
+		typeName.RemoveFromEnd(pointer);
+
+		UClass* cl = FindObject<UClass>(nullptr, *typeName);
+		if (cl)
+		{
+			if (!IKlawrCodeGeneratorPlugin::Get().ShouldExportFromPackage(cl->GetOutermost()))
+			{
+				bSupported = false;
+			}
+		}
+	}
 
 	return bSupported;
 }
@@ -248,25 +288,26 @@ bool FCodeGenerator::IsPropertyTypePointer(const UProperty* Property)
 
 bool FCodeGenerator::IsStructPropertyTypeSupported(const UStructProperty* Property)
 {
-	return (Property->Struct->GetFName() == Name_Vector2D) 
-		|| (Property->Struct->GetFName() == Name_Vector) 
-		|| (Property->Struct->GetFName() == Name_Vector4) 
-		|| (Property->Struct->GetFName() == Name_Quat) 
-		|| (Property->Struct->GetFName() == Name_Rotator)
-		|| (Property->Struct->GetFName() == Name_LinearColor) 
-		|| (Property->Struct->GetFName() == Name_Color) 
-		|| (Property->Struct->GetFName() == Name_Transform);
+	if (!IKlawrCodeGeneratorPlugin::Get().ShouldExportFromPackage(Property->Struct->GetOutermost()))
+	{
+		return false;
+	}
+
+	const FName typeName = Property->Struct->GetFName();
+	return SpecialStructs.Contains(typeName) || CanExportStruct(Property->Struct);
 }
 
 bool FCodeGenerator::CanExportProperty(const UScriptStruct* Struct, const UProperty* Property)
 {
 	// only public, editable properties can be exported
-	if (!Property->HasAnyFlags(RF_Public) ||
+	/*if (!Property->HasAnyFlags(RF_Public) ||
 		(Property->GetPropertyFlags() & CPF_Protected) ||
 		!(Property->GetPropertyFlags() & CPF_Edit))
 	{
 		return false;
-	}
+	}*/
+
+	if (Property->IsA<UWeakObjectProperty>()) return true;
 
 	return IsPropertyTypeSupported(Property);
 }
@@ -480,6 +521,59 @@ void FCodeGenerator::ExportStruct(UScriptStruct* Struct) {
 	csharpWrapperGenerator.GenerateFooter();
 
 	const FString managedGlueFilename = GeneratedCodePath / (Struct->GetName() + TEXT(".cs"));
+	AllManagedWrapperFiles.Add(managedGlueFilename);
+	WriteToFile(managedGlueFilename, managedGlueCode.Content);
+}
+
+void FCodeGenerator::ExportEnum(UEnum* Enum) {
+	auto config = GetConig();
+
+
+	if (AllExportedEnums.Contains(Enum) || !CanExportEnum(Enum))
+	{
+		// already processed
+		return;
+	}
+
+	if (!Enum) {
+		return;
+	}
+
+	UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Exporting enum %s"), *Enum->GetName());
+
+	// even if a class can't be properly exported generate a C# wrapper for it, because it may 
+	// still be used as a function parameter in a function that is exported by another class
+	AllExportedEnums.Add(Enum);
+
+	// FCodeFormatter nativeGlueCode(TEXT('\t'), 1);
+	FCodeFormatter managedGlueCode(TEXT(' '), 4);
+	// FNativeWrapperGenerator nativeWrapperGenerator(Class, nativeGlueCode);
+	FCSharpEnumWrapperGenerator csharpWrapperGenerator(
+		Enum,
+		managedGlueCode
+	);
+
+	csharpWrapperGenerator.GenerateHeader();
+
+	// export properties
+	for (int i = 0; i < Enum->GetMaxEnumValue(); i++)
+	{
+		const FName name = Enum->GetNameByIndex(i);
+		if (name != NAME_None)
+		{
+			csharpWrapperGenerator.GenerateName(name.ToString(), i);
+		}
+	}
+
+	// nativeWrapperGenerator.GenerateFooter();
+
+	// const FString nativeGlueFilename = GeneratedCodePath / (Class->GetName() + TEXT(".klawr.h"));
+	// AllScriptHeaders.Add(nativeGlueFilename);
+	// WriteToFile(nativeGlueFilename, nativeGlueCode.Content);
+
+	csharpWrapperGenerator.GenerateFooter();
+
+	const FString managedGlueFilename = GeneratedCodePath / (Enum->GetName() + TEXT(".cs"));
 	AllManagedWrapperFiles.Add(managedGlueFilename);
 	WriteToFile(managedGlueFilename, managedGlueCode.Content);
 }

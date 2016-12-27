@@ -71,7 +71,12 @@ namespace Klawr {
         virtual void Initialize(const FString & RootLocalPath, const FString & RootBuildPath, const FString & OutputDirectory, const FString & IncludeBase) override {
             UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Using Klawr Code Generator."));
             CodeGenerator = new FCodeGenerator(RootLocalPath, RootBuildPath, OutputDirectory, IncludeBase);
-            UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Output directory: %s"), *OutputDirectory);
+
+			//TArray<UObject*> packages;
+			//GetObjectsOfClass(UPackage::StaticClass(), packages);
+
+			UE_LOG(LogKlawrCodeGenerator, Log, TEXT("Output directory: %s"), *OutputDirectory);
+
         }
 
         virtual void ExportClass(UClass * Class, const FString & SourceHeaderFilename, const FString & GeneratedHeaderFilename, bool bHasChanged) override {
@@ -80,14 +85,60 @@ namespace Klawr {
             
         }
 
+		virtual bool ShouldExportFromPackage(const UPackage* package)
+		{
+			auto config = FCodeGenerator::GetConig();
+			FString packageName = package->GetName();
+			packageName.RemoveFromStart(L"/Script/");
+
+			if (packageName.Contains(L"/"))
+			{
+				FString left, right;
+				packageName.Split(L"/", &left, &right);
+				packageName = left;
+			}
+
+			if (config.ExcludedModules.Contains(packageName))
+			{
+				return false;
+			}
+
+			if ((config.SupportedModules.Num() > 0) && !config.SupportedModules.Contains(packageName))
+			{
+				return false;
+			}
+
+			return true;
+		}
+
         virtual void FinishExport() override {
+			auto config = FCodeGenerator::GetConig();
+
+			// Export all structs
 			TArray<UObject*> structs;
 			GetObjectsOfClass(UScriptStruct::StaticClass(), structs);
 			for (int i = 0; i < structs.Num(); i++)
 			{
 				UScriptStruct* Struct = CastChecked<UScriptStruct>(structs[i]);
-				// CodeGenerator->ExportStruct(Struct);
+				if (ShouldExportFromPackage(Struct->GetOutermost()))
+				{
+					CodeGenerator->ExportStruct(Struct);
+				}
 			}
+
+			// Export all enums
+			TArray<UObject*> enums;
+			GetObjectsOfClass(UEnum::StaticClass(), enums);
+			for (int i = 0; i < enums.Num(); i++)
+			{
+				UEnum* Enum = CastChecked<UEnum>(enums[i]);
+				if (ShouldExportFromPackage(Enum->GetOutermost()))
+				{
+					CodeGenerator->ExportEnum(Enum);
+				}
+			}
+
+
             CodeGenerator->FinishExport();
         }
 

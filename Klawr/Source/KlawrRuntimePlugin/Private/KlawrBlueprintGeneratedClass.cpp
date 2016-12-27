@@ -149,16 +149,16 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 				if (CLRMethod.ReturnType == ParameterTypeTranslation::ParametertypeObject)
 				{
 					newFunction.ResultClass = FindObject<UClass>(ANY_PACKAGE, *CLRMethod.ClassName);
-					UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObject as return value is not supported yet. Please use local properties to pass UObjects into/from c# space. (Function '%s' in class '%s')"),
-						*CLRMethod.Name, *CLRClass.Name);
+					//UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObject as return value is not supported yet. Please use local properties to pass UObjects into/from c# space. (Function '%s' in class '%s')"),
+						//*CLRMethod.Name, *CLRClass.Name);
 				}
 				for (auto CLRParameter : CLRMethod.Parameters)
 				{
 					newFunction.Parameters.Add(CLRParameter.Name, CLRParameter.TypeId);
 					if (CLRParameter.TypeId == ParameterTypeTranslation::ParametertypeObject)
 					{
-						UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObjects as parameters are not supported yet. Please use local properties to pass UObjects into c# space. (Parameter '%s' of function '%s' in class '%s')"),
-							*CLRParameter.Name, *CLRMethod.Name, *CLRClass.Name);
+						//UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObjects as parameters are not supported yet. Please use local properties to pass UObjects into c# space. (Parameter '%s' of function '%s' in class '%s')"),
+							//*CLRParameter.Name, *CLRMethod.Name, *CLRClass.Name);
 
 						newFunction.parameterClasses.Add(FindObject<UClass>(ANY_PACKAGE, *CLRParameter.ClassName));
 					}

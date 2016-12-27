@@ -40,6 +40,7 @@ public:
 
     void ExportClass(UClass* Class, const FString& SourceHeaderFilename, const FString& GeneratedHeaderFilename, bool bHasChanged);
 	void ExportStruct(UScriptStruct* Struct);
+	void ExportEnum(UEnum* Enum);
 	void FinishExport();
 
 	static FString GetPropertyCPPType(const UProperty* Property);
@@ -76,14 +77,9 @@ public:
     }
 
 private:
-	static const FName Name_Vector2D;
-	static const FName Name_Vector;
-	static const FName Name_Vector4;
-	static const FName Name_Quat;
-	static const FName Name_Rotator;
-	static const FName Name_Transform;
-	static const FName Name_LinearColor;
-	static const FName Name_Color;
+
+	// Structs which we have manually bound in ClrHostManaged for whatever reason (e.g. don't need to export them, but can still use them)
+	static const TArray<FName> SpecialStructs;
 
 	static const FString ClrHostManagedAssemblyName;
 		
@@ -105,9 +101,11 @@ private:
 	TArray<const UClass*> ClassesWithNativeWrappers;
 	TArray<const UClass*> AllExportedClasses;
 	TArray<const UScriptStruct*> AllExportedStructs;
+	TArray<const UEnum*> AllExportedEnums;
 
 	static bool CanExportClass(const UClass* Class);
 	static bool CanExportStruct(const UScriptStruct* Struct);
+	static bool CanExportEnum(const UEnum* Enum);
 	static bool CanExportProperty(const UClass* Class, const UProperty* Property);
 	static bool CanExportProperty(const UScriptStruct* Struct, const UProperty* Property);
 	static bool CanExportFunction(const UClass* Class, const UFunction* Function);
