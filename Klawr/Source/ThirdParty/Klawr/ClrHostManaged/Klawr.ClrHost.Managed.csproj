@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\UENUMAttribute.cs" />
     <Compile Include="GlobalStrings.cs" />
     <Compile Include="Attributes\ConvertClassNameAttribute.cs" />
     <Compile Include="Attributes\UFUNCTIONAttribute.cs" />

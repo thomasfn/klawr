@@ -73,6 +73,7 @@ public:
 void SScriptTypeTree::Construct(const FArguments& InArgs)
 {
 	OnScriptTypeSelected = InArgs._OnScriptTypeSelected;
+	scriptType = (ScriptType::Type)InArgs._ScriptType;
 
 	ChildSlot
 	[
@@ -154,7 +155,18 @@ void SScriptTypeTree::MergeNamespaceItems(TArray<FScriptTypeTreeItemPtr>& namesp
 void SScriptTypeTree::Populate()
 {
 	TArray<FString> typeNames;
-	IKlawrRuntimePlugin::Get().GetScriptComponentTypes(typeNames);
+	switch (scriptType)
+	{
+		case ScriptType::ScriptComponent:
+			IKlawrRuntimePlugin::Get().GetScriptComponentTypes(typeNames);
+			break;
+		case ScriptType::ScriptEnum:
+			IKlawrRuntimePlugin::Get().GetScriptEnumTypes(typeNames);
+			break;
+		default:
+			return;
+	}
+	
 
 	FScriptTypeTreeItemPtr namespaceItem;
 	for (const auto& fullTypeName : typeNames)

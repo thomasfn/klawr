@@ -23,20 +23,18 @@
 //-------------------------------------------------------------------------------
 
 #include "KlawrEditorPluginPrivatePCH.h"
-#include "KlawrBlueprintFactory.h"
-#include "KlawrBlueprint.h"
-#include "KlawrBlueprintGeneratedClass.h"
-#include "KlawrScriptComponent.h"
+#include "KlawrEnumFactory.h"
+#include "KlawrScriptEnum.h"
 #include "KlawrScriptsReloader.h"
 #include "IKlawrRuntimePlugin.h"
 #include "Widgets/SScriptTypeSelectionDialog.h"
 
-#define LOCTEXT_NAMESPACE "KlawrEditorPlugin.UKlawrBlueprintFactory"
+#define LOCTEXT_NAMESPACE "KlawrEditorPlugin.UKlawrEnumFactory"
 
-UKlawrBlueprintFactory::UKlawrBlueprintFactory(const FObjectInitializer& objectInitializer)
+UKlawrEnumFactory::UKlawrEnumFactory(const FObjectInitializer& objectInitializer)
 	: Super(objectInitializer)
 {
-	Super::SupportedClass = UKlawrBlueprint::StaticClass();
+	Super::SupportedClass = UKlawrScriptEnum::StaticClass();
 	Super::bCreateNew = true;
 	Super::bEditAfterNew = false;
 	Super::bEditorImport = false;
@@ -45,18 +43,18 @@ UKlawrBlueprintFactory::UKlawrBlueprintFactory(const FObjectInitializer& objectI
 	Super::Formats.Add(TEXT("cs;C# Source"));
 }
 
-bool UKlawrBlueprintFactory::DoesSupportClass(UClass* Class)
+bool UKlawrEnumFactory::DoesSupportClass(UClass* Class)
 {
-	return Class == UKlawrBlueprint::StaticClass();
+	return Class == UKlawrScriptEnum::StaticClass();
 }
 
-UObject* UKlawrBlueprintFactory::FactoryCreateNew(
+UObject* UKlawrEnumFactory::FactoryCreateNew(
 	UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context,
 	FFeedbackContext* Warn
 )
 {
 	FString scriptType = Klawr::SScriptTypeSelectionDialog::SelectScriptType(
-		LOCTEXT("NewBlueprintDialogTitle", "New Klawr Blueprint"), InName.ToString(), Klawr::ScriptType::ScriptComponent
+		LOCTEXT("NewEnumDialogTitle", "New Klawr Enum"), InName.ToString(), Klawr::ScriptType::ScriptEnum
 	);
 
 	if (scriptType.IsEmpty())
@@ -64,28 +62,27 @@ UObject* UKlawrBlueprintFactory::FactoryCreateNew(
 		return nullptr;
 	}
 
-	auto newBlueprint = CastChecked<UKlawrBlueprint>(
+	/*auto newBlueprint = CastChecked<UKlawrScriptEnum>(
 		FKismetEditorUtilities::CreateBlueprint(
 			UKlawrScriptComponent::StaticClass(), InParent, InName, BPTYPE_Normal, 
 			UKlawrBlueprint::StaticClass(),	UKlawrBlueprintGeneratedClass::StaticClass(), 
 			"UKlawrBlueprintFactory"
 		)
-	);
+	);*/
+
+	auto newEnum = NewObject<UKlawrScriptEnum>(InParent, InName);
 	
-	newBlueprint->ScriptDefinedType = scriptType;
-	// TODO: Store some sort of fingerprint of the script type (built from a list of exported
-	//       properties and methods), so that when the game scripts assembly is rebuilt the
-	//       Blueprints whose script types changed can be marked as dirty or recompiled.
-	
-	FKismetEditorUtilities::CompileBlueprint(newBlueprint);
-	FEditorDelegates::OnAssetPostImport.Broadcast(this, newBlueprint);
+	newEnum->ScriptDefinedType = scriptType;
+	FEditorDelegates::OnAssetPostImport.Broadcast(this, newEnum);
+
+	newEnum->RebuildFromType();
 
 	// Disable and re-enable Scripts Reloader 
 	// Fixes issue when you add a blueprint for the first time
 	
 	Klawr::FScriptsReloader::Get().Disable();
 	Klawr::FScriptsReloader::Get().Enable();
-	return newBlueprint;
+	return newEnum;
 }
 
 #undef LOCTEXT_NAMESPACE

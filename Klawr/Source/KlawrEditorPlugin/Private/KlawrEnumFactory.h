@@ -23,23 +23,34 @@
 //-------------------------------------------------------------------------------
 #pragma once
 
-#include "IKlawrEditorPlugin.h"
-#include "CoreUObject.h"
-#include "ModuleManager.h"
-#include "Engine.h"
-#include "UnrealEd.h"
-#include "ClassViewerModule.h"
-#include "ClassViewerFilter.h"
-#include "Kismet2/KismetEditorUtilities.h"
-#include "Kismet2/SClassPickerDialog.h"
+#include "KlawrEnumFactory.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogKlawrEditorPlugin, Log, All);
+/**
+ * Creates Klawr Enums.
+ */
+UCLASS()
+class UKlawrEnumFactory : public UFactory
+{
+	GENERATED_BODY()
 
-namespace Klawr {
-	namespace ScriptType {
-		enum Type {
-			ScriptComponent,
-			ScriptEnum
-		};
-	}
-}
+public:
+	UKlawrEnumFactory(const FObjectInitializer& objectInitializer);
+
+public: // UFactory interface
+	virtual bool DoesSupportClass(UClass* Class) override;
+
+	/** Create a new Klawr Enum from scratch. */
+	virtual UObject* FactoryCreateNew(
+		UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, 
+		FFeedbackContext* Warn
+	) override;
+
+private:
+	bool GenerateScriptFile();
+
+private:
+	// name of source file (including extension)
+	FString SourceFilename;
+	// directory where source file is located (relative to the project root)
+	FString SourceLocation;
+};

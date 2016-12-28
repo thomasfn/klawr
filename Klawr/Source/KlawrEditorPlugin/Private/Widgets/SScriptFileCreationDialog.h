@@ -36,6 +36,7 @@ public:
 
 		/** Initial value for Source Filename text-box. */
 		SLATE_ARGUMENT(FText, SourceFilename)
+		SLATE_ARGUMENT(int, ScriptType)
 
 	SLATE_END_ARGS()
 
@@ -47,7 +48,7 @@ public:
 	 * @return The full name of the script file created by the user, or an empty string if no
 	 *         script file was created (for whatever reason).
 	 */
-	static FString CreateScriptFile(const FString& DefaultScriptName);
+	static FString CreateScriptFile(const FString& DefaultScriptName, ScriptType::Type InScriptType);
 
 private:
 	bool ShowAsModalWindow();
@@ -76,6 +77,7 @@ private:
 	static bool GenerateScriptFile(const FString& InSourceLocation, const FString& InSourceFilename);
 
 private:
+	ScriptType::Type scriptType;
 	FText SourceFilenameText;
 	FText SourceLocationText;
 	bool bUserConfirmed;

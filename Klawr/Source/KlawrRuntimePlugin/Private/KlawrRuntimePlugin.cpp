@@ -33,6 +33,7 @@
 #include "KismetEditorUtilities.h"
 #include "CompilerResultsLog.h"
 #include "KlawrBlueprint.h"
+#include "KlawrScriptEnum.h"
 #endif
 
 DEFINE_LOG_CATEGORY(LogKlawrRuntimePlugin);
@@ -121,6 +122,16 @@ public:
 				LogResults.EventDisplayThresholdMs = 500;
 				FKismetEditorUtilities::CompileBlueprint(temp, false, false, false, &LogResults);
 			}
+
+			AssetData.Empty();
+			AssetRegistryModule.Get().GetAssetsByClass(UKlawrScriptEnum::StaticClass()->GetFName(), AssetData);
+
+			for (const auto& iter : AssetData)
+			{
+				UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Recreating enum %s"), *(iter.AssetName.ToString()));
+				UKlawrScriptEnum* temp = CastChecked<UKlawrScriptEnum>(iter.GetAsset());
+				temp->RebuildFromType();
+			}
 		}
 		else
 		{
@@ -141,6 +152,16 @@ public:
 		{
 			const TCHAR* type = *(FString(scriptType.c_str()));
 			Types.Add(FString(scriptType.c_str()));
+		}
+	}
+
+	virtual void GetScriptEnumTypes(TArray<FString>& Types) override
+	{
+		FCLRAssemblyInfo assemblyInfo;
+		FJsonObjectConverter::JsonObjectStringToUStruct(FString(GetAssemblyInfo(PrimaryEngineAppDomainID)), &assemblyInfo, 0, 0);
+		for (const FCLREnumInfo& enumInfo : assemblyInfo.EnumInfos)
+		{
+			Types.Add(enumInfo.Name);
 		}
 	}
 #endif // WITH_EDITOR

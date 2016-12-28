@@ -42,6 +42,7 @@ public:
 	SLATE_BEGIN_ARGS(SScriptTypeTree) {}
 		/** Callback to be fired when a type is selected in the tree. */
 		SLATE_EVENT(FOnScriptTypeSelected, OnScriptTypeSelected)
+		SLATE_ARGUMENT(int, ScriptType)
 
 	SLATE_END_ARGS()
 
@@ -69,6 +70,7 @@ private:
 	void TreeView_OnSelectionChanged(FScriptTypeTreeItemPtr Item, ESelectInfo::Type SelectInfo);
 
 private:
+	ScriptType::Type scriptType;
 	TSharedPtr<STreeView<FScriptTypeTreeItemPtr>> TreeView;
 
 	/** Namespaces that are the top-level items in the tree. */

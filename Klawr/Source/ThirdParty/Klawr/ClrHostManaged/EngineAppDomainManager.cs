@@ -791,106 +791,166 @@ namespace Klawr.ClrHost.Managed{
             try
             {
                 result.Append("{ " + Quoted("classInfos") + ": [ ");
-                bool firstClass = true;
-                foreach (var componentTypeName in AppDomain.CurrentDomain.GetAssemblies()
-                    .Where(assembly => !assembly.IsDynamic)
-                    .SelectMany(assembly => assembly.GetTypes())
-                    .Where(t => t.IsSubclassOf(scriptComponentType))
-                    .Select(t => t.FullName))
-                {
-                    Type componentType = FindTypeByName(componentTypeName);
-                    if (!firstClass)
-                    {
-                        result.Append(",");
-                    }
-                    firstClass = false;
-                    result.Append("{" + Quoted("name") + ": " + Quoted(componentType.FullName) + "," + Quoted("methodInfos") + ": [ ");
-                    // Get method infos
-                    bool first = true;
-                    foreach (MethodInfo methodInfo in componentType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(function => function.GetCustomAttributes<UFUNCTIONAttribute>(true).Any()))
-                    {
-                        if (!first)
-                        {
-                            result.Append(",");
-                        }
-                        first = false;
-                        result.Append("{" + Quoted("name") + ": " + Quoted(methodInfo.Name) + "," + Quoted("returnType") + ": " + TranslateReturnType(methodInfo.ReturnType) + ",");
-                        result.Append(Quoted("className") + ":" + Quoted(GetClassName(methodInfo.ReturnType)) + ",");
-                        result.Append(Quoted("parameters") + ": [");
-                        bool firstParam = true;
-                        foreach (ParameterInfo parameterInfo in methodInfo.GetParameters())
-                        {
-                            if (!firstParam)
-                            {
-                                result.Append(",");
-                            }
-                            firstParam = false;
-                            result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
-                            result.Append(Quoted(GetClassName(parameterInfo.ParameterType)) + "," + Quoted("metaData") + ":[]");
-                            result.Append("}");
-                        }
+                ExportClassInfos(result);
+                result.Append("], " + Quoted("enumInfos") + ": [ ");
+                ExportEnumInfos(result);
+                result.Append("]}");
+                
 
-                        result.Append("],");
-                        result.Append(Quoted("metaData") + ":[");
-                        bool firstMeta = true;
-                        // Can not be NULL
-                        UFUNCTIONAttribute ufa = (UFUNCTIONAttribute)methodInfo.GetCustomAttribute(typeof(UFUNCTIONAttribute));
-                        string[] tempMetas = ufa.GetMetas();
-                        for (int i = 0; i < tempMetas.Length; i += 2)
-                        {
-                            if (!firstMeta)
-                            {
-                                result.Append(",");
-                            }
-                            firstMeta = false;
-                            result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
-                            result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
-                        }
-                        result.Append("]");
-                        result.Append("}");
-                    }
-
-                    result.Append("]," + Quoted("propertyInfos") + ": [");
-                    bool firstProperty = true;
-                    // Get property infos
-                    foreach (PropertyInfo propertyInfo in componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()))
-                    {
-                        if (!firstProperty)
-                        {
-                            result.Append(",");
-                        }
-                        firstProperty = false;
-                        result.Append("{" + Quoted("name") + ": " + Quoted(propertyInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(propertyInfo.PropertyType) + "," + Quoted("className") + ":");
-
-                        result.Append(Quoted(GetClassName(propertyInfo.PropertyType)) + ",");
-                        result.Append(Quoted("metaData") + ":[");
-                        bool firstMeta = true;
-                        UPROPERTYAttribute upa = propertyInfo.GetCustomAttribute<UPROPERTYAttribute>();
-                        string[] tempMetas = upa.GetMetas();
-                        for (int i = 0; i < tempMetas.Length; i += 2)
-                        {
-                            if (!firstMeta)
-                            {
-                                result.Append(",");
-                            }
-                            firstMeta = false;
-                            result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
-                            result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
-                        }
-                        result.Append("]");
-
-                        result.Append("}");
-                    }
-                    result.Append("]}");
-                }
+                
             }
             catch (Exception ex)
             {
                 result.Append(ex.StackTrace + " " + ex.Message);
             }
-            result.Append("]}");
 
-            return result.ToString();
+            string str = result.ToString();
+
+            File.WriteAllText("assemblyInfo.json", str);
+
+            return str;
+        }
+
+        private void ExportClassInfos(StringBuilder result)
+        {
+            var scriptComponentType = FindTypeByName("Klawr.UnrealEngine.UKlawrScriptComponent");
+            bool firstClass = true;
+            foreach (var componentTypeName in AppDomain.CurrentDomain.GetAssemblies()
+                .Where(assembly => !assembly.IsDynamic)
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(t => t.IsSubclassOf(scriptComponentType))
+                .Select(t => t.FullName))
+            {
+                Type componentType = FindTypeByName(componentTypeName);
+                if (!firstClass)
+                {
+                    result.Append(",");
+                }
+                firstClass = false;
+                result.Append("{" + Quoted("name") + ": " + Quoted(componentType.FullName) + "," + Quoted("methodInfos") + ": [ ");
+                // Get method infos
+                bool first = true;
+                foreach (MethodInfo methodInfo in componentType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(function => function.GetCustomAttributes<UFUNCTIONAttribute>(true).Any()))
+                {
+                    if (!first)
+                    {
+                        result.Append(",");
+                    }
+                    first = false;
+                    result.Append("{" + Quoted("name") + ": " + Quoted(methodInfo.Name) + "," + Quoted("returnType") + ": " + TranslateReturnType(methodInfo.ReturnType) + ",");
+                    result.Append(Quoted("className") + ":" + Quoted(GetClassName(methodInfo.ReturnType)) + ",");
+                    result.Append(Quoted("parameters") + ": [");
+                    bool firstParam = true;
+                    foreach (ParameterInfo parameterInfo in methodInfo.GetParameters())
+                    {
+                        if (!firstParam)
+                        {
+                            result.Append(",");
+                        }
+                        firstParam = false;
+                        result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
+                        result.Append(Quoted(GetClassName(parameterInfo.ParameterType)) + "," + Quoted("metaData") + ":[]");
+                        result.Append("}");
+                    }
+
+                    result.Append("],");
+                    result.Append(Quoted("metaData") + ":[");
+                    bool firstMeta = true;
+                    // Can not be NULL
+                    UFUNCTIONAttribute ufa = (UFUNCTIONAttribute)methodInfo.GetCustomAttribute(typeof(UFUNCTIONAttribute));
+                    string[] tempMetas = ufa.GetMetas();
+                    for (int i = 0; i < tempMetas.Length; i += 2)
+                    {
+                        if (!firstMeta)
+                        {
+                            result.Append(",");
+                        }
+                        firstMeta = false;
+                        result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
+                        result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
+                    }
+                    result.Append("]");
+                    result.Append("}");
+                }
+
+                result.Append("]," + Quoted("propertyInfos") + ": [");
+                bool firstProperty = true;
+                // Get property infos
+                foreach (PropertyInfo propertyInfo in componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(property => property.GetCustomAttributes<UPROPERTYAttribute>(true).Any()))
+                {
+                    if (!firstProperty)
+                    {
+                        result.Append(",");
+                    }
+                    firstProperty = false;
+                    result.Append("{" + Quoted("name") + ": " + Quoted(propertyInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(propertyInfo.PropertyType) + "," + Quoted("className") + ":");
+
+                    result.Append(Quoted(GetClassName(propertyInfo.PropertyType)) + ",");
+                    result.Append(Quoted("metaData") + ":[");
+                    bool firstMeta = true;
+                    UPROPERTYAttribute upa = propertyInfo.GetCustomAttribute<UPROPERTYAttribute>();
+                    string[] tempMetas = upa.GetMetas();
+                    for (int i = 0; i < tempMetas.Length; i += 2)
+                    {
+                        if (!firstMeta)
+                        {
+                            result.Append(",");
+                        }
+                        firstMeta = false;
+                        result.Append("{" + Quoted("metaKey") + ":" + Quoted(tempMetas[i]) + ",");
+                        result.Append(Quoted("metaValue") + ":" + Quoted(tempMetas[i + 1]) + "}");
+                    }
+                    result.Append("]");
+
+                    result.Append("}");
+                }
+                result.Append("]}");
+            }
+        }
+
+        private void ExportEnumInfos(StringBuilder result)
+        {
+            bool firstEnum = true;
+            foreach (var enumType in AppDomain.CurrentDomain.GetAssemblies()
+              .Where(assembly => !assembly.IsDynamic)
+              .SelectMany(assembly => assembly.GetTypes())
+              .Where(t => t.IsEnum && t.GetCustomAttribute<UENUMAttribute>() != null)
+            )
+            {
+                if (!firstEnum)
+                {
+                    result.Append(", ");
+                }
+                firstEnum = false;
+                result.Append("{");
+                result.Append(Quoted("name"));
+                result.Append(": ");
+                result.Append(Quoted(enumType.FullName));
+                result.Append(", ");
+                result.Append(Quoted("values"));
+                result.Append(": [ ");
+                int[] values = Enum.GetValues(enumType) as int[];
+                bool firstName = true;
+                foreach (int value in values)
+                {
+                    string name = Enum.GetName(enumType, value);
+                    if (!firstName)
+                    {
+                        result.Append(", ");
+                    }
+                    firstName = false;
+                    result.Append("{");
+                    result.Append(Quoted("key"));
+                    result.Append(": ");
+                    result.Append(Quoted(name));
+                    result.Append(", ");
+                    result.Append(Quoted("value"));
+                    result.Append(": ");
+                    result.Append(value);
+                    result.Append("}");
+                }
+                result.Append(" ]}");
+            }
         }
 
         private string GetClassName(Type type)

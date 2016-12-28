@@ -21,25 +21,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //-------------------------------------------------------------------------------
-#pragma once
 
-#include "IKlawrEditorPlugin.h"
-#include "CoreUObject.h"
-#include "ModuleManager.h"
-#include "Engine.h"
-#include "UnrealEd.h"
-#include "ClassViewerModule.h"
-#include "ClassViewerFilter.h"
-#include "Kismet2/KismetEditorUtilities.h"
-#include "Kismet2/SClassPickerDialog.h"
+#include "KlawrRuntimePluginPrivatePCH.h"
+#include "KlawrScriptEnum.h"
+#include "KlawrClrHost.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogKlawrEditorPlugin, Log, All);
+UKlawrScriptEnum::UKlawrScriptEnum(const FObjectInitializer& objectInitializer)
+	: Super(objectInitializer)
+{
+	
+}
 
-namespace Klawr {
-	namespace ScriptType {
-		enum Type {
-			ScriptComponent,
-			ScriptEnum
-		};
-	}
+void UKlawrScriptEnum::RebuildFromType()
+{
+
 }

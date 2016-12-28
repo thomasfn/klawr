@@ -23,6 +23,8 @@
 //-------------------------------------------------------------------------------
 #pragma once
 
+#include "KlawrEditorPluginPrivatePCH.h"
+
 namespace Klawr {
 
 /**
@@ -33,6 +35,7 @@ class SScriptTypeSelectionDialog : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS(SScriptTypeSelectionDialog) {}
 		SLATE_ARGUMENT(FString, DefaultSelection)
+		SLATE_ARGUMENT(int, ScriptType)
 	SLATE_END_ARGS()
 
 public:
@@ -45,7 +48,7 @@ public:
 	 * @return The full name of the script type selected by the user, or an empty string if the
 	 *         the user didn't select any type (for whatever reason).
 	 */
-	static FString SelectScriptType(const FText& DialogTitle, const FString& InDefaultSelection);
+	static FString SelectScriptType(const FText& DialogTitle, const FString& InDefaultSelection, ScriptType::Type scriptType);
 
 private:
 	bool ShowAsModalWindow(const FText& WindowTitle);
@@ -56,6 +59,7 @@ private:
 	FReply Cancel_OnClicked();
 
 private:
+	ScriptType::Type scriptType;
 	bool bUserConfirmed;
 	TWeakPtr<SWindow> Dialog;
 	TSharedPtr<class SScriptTypeTree> ScriptTypeTreeWidget;

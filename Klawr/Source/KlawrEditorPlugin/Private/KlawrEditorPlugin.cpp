@@ -27,6 +27,7 @@
 #include "KlawrBlueprintCompiler.h"
 #include "KismetCompilerModule.h"
 #include "AssetTypeActions_KlawrBlueprint.h"
+#include "AssetTypeActions_KlawrEnum.h"
 #include "IKlawrRuntimePlugin.h"
 #include "KlawrGameProjectBuilder.h"
 #include "KlawrScriptsReloader.h"
@@ -161,6 +162,7 @@ public: // IModuleInterface interface
 		// register asset types
 		auto& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 		AssetTools.RegisterAssetTypeActions(MakeShareable(new FAssetTypeActions_KlawrBlueprint));
+		AssetTools.RegisterAssetTypeActions(MakeShareable(new FAssetTypeActions_KlawrEnum));
 		
 		// register Blueprint compiler
 		auto& CompilerModule = FModuleManager::LoadModuleChecked<IKismetCompilerInterface>("KismetCompiler");

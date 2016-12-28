@@ -23,23 +23,33 @@
 //-------------------------------------------------------------------------------
 #pragma once
 
-#include "IKlawrEditorPlugin.h"
-#include "CoreUObject.h"
-#include "ModuleManager.h"
-#include "Engine.h"
-#include "UnrealEd.h"
-#include "ClassViewerModule.h"
-#include "ClassViewerFilter.h"
-#include "Kismet2/KismetEditorUtilities.h"
-#include "Kismet2/SClassPickerDialog.h"
+#include "KlawrScriptEnum.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogKlawrEditorPlugin, Log, All);
+/**
+ * An enum whose enumerators are implemented in C# or any other CLI language.
+ */
+UCLASS()
+class KLAWRRUNTIMEPLUGIN_API UKlawrScriptEnum : public UUserDefinedEnum
+{
+	GENERATED_BODY()
 
-namespace Klawr {
-	namespace ScriptType {
-		enum Type {
-			ScriptComponent,
-			ScriptEnum
-		};
-	}
-}
+public:
+	UKlawrScriptEnum(const FObjectInitializer& objectInitializer);
+
+	/**
+	* The fully qualified name of the type defined in the script associated with an instance of
+	* this class.
+	*/
+	UPROPERTY()
+	FString ScriptDefinedType;
+
+	void RebuildFromType();
+
+public: // UUserDefinedEnum interface
+
+		
+
+
+private:
+
+};

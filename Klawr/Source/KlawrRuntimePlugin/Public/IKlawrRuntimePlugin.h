@@ -64,6 +64,7 @@ public:
 	virtual void SetPIEAppDomainID(int AppDomainID) = 0;
 	virtual bool ReloadPrimaryAppDomain() = 0;
 	virtual void GetScriptComponentTypes(TArray<FString>& Types) = 0;
+	virtual void GetScriptEnumTypes(TArray<FString>& Types) = 0;
 #endif // WITH_EDITOR
 
 	virtual void SetFloat(int appDomainID, __int64 instanceID, const TCHAR* propertyName, float value) const = 0;

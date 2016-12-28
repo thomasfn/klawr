@@ -33,6 +33,7 @@ namespace Klawr {
 
 void SScriptFileCreationDialog::Construct(const FArguments& InArgs)
 {
+	scriptType = (ScriptType::Type)InArgs._ScriptType;
 	bUserConfirmed = false;
 	FString sourceFilename = InArgs._SourceFilename.ToString();
 	if (!sourceFilename.EndsWith(TEXT(".cs")))
@@ -164,11 +165,12 @@ bool SScriptFileCreationDialog::ShowAsModalWindow()
 	return bUserConfirmed;
 }
 
-FString SScriptFileCreationDialog::CreateScriptFile(const FString& DefaultScriptName)
+FString SScriptFileCreationDialog::CreateScriptFile(const FString& DefaultScriptName, ScriptType::Type InScriptType)
 {
 	TSharedRef<SScriptFileCreationDialog> dialog =
 		SNew(SScriptFileCreationDialog)
-		.SourceFilename(FText::FromString(DefaultScriptName));
+		.SourceFilename(FText::FromString(DefaultScriptName))
+		.ScriptType(InScriptType);
 
 	if (dialog->ShowAsModalWindow())
 	{
@@ -346,6 +348,8 @@ bool SScriptFileCreationDialog::GenerateScriptFile(
 
 	if (InSourceFilename.EndsWith(TEXT(".cs")))
 	{
+		// TODO: Use different template for enum
+
 		templatePath = templatePath / TEXT("Template.cs");
 		if (!FPaths::FileExists(templatePath))
 		{

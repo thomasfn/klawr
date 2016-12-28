@@ -35,6 +35,7 @@ namespace Klawr {
 
     void SScriptTypeSelectionDialog::Construct(const FArguments & InArgs) {
         DefaultSelection = InArgs._DefaultSelection;
+		scriptType = (ScriptType::Type)InArgs._ScriptType;
 
         bUserConfirmed = false;
 
@@ -69,6 +70,7 @@ namespace Klawr {
                         [
                             SAssignNew(ScriptTypeTreeWidget, SScriptTypeTree)
                             .OnScriptTypeSelected(this, &SScriptTypeSelectionDialog::OnScriptTypeSelected)
+							.ScriptType(scriptType)
                         ]
                     ]
                 ]
@@ -127,8 +129,10 @@ namespace Klawr {
         OKButton->SetEnabled(!SelectedScriptType.IsEmpty());
     }
 
-    FString SScriptTypeSelectionDialog::SelectScriptType(const FText & DialogTitle, const FString & InDefaultSelection) {
-        TSharedRef<Klawr::SScriptTypeSelectionDialog> dialog = SNew(Klawr::SScriptTypeSelectionDialog).DefaultSelection(InDefaultSelection);
+    FString SScriptTypeSelectionDialog::SelectScriptType(const FText & DialogTitle, const FString & InDefaultSelection, ScriptType::Type scriptType) {
+        TSharedRef<Klawr::SScriptTypeSelectionDialog> dialog = SNew(Klawr::SScriptTypeSelectionDialog)
+			.DefaultSelection(InDefaultSelection)
+			.ScriptType(scriptType);
 
         if(dialog->ShowAsModalWindow(DialogTitle)) {
             return dialog->SelectedScriptType;
@@ -157,7 +161,7 @@ namespace Klawr {
     }
 
     FReply SScriptTypeSelectionDialog::CreateNewScriptType_OnClicked() {
-        FString scriptFilename = SScriptFileCreationDialog::CreateScriptFile(DefaultSelection);
+        FString scriptFilename = SScriptFileCreationDialog::CreateScriptFile(DefaultSelection, scriptType);
         if(!scriptFilename.IsEmpty()) {
             // update the game scripts .csproj
             if(FGameProjectBuilder::AddSourceFileToProject(scriptFilename)) {
