@@ -57,6 +57,7 @@
     <Compile Include="Interfaces\IDefaultAppDomainManager.cs" />
     <Compile Include="Interfaces\IEngineAppDomainManager.cs" />
     <Compile Include="Interfaces\IScriptObject.cs" />
+    <Compile Include="Wrappers\FVector.cs" />
     <Compile Include="Wrappers\LogUtils.cs" />
     <Compile Include="Wrappers\Object.cs" />
     <Compile Include="Wrappers\ObjectUtils.cs" />

@@ -7,13 +7,6 @@ namespace Klawr.UnrealEngine{
         public float Y;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct FVector{
-        public float X;
-        public float Y;
-        public float Z;
-    }
-
     // TODO: The FVector4 class is 16-byte aligned, but the mirror FVector4 USTRUCT is not,
     //       which one of those is this struct actually going to correspond to? And does it matter?
     [StructLayout(LayoutKind.Sequential)]
