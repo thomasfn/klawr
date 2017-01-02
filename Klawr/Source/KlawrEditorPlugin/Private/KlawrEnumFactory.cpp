@@ -70,9 +70,12 @@ UObject* UKlawrEnumFactory::FactoryCreateNew(
 		)
 	);*/
 
-	auto newEnum = NewObject<UKlawrScriptEnum>(InParent, InName);
-	
+	auto newEnum = NewObject<UKlawrScriptEnum>(InParent, InName, RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted);
 	newEnum->ScriptDefinedType = scriptType;
+	TArray<TPair<FName, uint8>> emptyNames;
+	newEnum->SetEnums(emptyNames, UEnum::ECppForm::Namespaced);
+	newEnum->SetMetaData(TEXT("BlueprintType"), TEXT("true"));
+
 	FEditorDelegates::OnAssetPostImport.Broadcast(this, newEnum);
 
 	newEnum->RebuildFromType();

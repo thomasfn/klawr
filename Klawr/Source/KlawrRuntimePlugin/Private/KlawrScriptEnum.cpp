@@ -26,6 +26,10 @@
 #include "KlawrScriptEnum.h"
 #include "KlawrClrHost.h"
 
+#if WITH_EDITOR
+#include "Editor/UnrealEd/Public/Kismet2/EnumEditorUtils.h"
+#endif	// WITH_EDITOR
+
 UKlawrScriptEnum::UKlawrScriptEnum(const FObjectInitializer& objectInitializer)
 	: Super(objectInitializer)
 {
@@ -34,5 +38,29 @@ UKlawrScriptEnum::UKlawrScriptEnum(const FObjectInitializer& objectInitializer)
 
 void UKlawrScriptEnum::RebuildFromType()
 {
+	const FCLRAssemblyInfo& assemblyInfo = IKlawrRuntimePlugin::Get().GetPrimaryAssemblyInfo();
 
+	TArray < TPair < FName, uint8 >> enumerators;
+	for (const FCLREnumInfo& enumInfo : assemblyInfo.EnumInfos)
+	{
+		if (enumInfo.Name == ScriptDefinedType)
+		{
+
+			for (const FCLREnumKeyValue& keyValue : enumInfo.Values)
+			{
+				TPair < FName, uint8 > pair;
+				const FString fullName = FString::Printf(TEXT("%s::%s"), *ScriptDefinedType, *keyValue.Key);
+				pair.Key = FName(*fullName);
+				pair.Value = keyValue.Value;
+				enumerators.Add(pair);
+			}
+
+			break;
+		}
+	}
+
+	SetEnums(enumerators, UEnum::ECppForm::Namespaced);
+#if WITH_EDITOR
+	FEnumEditorUtils::UpdateAfterPathChanged(this);
+#endif	// WITH_EDITOR
 }

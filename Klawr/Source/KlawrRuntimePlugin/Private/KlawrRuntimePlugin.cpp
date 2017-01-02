@@ -67,11 +67,28 @@ void RegisterWrapperClasses() {}
 
 class FRuntimePlugin : public IKlawrRuntimePlugin
 {
+private:
+
 	int PrimaryEngineAppDomainID;
+	FCLRAssemblyInfo PrimaryAssemblyInfo;
 
 #if WITH_EDITOR
 	int PIEAppDomainID;
 #endif // WITH_EDITOR
+
+	void RebuildEnums()
+	{
+		FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		TArray<FAssetData> assetData;
+		assetRegistryModule.Get().GetAssetsByClass(UKlawrScriptEnum::StaticClass()->GetFName(), assetData);
+
+		for (const auto& iter : assetData)
+		{
+			UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Rebuilding enum %s"), *(iter.AssetName.ToString()));
+			UKlawrScriptEnum* temp = CastChecked<UKlawrScriptEnum>(iter.GetAsset());
+			temp->RebuildFromType();
+		}
+	}
 
 public:
 
@@ -108,6 +125,9 @@ public:
 			{
 				DestroyAppDomain(NewAppDomainID);
 			}
+
+			PrimaryAssemblyInfo = GetAssemblyInfo(PrimaryEngineAppDomainID);
+
 			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 			TArray<FAssetData> AssetData;
 			AssetRegistryModule.Get().GetAssetsByClass(UKlawrBlueprint::StaticClass()->GetFName(), AssetData);
@@ -123,15 +143,8 @@ public:
 				FKismetEditorUtilities::CompileBlueprint(temp, false, false, false, &LogResults);
 			}
 
-			AssetData.Empty();
-			AssetRegistryModule.Get().GetAssetsByClass(UKlawrScriptEnum::StaticClass()->GetFName(), AssetData);
+			RebuildEnums();
 
-			for (const auto& iter : AssetData)
-			{
-				UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Recreating enum %s"), *(iter.AssetName.ToString()));
-				UKlawrScriptEnum* temp = CastChecked<UKlawrScriptEnum>(iter.GetAsset());
-				temp->RebuildFromType();
-			}
 		}
 		else
 		{
@@ -157,9 +170,7 @@ public:
 
 	virtual void GetScriptEnumTypes(TArray<FString>& Types) override
 	{
-		FCLRAssemblyInfo assemblyInfo;
-		FJsonObjectConverter::JsonObjectStringToUStruct(FString(GetAssemblyInfo(PrimaryEngineAppDomainID)), &assemblyInfo, 0, 0);
-		for (const FCLREnumInfo& enumInfo : assemblyInfo.EnumInfos)
+		for (const FCLREnumInfo& enumInfo : PrimaryAssemblyInfo.EnumInfos)
 		{
 			Types.Add(enumInfo.Name);
 		}
@@ -184,7 +195,14 @@ public:
 		{
 			bCreated = CreateAppDomain(PrimaryEngineAppDomainID);
 
-			if (!bCreated)
+			if (bCreated)
+			{
+				PrimaryAssemblyInfo = GetAssemblyInfo(PrimaryEngineAppDomainID);
+#if WITH_EDITOR
+				RebuildEnums();
+#endif // WITH_EDITOR
+			}
+			else
 			{
 				UE_LOG(
 					LogKlawrRuntimePlugin, Error, 
@@ -370,7 +388,7 @@ public: // IModuleInterface interface
 	}
 
 	int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const
-	{;
+	{
 		return IClrHost::Get()->CallCSFunctionInt(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
@@ -394,11 +412,17 @@ public: // IModuleInterface interface
 		IClrHost::Get()->CallCSFunctionVoid(appDomainID, instanceID, functionName, args->args.Num() ? &args->args[0] : nullptr, args->args.Num());
 	}
 
-	const TCHAR* GetAssemblyInfo(int appDomainID) const
+	FCLRAssemblyInfo GetAssemblyInfo(int appDomainID) const override
 	{
-		return IClrHost::Get()->GetAssemblyInfo(appDomainID);
+		FCLRAssemblyInfo result;
+		FJsonObjectConverter::JsonObjectStringToUStruct(FString(IClrHost::Get()->GetAssemblyInfo(appDomainID)), &result, 0, 0);
+		return result;
 	}
 
+	virtual const FCLRAssemblyInfo& GetPrimaryAssemblyInfo() const override
+	{
+		return PrimaryAssemblyInfo;
+	}
 };
 
 } // namespace Klawr

@@ -62,8 +62,8 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 		return;
 	}
 
-	FCLRAssemblyInfo assemblyInfo;
-	FJsonObjectConverter::JsonObjectStringToUStruct(FString(Klawr::IClrHost::Get()->GetAssemblyInfo(appDomainId)), &assemblyInfo, 0, 0);
+	const FCLRAssemblyInfo& assemblyInfo = IKlawrRuntimePlugin::Get().GetAssemblyInfo(appDomainId);
+	// FJsonObjectConverter::JsonObjectStringToUStruct(FString(Klawr::IClrHost::Get()->GetAssemblyInfo(appDomainId)), &assemblyInfo, 0, 0);
 
 	for (auto CLRClass : assemblyInfo.ClassInfos)
 	{
@@ -133,8 +133,9 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 	{
 		return;
 	}
-	FCLRAssemblyInfo assemblyInfo;
-	FJsonObjectConverter::JsonObjectStringToUStruct(FString(Klawr::IClrHost::Get()->GetAssemblyInfo(appDomainId)), &assemblyInfo, 0, 0);
+	
+	// FJsonObjectConverter::JsonObjectStringToUStruct(FString(Klawr::IClrHost::Get()->GetAssemblyInfo(appDomainId)), &assemblyInfo, 0, 0);
+	const FCLRAssemblyInfo& assemblyInfo = IKlawrRuntimePlugin::Get().GetAssemblyInfo(appDomainId);
 
 	for (auto CLRClass : assemblyInfo.ClassInfos)
 	{

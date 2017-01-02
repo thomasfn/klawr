@@ -26,6 +26,7 @@
 #include "ModuleManager.h"
 #include "KlawrBlueprintGeneratedClass.h"
 #include "KlawrScriptComponent.h"
+#include "KlawrAssemblyInfo.h"
 
 /**
  * Hosts the MS CLR, which is used to execute managed code in UnrealEd and in-game.
@@ -86,7 +87,8 @@ public:
 	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
 	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, UKlawrArgArray* args) const = 0;
 
-	virtual const TCHAR* GetAssemblyInfo(int appDomainID) const = 0;
+	virtual FCLRAssemblyInfo GetAssemblyInfo(int appDomainID) const = 0;
+	virtual const FCLRAssemblyInfo& GetPrimaryAssemblyInfo() const = 0;
 	/**
 	 * Get the ID of the app domain in which the given object is referenced.
 	 */
