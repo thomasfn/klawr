@@ -87,9 +87,27 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 				case ParameterTypeTranslation::ParametertypeString:
 					propertyInfo.Class = UStrProperty::StaticClass();
 					break;
+				case ParameterTypeTranslation::ParametertypeEnum:
+				{
+					propertyInfo.Class = UByteProperty::StaticClass();
+
+					FString enumName = CLRProperty.ClassName;
+					propertyInfo.innerEnum = FindObject<UEnum>(ANY_PACKAGE, *enumName);
+					if (propertyInfo.innerEnum != nullptr) break;
+
+					enumName.RemoveFromStart(L"E", ESearchCase::CaseSensitive);
+
+					propertyInfo.innerEnum = FindObject<UEnum>(ANY_PACKAGE, *enumName);
+					if (propertyInfo.innerClass != nullptr) break;
+
+					UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("Could not locate UEnum for name '%s' in class '%s'"),
+						*CLRProperty.ClassName, *CLRClass.Name);
+					break;
+				}
 				case ParameterTypeTranslation::ParametertypeObject:
+				{
 					propertyInfo.Class = UObjectProperty::StaticClass();
-					
+
 
 					FString className = CLRProperty.ClassName;
 					propertyInfo.innerClass = FindObject<UClass>(ANY_PACKAGE, *className);
@@ -108,8 +126,9 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 
 					UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("Could not locate UClass for name '%s' in class '%s'"),
 						*CLRProperty.ClassName, *CLRClass.Name);
-					
+
 					break;
+				}
 				}
 
 				if (propertyInfo.Class)

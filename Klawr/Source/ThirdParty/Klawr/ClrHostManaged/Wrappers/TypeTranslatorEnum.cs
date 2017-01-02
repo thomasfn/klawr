@@ -8,8 +8,13 @@ namespace Klawr.ClrHost.Managed.Wrappers
         ParametertypeInt = 1,
         ParametertypeBool = 2,
         ParametertypeString = 3,
-        ParametertypeObject = 4,
-        ParametertypeVoid = 5,
+        ParametertypeStruct = 4,
+        ParametertypeEnum = 5,
+        ParametertypeObject = 6,
+        ParametertypeScriptStruct = 7,
+        ParametertypeScriptEnum = 8,
+        ParametertypeVoid = 9
+
     };
 #if !__LINE__
 }

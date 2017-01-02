@@ -520,18 +520,7 @@ namespace Klawr.ClrHost.Managed{
             }
 
             MethodInfo mi = scriptComponentType.GetMethod(functionName);
-            if (mi.ReturnType == typeof(float))
-            { return 0; }
-            else if (mi.ReturnType == typeof(int))
-            { return 1; }
-            else if (mi.ReturnType == typeof(bool))
-            { return 2; }
-            else if (mi.ReturnType == typeof(string))
-            { return 3; }
-            else if (mi.ReturnType.IsSubclassOf(typeof(UObject)))
-            { return 4; }
-            // Unknown type??
-            return -1;
+            return TranslateType(mi.ReturnType);
         }
 
         public string[] GetScriptComponentFunctionParameterNames(string componentName, string functionName)
@@ -566,19 +555,7 @@ namespace Klawr.ClrHost.Managed{
             {
                 parameterType = mi.GetParameters()[parameterCount].ParameterType;
             }
-            if (parameterType == typeof(float))
-            { return 0; }
-            else if (parameterType == typeof(int))
-            { return 1; }
-            else if (parameterType == typeof(bool))
-            { return 2; }
-            else if (parameterType == typeof(string))
-            { return 3; }
-            else if (parameterType.IsSubclassOf(typeof(UObject)))
-            { return 4; }
-            else if (parameterType == typeof(void))
-            { return 5; }
-            return -1;
+            return TranslateType(parameterType);
         }
 
         public string GetScriptComponentFunctionParameterTypeObjectClass(string componentName, string functionName, int parameterCount)
@@ -593,47 +570,20 @@ namespace Klawr.ClrHost.Managed{
             MethodInfo mi = scriptComponentType.GetMethod(functionName);
             Type parameterType = mi.GetParameters()[parameterCount].ParameterType;
 
-            bool removeFirstChar = parameterType.GetCustomAttribute<ConvertClassNameAttribute>() != null;
-            if (removeFirstChar)
-            {
-                return parameterType.Name.Substring(1);
-            }
-            return parameterType.Name;
+            return TranslateClassName(parameterType);
         }
 
         public int GetScriptComponentPropertyType(string componentName, string propertyName)
         {
             PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
-            if (pi.PropertyType == typeof(float))
-            { return 0; }
-            else if (pi.PropertyType == typeof(int))
-            { return 1; }
-            else if (pi.PropertyType == typeof(bool))
-            { return 2; }
-            else if (pi.PropertyType == typeof(string))
-            { return 3; }
-            else if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
-            { return 4; }
-
-            // Unknown type??
-            return -1;
+            return TranslateType(pi.PropertyType);
         }
 
 
         public string GetScriptComponentPropertyClassType(string componentName, string propertyName)
         {
             PropertyInfo pi = FindTypeByName(componentName).GetProperty(propertyName);
-            if (pi.PropertyType.IsSubclassOf(typeof(UObject)))
-            {
-                Type tp = pi.PropertyType;
-                bool removeFirstChar = pi.PropertyType.GetCustomAttribute<ConvertClassNameAttribute>() != null;
-                if (removeFirstChar)
-                {
-                    return tp.Name.Substring(1);
-                }
-                return tp.Name;
-            }
-            return "";
+            return TranslateClassName(pi.PropertyType);
         }
 
         public void SetFloat(long instanceID, string propertyName, float value)
@@ -645,7 +595,15 @@ namespace Klawr.ClrHost.Managed{
         public void SetInt(long instanceID, string propertyName, int value)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            if (pi.PropertyType.IsEnum)
+            {
+                pi.SetValue(_scriptComponents[instanceID].Instance, (byte)value);
+            }
+            else
+            {
+                pi.SetValue(_scriptComponents[instanceID].Instance, value);
+            }
         }
 
         public void SetBool(long instanceID, string propertyName, bool value)
@@ -658,6 +616,18 @@ namespace Klawr.ClrHost.Managed{
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
             instanceType.GetProperty(propertyName).SetValue(_scriptComponents[instanceID].Instance, value);
+        }
+
+        public bool SetStruct(long instanceID, string propertyName, IntPtr value)
+        {
+            IDisposable instance = _scriptComponents[instanceID].Instance;
+            Type instanceType = instance.GetType();
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            Type propType = pi.PropertyType;
+            if (!propType.IsValueType || value == IntPtr.Zero) return false;
+            object obj = Marshal.PtrToStructure(value, propType);
+            pi.SetValue(obj, instance);
+            return true;
         }
 
         public void SetObj(long instanceID, string propertyName, IntPtr value)
@@ -674,25 +644,37 @@ namespace Klawr.ClrHost.Managed{
         public float GetFloat(long instanceID, string propertyName)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            return (float)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            return Convert.ToSingle(instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance));
         }
 
         public int GetInt(long instanceID, string propertyName)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            return (int)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            return Convert.ToInt32(instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance));
         }
 
         public bool GetBool(long instanceID, string propertyName)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            return (bool)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            return Convert.ToBoolean(instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance));
         }
 
         public string GetStr(long instanceID, string propertyName)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
-            return (string)instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance);
+            return Convert.ToString(instanceType.GetProperty(propertyName).GetValue(_scriptComponents[instanceID].Instance));
+        }
+
+        public bool GetStruct(long instanceID, string propertyName, IntPtr result)
+        {
+            IDisposable instance = _scriptComponents[instanceID].Instance;
+            Type instanceType = instance.GetType();
+            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            Type propType = pi.PropertyType;
+            if (!propType.IsValueType || result == IntPtr.Zero) return false;
+            object obj = pi.GetValue(instance);
+            Marshal.StructureToPtr(obj, result, false);
+            return true;
         }
 
         public IntPtr GetObj(long instanceID, string propertyName)
@@ -708,6 +690,43 @@ namespace Klawr.ClrHost.Managed{
             return uobject.NativeObject.Handle;
         }
 
+        private object TranslateObject(object inputObj, Type expectedType)
+        {
+            if (inputObj is IntPtr)
+            {
+                var ptr = (IntPtr)inputObj;
+                if (ptr == IntPtr.Zero)
+                {
+                    return null;
+                }
+                else
+                {
+                    if (expectedType.IsValueType)
+                    {
+                        // Struct
+                        return Marshal.PtrToStructure(ptr, expectedType);
+                    }
+                    else
+                    {
+                        // UObject
+                        var nativeObject = new UObjectHandle(ptr, false);
+                        var constructor = expectedType.GetConstructor(new Type[] { typeof(UObjectHandle) });
+                        var idisp = constructor.Invoke(new object[] { nativeObject });
+                        return idisp;
+                    }
+                }
+            }
+            else if (expectedType.IsEnum)
+            {
+                // Not sure if we actually need to do this, but let's play it safe
+                return Convert.ToByte(inputObj);
+            }
+            else
+            {
+                return inputObj;
+            }
+        }
+
         private T DoCSFunctionCall<T>(long instanceID, string functionName, object[] args)
         {
             Type instanceType = _scriptComponents[instanceID].Instance.GetType();
@@ -716,24 +735,10 @@ namespace Klawr.ClrHost.Managed{
             try
             {
                 // Translate args
+                var pArr = mi.GetParameters();
                 for (int i = 0; i < args.Length; i++)
                 {
-                    if (args[i] is IntPtr)
-                    {
-                        var ptr = (IntPtr)args[i];
-                        if (ptr == IntPtr.Zero)
-                        {
-                            args[i] = null;
-                        }
-                        else
-                        {
-                            Type parameterType = mi.GetParameters()[i].ParameterType;
-                            var nativeObject = new UObjectHandle(ptr, false);
-                            var constructor = parameterType.GetConstructor(new Type[] { typeof(UObjectHandle) });
-                            var idisp = constructor.Invoke(new object[] { nativeObject });
-                            args[i] = idisp;
-                        }
-                    }
+                    args[i] = TranslateObject(args[i], pArr[i].ParameterType);
                 }
 
                 // Perform call
@@ -761,6 +766,13 @@ namespace Klawr.ClrHost.Managed{
         public string CallCSFunctionString(long instanceID, string functionName, object[] args)
         {
             return DoCSFunctionCall<string>(instanceID, functionName, args);
+        }
+        public bool CallCSFunctionStruct(long instanceID, string functionName, object[] args, IntPtr returnValue)
+        {
+            object obj = DoCSFunctionCall<object>(instanceID, functionName, args);
+            if (obj == null || !obj.GetType().IsValueType || returnValue == IntPtr.Zero) return false;
+            Marshal.StructureToPtr(obj, returnValue, false);
+            return true;
         }
         public IntPtr CallCSFunctionObject(long instanceID, string functionName, object[] args)
         {
@@ -837,8 +849,8 @@ namespace Klawr.ClrHost.Managed{
                         result.Append(",");
                     }
                     first = false;
-                    result.Append("{" + Quoted("name") + ": " + Quoted(methodInfo.Name) + "," + Quoted("returnType") + ": " + TranslateReturnType(methodInfo.ReturnType) + ",");
-                    result.Append(Quoted("className") + ":" + Quoted(GetClassName(methodInfo.ReturnType)) + ",");
+                    result.Append("{" + Quoted("name") + ": " + Quoted(methodInfo.Name) + "," + Quoted("returnType") + ": " + TranslateType(methodInfo.ReturnType) + ",");
+                    result.Append(Quoted("className") + ":" + Quoted(TranslateClassName(methodInfo.ReturnType)) + ",");
                     result.Append(Quoted("parameters") + ": [");
                     bool firstParam = true;
                     foreach (ParameterInfo parameterInfo in methodInfo.GetParameters())
@@ -848,8 +860,8 @@ namespace Klawr.ClrHost.Managed{
                             result.Append(",");
                         }
                         firstParam = false;
-                        result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
-                        result.Append(Quoted(GetClassName(parameterInfo.ParameterType)) + "," + Quoted("metaData") + ":[]");
+                        result.Append("{" + Quoted("name") + ": " + Quoted(parameterInfo.Name) + "," + Quoted("typeId") + ": " + TranslateType(parameterInfo.ParameterType) + "," + Quoted("className") + ":");
+                        result.Append(Quoted(TranslateClassName(parameterInfo.ParameterType)) + "," + Quoted("metaData") + ":[]");
                         result.Append("}");
                     }
 
@@ -883,9 +895,9 @@ namespace Klawr.ClrHost.Managed{
                         result.Append(",");
                     }
                     firstProperty = false;
-                    result.Append("{" + Quoted("name") + ": " + Quoted(propertyInfo.Name) + "," + Quoted("typeId") + ": " + TranslateReturnType(propertyInfo.PropertyType) + "," + Quoted("className") + ":");
+                    result.Append("{" + Quoted("name") + ": " + Quoted(propertyInfo.Name) + "," + Quoted("typeId") + ": " + TranslateType(propertyInfo.PropertyType) + "," + Quoted("className") + ":");
 
-                    result.Append(Quoted(GetClassName(propertyInfo.PropertyType)) + ",");
+                    result.Append(Quoted(TranslateClassName(propertyInfo.PropertyType)) + ",");
                     result.Append(Quoted("metaData") + ":[");
                     bool firstMeta = true;
                     UPROPERTYAttribute upa = propertyInfo.GetCustomAttribute<UPROPERTYAttribute>();
@@ -953,21 +965,24 @@ namespace Klawr.ClrHost.Managed{
             }
         }
 
-        private string GetClassName(Type type)
+        private string TranslateClassName(Type type)
         {
-            string typeName = "";
-            if ((type == typeof(UObject)) || (type.IsSubclassOf(typeof(UObject))))
+            bool isUObject = (type == typeof(UObject)) || (type.IsSubclassOf(typeof(UObject)));
+            bool isUStruct = type.IsValueType && type.Name[0] == 'F';
+            bool isUEnum = type.IsValueType && type.Name[0] == 'E';
+            if (isUObject || isUStruct || isUEnum)
             {
-                typeName = type.Name;
+                string typeName = type.Name;
                 if (type.GetCustomAttribute<ConvertClassNameAttribute>() != null)
                 {
                     typeName = typeName.Substring(1);
                 }
+                return typeName;
             }
-            return typeName;
+            return "";
         }
 
-        private int TranslateReturnType(Type inputType)
+        private int TranslateType(Type inputType)
         {
             if (inputType == typeof(void))
             {
@@ -988,6 +1003,14 @@ namespace Klawr.ClrHost.Managed{
             else if (inputType == typeof(string))
             {
                 return (int)ParameterTypeTranslation.ParametertypeString;
+            }
+            else if (inputType.IsValueType && inputType.Name[0] == 'F')
+            {
+                return (int)ParameterTypeTranslation.ParametertypeStruct;
+            }
+            else if (inputType.IsValueType && inputType.Name[0] == 'E')
+            {
+                return (int)ParameterTypeTranslation.ParametertypeEnum;
             }
             else if ((inputType == typeof(UObject)) || (inputType.IsSubclassOf(typeof(UObject))))
             {

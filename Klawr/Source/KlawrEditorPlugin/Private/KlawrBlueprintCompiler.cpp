@@ -148,7 +148,7 @@ namespace Klawr {
 
 		for (auto& Field : ScriptDefinedFields)
 		{
-			UClass* InnerType = Field.Class;
+			UObject* InnerType = Field.Class;
 			if (Field.Class->IsChildOf(UProperty::StaticClass()))
 			{
 				FString PinCategory;
@@ -167,6 +167,11 @@ namespace Klawr {
 				else if (Field.Class->IsChildOf(UBoolProperty::StaticClass()))
 				{
 					PinCategory = Schema->PC_Boolean;
+				}
+				else if (Field.Class->IsChildOf(UByteProperty::StaticClass()))
+				{
+					PinCategory = Schema->PC_Byte;
+					InnerType = Field.innerEnum;
 				}
 				else if (Field.Class->IsChildOf(UObjectProperty::StaticClass()))
 				{

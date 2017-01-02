@@ -38,16 +38,20 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptField
 	UClass* Class;
 
 	UClass* innerClass;
+	UStruct* innerStruct;
+	UEnum* innerEnum;
 
 	TMap<FString, FString> metas;
 
 	FScriptField()
-		: Class(NULL)
+		: Class(nullptr)
+		, innerClass(nullptr), innerStruct(nullptr), innerEnum(nullptr)
 	{
 	}
 	FScriptField(FName InName, UClass* InClass)
 		: Name(InName)
 		, Class(InClass)
+		, innerClass(nullptr), innerStruct(nullptr), innerEnum(nullptr)
 	{
 	}
 };
@@ -119,5 +123,4 @@ public:
 		}
 		return GeneratedClass;
 	}
-	void TestJSon();
 };

@@ -71,18 +71,21 @@ public: // IClrHost interface
 	virtual void SetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, int value) const override;
 	virtual void SetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, bool value) const override;
 	virtual void SetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, const TCHAR* value) const override;
+	virtual bool SetStruct(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, void* value) const override;
 	virtual void SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const override;
 
 	virtual float GetFloat(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
 	virtual int GetInt(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
 	virtual bool GetBool(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
 	virtual const TCHAR* GetStr(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
+	virtual bool GetStruct(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, void* result) const override;
 	virtual UObject* GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const override;
 
 	virtual float CallCSFunctionFloat(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const override;
 	virtual int CallCSFunctionInt(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const override;
 	virtual bool CallCSFunctionBool(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const override;
 	virtual const TCHAR* CallCSFunctionString(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const override;
+	virtual bool CallCSFunctionStruct(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount, void* returnValue) const override;
 	virtual UObject* CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const override;
 	virtual void CallCSFunctionVoid(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const override;
 

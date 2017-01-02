@@ -103,18 +103,21 @@ namespace Klawr.ClrHost.Interfaces{
         void SetInt(long instanceID, string propertyName, int value);
         void SetBool(long instanceID, string propertyName, bool value);
         void SetStr(long instanceID, string propertyName, string value);
+        bool SetStruct(long instanceID, string propertyName, IntPtr value);
         void SetObj(long instanceID, string propertyName, IntPtr value);
 
         float GetFloat(long instanceID, string propertyName);
         int GetInt(long instanceID, string propertyName);
         bool GetBool(long instanceID, string propertyName);
         string GetStr(long instanceID, string propertyName);
+        bool GetStruct(long instanceID, string propertyName, IntPtr result);
         IntPtr GetObj(long instanceID, string propertyName);
 
         float CallCSFunctionFloat(long instanceID, string functionName, object[] args);
         int CallCSFunctionInt(long instanceID, string functionName, object[] args);
         bool CallCSFunctionBool(long instanceID, string functionName, object[] args);
         string CallCSFunctionString(long instanceID, string functionName, object[] args);
+        bool CallCSFunctionStruct(long instanceID, string functionName, object[] args, IntPtr returnValue);
         IntPtr CallCSFunctionObject(long instanceID, string functionName, object[] args);
         void CallCSFunctionVoid(long instanceID, string functionName, object[] args);
 

@@ -305,6 +305,36 @@ void UKlawrScriptComponent::UpdatePropertyTracker(Klawr::PropertyTracker& tracke
 			return;
 		}
 	}
+	else if (tracker.Property->GetClass()->IsChildOf(UByteProperty::StaticClass()))
+	{
+		UByteProperty* propByte = Cast<UByteProperty>(tracker.Property);
+
+		// Did managed value change?
+		uint8 prevManagedValue = tracker.GetPreviousManaged<uint8>();
+		uint8 managedValue = runtime.GetInt(appDomainId, Proxy->InstanceID, propertyName);
+		if (prevManagedValue != managedValue)
+		{
+			// Managed value changed, commit it
+			propByte->SetPropertyValue_InContainer(this, managedValue);
+			tracker.SetPreviousManaged(managedValue);
+			tracker.SetPreviousNative(managedValue);
+			UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Property %s changed (managed-side), was %i, now %i"), propertyName, prevManagedValue, managedValue);
+			return;
+		}
+
+		// Did native value change?
+		uint8 prevNativeValue = tracker.GetPreviousNative<uint8>();
+		uint8 nativeValue = propByte->GetPropertyValue_InContainer(this);
+		if (prevNativeValue != nativeValue)
+		{
+			// Native value changed, commit it
+			runtime.SetInt(appDomainId, Proxy->InstanceID, propertyName, (int)nativeValue);
+			tracker.SetPreviousManaged(nativeValue);
+			tracker.SetPreviousNative(nativeValue);
+			UE_LOG(LogKlawrRuntimePlugin, Log, TEXT("Property %s changed (native-side), was %i, now %i"), propertyName, prevNativeValue, nativeValue);
+			return;
+		}
+	}
 	else if (tracker.Property->GetClass()->IsChildOf(UObjectProperty::StaticClass()))
 	{
 		UObjectProperty* propObject = Cast<UObjectProperty>(tracker.Property);

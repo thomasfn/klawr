@@ -504,6 +504,16 @@ const TCHAR* __cdecl ClrHost::GetStr(const int appDomainID, const __int64 instan
 	return TEXT("");
 }
 
+bool __cdecl ClrHost::GetStruct(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, void* result) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->GetStruct(instanceID, propertyName, (INT_PTR)result) != 0; // for some reason, true = -1 sometimes
+	}
+	return false;
+}
+
 UObject* __cdecl ClrHost::GetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName) const
 {
 	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
@@ -548,6 +558,16 @@ void __cdecl ClrHost::SetStr(const int appDomainID, const __int64 instanceID, co
 	{
 		appDomainManager->SetStr(instanceID, propertyName, value);
 	}
+}
+
+bool __cdecl ClrHost::SetStruct(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, void* value) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		return appDomainManager->SetStruct(instanceID, propertyName, (INT_PTR)value) != 0;
+	}
+	return false;
 }
 
 void __cdecl ClrHost::SetObj(const int appDomainID, const __int64 instanceID, const TCHAR* propertyName, UObject* value) const
@@ -655,6 +675,17 @@ const TCHAR* __cdecl ClrHost::CallCSFunctionString(int appDomainID, __int64 inst
 		return appDomainManager->CallCSFunctionString(instanceID, functionName, argsArray);
 	}
 	return nullptr;
+}
+
+bool __cdecl ClrHost::CallCSFunctionStruct(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount, void* returnValue) const
+{
+	auto appDomainManager = _hostControl->GetEngineAppDomainManager(appDomainID);
+	if (appDomainManager)
+	{
+		SAFEARRAY* argsArray = VariantArgsToSafeArray(args, argCount);
+		return appDomainManager->CallCSFunctionStruct(instanceID, functionName, argsArray, (INT_PTR)returnValue);
+	}
+	return false;
 }
 
 UObject* __cdecl ClrHost::CallCSFunctionObject(int appDomainID, __int64 instanceID, const TCHAR* functionName, VariantArg* args, int argCount) const
