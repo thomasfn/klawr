@@ -28,6 +28,9 @@
 #include "JsonObjectConverter.h"
 #include "../../../ThirdParty/Klawr/ClrHostManaged/Wrappers/TypeTranslatorEnum.cs"
 
+#include "AssetRegistryModule.h"
+#include "KlawrScriptEnum.h"
+
 
 UKlawrBlueprintGeneratedClass::UKlawrBlueprintGeneratedClass(const FObjectInitializer& objectInitializer)
 	: Super(objectInitializer)
@@ -145,6 +148,29 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFields(TArray<FScriptField>&
 	}
 }
 
+// TODO: Find a better place for this?
+
+UKlawrScriptEnum* FindScriptEnum(const FString& name)
+{
+	// Find all Klawr script enums
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	TArray<FAssetData> assetData;
+	AssetRegistryModule.Get().GetAssetsByClass(UKlawrScriptEnum::StaticClass()->GetFName(), assetData);
+	for (const auto& iter : assetData)
+	{
+		UKlawrScriptEnum* temp = CastChecked<UKlawrScriptEnum>(iter.GetAsset());
+
+		if (name == temp->ScriptDefinedType)
+		{
+			// We found it!
+			return temp;
+		}
+	}
+
+	// Not found
+	return nullptr;
+}
+
 void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunction>& OutFunctions)
 {
 	OutFunctions.Empty();
@@ -173,6 +199,16 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 					case ParameterTypeTranslation::ParametertypeEnum:
 						fresult.innerEnum = FindObject<UEnum>(ANY_PACKAGE, *CLRMethod.ClassName);
 						break;
+					case ParameterTypeTranslation::ParametertypeScriptEnum:
+						fresult.innerEnum = FindScriptEnum(CLRMethod.ClassName);
+						if (fresult.innerEnum == nullptr)
+						{
+							UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Could not locate an appropiate UKlawrScriptEnum for name '%s' in class '%s'"),
+								*CLRMethod.ClassName, *CLRClass.Name);
+						}
+						fresult.Type = ParameterTypeTranslation::ParametertypeEnum;
+						break;
+
 				}
 				newFunction.Result = fresult;
 				for (auto CLRParameter : CLRMethod.Parameters)
@@ -185,6 +221,15 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 							break;
 						case ParameterTypeTranslation::ParametertypeEnum:
 							fparam.innerEnum = FindObject<UEnum>(ANY_PACKAGE, *CLRParameter.ClassName);
+							break;
+						case ParameterTypeTranslation::ParametertypeScriptEnum:
+							fparam.innerEnum = FindScriptEnum(CLRParameter.ClassName);
+							if (fparam.innerEnum == nullptr)
+							{
+								UE_LOG(LogKlawrRuntimePlugin, Warning, TEXT("Could not locate an appropiate UKlawrScriptEnum for name '%s' in class '%s'"),
+									*CLRParameter.ClassName, *CLRClass.Name);
+							}
+							fparam.Type = ParameterTypeTranslation::ParametertypeEnum;
 							break;
 					}
 					newFunction.Parameters.Add(CLRParameter.Name, fparam);

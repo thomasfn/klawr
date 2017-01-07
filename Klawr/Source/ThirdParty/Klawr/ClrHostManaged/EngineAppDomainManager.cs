@@ -974,8 +974,12 @@ namespace Klawr.ClrHost.Managed{
         {
             bool isUObject = (type == typeof(UObject)) || (type.IsSubclassOf(typeof(UObject)));
             bool isUStruct = type.IsValueType && type.Name[0] == 'F';
-            bool isUEnum = type.IsValueType && type.Name[0] == 'E';
-            if (isUObject || isUStruct || isUEnum)
+            bool isUEnum = type.IsEnum;
+            if (isUEnum && type.GetCustomAttribute<UENUMAttribute>() != null)
+            {
+                return type.FullName;
+            }
+            else if (isUObject || isUStruct || isUEnum)
             {
                 string typeName = type.Name;
                 if (type.GetCustomAttribute<ConvertClassNameAttribute>() != null)
@@ -1009,13 +1013,20 @@ namespace Klawr.ClrHost.Managed{
             {
                 return (int)ParameterTypeTranslation.ParametertypeString;
             }
+            else if (inputType.IsEnum)
+            {
+                if (inputType.GetCustomAttribute<UENUMAttribute>() != null)
+                {
+                    return (int)ParameterTypeTranslation.ParametertypeScriptEnum;
+                }
+                else
+                {
+                    return (int)ParameterTypeTranslation.ParametertypeEnum;
+                }
+            }
             else if (inputType.IsValueType && inputType.Name[0] == 'F')
             {
                 return (int)ParameterTypeTranslation.ParametertypeStruct;
-            }
-            else if (inputType.IsValueType && inputType.Name[0] == 'E')
-            {
-                return (int)ParameterTypeTranslation.ParametertypeEnum;
             }
             else if ((inputType == typeof(UObject)) || (inputType.IsSubclassOf(typeof(UObject))))
             {
