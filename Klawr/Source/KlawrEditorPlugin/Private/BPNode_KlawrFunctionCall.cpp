@@ -270,38 +270,38 @@ void UBPNode_KlawrFunctionCall::PinTypeChanged(UEdGraphPin* Pin)
 				if (scriptfunction.Name.ToString() == Pin->DefaultValue)
 				{
 					int fIndex = 0;
-					for (auto key : scriptfunction.Parameters)
+					for (auto pair : scriptfunction.Parameters)
 					{
 
 						FString PCType = TEXT("");
 						UClass* innerClass = NULL;
 
-						switch (key.Value)
+						switch (pair.Value.Type)
 						{
 							case ParameterTypeTranslation::ParametertypeFloat: PCType = K2Schema->PC_Float; break;
 							case ParameterTypeTranslation::ParametertypeInt: PCType = K2Schema->PC_Int; break;
 							case ParameterTypeTranslation::ParametertypeBool: PCType = K2Schema->PC_Boolean; break;
 							case ParameterTypeTranslation::ParametertypeString: PCType = K2Schema->PC_String; break;
-							case ParameterTypeTranslation::ParametertypeObject: PCType = K2Schema->PC_Object; innerClass = scriptfunction.parameterClasses[fIndex]; break;
+							case ParameterTypeTranslation::ParametertypeObject: PCType = K2Schema->PC_Object; innerClass = pair.Value.innerClass; break;
 						}
 						if (!PCType.IsEmpty())
 						{
-							FString paramName = key.Key;
-							UEdGraphPin *InputPin = CreatePin(EGPD_Input, *PCType, TEXT(""), innerClass, false, false, key.Key);
-							SetPinToolTip(*InputPin, key.Key);
+							FString paramName = pair.Key;
+							UEdGraphPin *InputPin = CreatePin(EGPD_Input, *PCType, TEXT(""), innerClass, false, false, paramName);
+							SetPinToolTip(*InputPin, paramName);
 						}
 						fIndex++;
 					}
 
 					UEdGraphPin* resultPin = FindPin(FGetConfigNodeName::GetResultPinName());
 
-					switch (scriptfunction.ResultType)
+					switch (scriptfunction.Result.Type)
 					{
 					case ParameterTypeTranslation::ParametertypeFloat: resultPin->PinType.PinCategory = K2Schema->PC_Float; RawFunctionName = TEXT("CallCSFunctionFloat"); break;
 					case ParameterTypeTranslation::ParametertypeInt: resultPin->PinType.PinCategory = K2Schema->PC_Int; RawFunctionName = TEXT("CallCSFunctionInt"); break;
 					case ParameterTypeTranslation::ParametertypeBool: resultPin->PinType.PinCategory = K2Schema->PC_Boolean; RawFunctionName = TEXT("CallCSFunctionBool"); break;
 					case ParameterTypeTranslation::ParametertypeString: resultPin->PinType.PinCategory = K2Schema->PC_String; RawFunctionName = TEXT("CallCSFunctionString"); break;
-					case ParameterTypeTranslation::ParametertypeObject: resultPin->PinType.PinCategory = K2Schema->PC_Object; resultPin->PinType.PinSubCategoryObject = scriptfunction.ResultClass; RawFunctionName = TEXT("CallCSFunctionObject"); break;
+					case ParameterTypeTranslation::ParametertypeObject: resultPin->PinType.PinCategory = K2Schema->PC_Object; resultPin->PinType.PinSubCategoryObject = scriptfunction.Result.innerClass; RawFunctionName = TEXT("CallCSFunctionObject"); break;
 					case ParameterTypeTranslation::ParametertypeVoid:resultPin->bHidden = true; RawFunctionName = TEXT("CallCSFunctionVoid"); break;
 					}
 

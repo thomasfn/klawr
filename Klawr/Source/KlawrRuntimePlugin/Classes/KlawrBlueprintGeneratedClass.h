@@ -56,15 +56,33 @@ struct KLAWRRUNTIMEPLUGIN_API FScriptField
 	}
 };
 
+struct KLAWRRUNTIMEPLUGIN_API FScriptFunctionParam
+{
+	int Type;
+
+	UClass* innerClass;
+	UStruct* innerStruct;
+	UEnum* innerEnum;
+
+	FScriptFunctionParam()
+		: Type(0)
+		, innerClass(nullptr), innerStruct(nullptr), innerEnum(nullptr)
+	{
+	}
+
+	FScriptFunctionParam(int InType)
+		: Type(InType)
+		, innerClass(nullptr), innerStruct(nullptr), innerEnum(nullptr)
+	{
+	}
+};
 
 struct KLAWRRUNTIMEPLUGIN_API FScriptFunction
 {
 	FName Name;
 	TMap<FString, FString> metas;
-	TMap<FString, int> Parameters;
-	TArray<UClass*> parameterClasses;
-	int ResultType;
-	UClass* ResultClass;
+	TMap<FString, FScriptFunctionParam> Parameters;
+	FScriptFunctionParam Result;
 
 	FScriptFunction()
 	{

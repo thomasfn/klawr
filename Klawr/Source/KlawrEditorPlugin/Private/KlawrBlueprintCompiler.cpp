@@ -89,11 +89,11 @@ namespace Klawr {
 
 	void FKlawrBlueprintCompiler::FinishCompilingClass(UClass* InGeneratedClass)
 	{
-		auto Blueprint = CastChecked<UKlawrBlueprint>(Super::Blueprint);
+		auto BP = CastChecked<UKlawrBlueprint>(Super::Blueprint);
 		auto GeneratedClass = CastChecked<UKlawrBlueprintGeneratedClass>(InGeneratedClass);
-		if (Blueprint && GeneratedClass)
+		if (BP && GeneratedClass)
 		{
-			GeneratedClass->ScriptDefinedType = Blueprint->ScriptDefinedType;
+			GeneratedClass->ScriptDefinedType = BP->ScriptDefinedType;
 		}
 
 		// allow classes generated from Blueprints of Klawr script components to be used in other 
@@ -301,14 +301,15 @@ namespace Klawr {
 
 		// Iterate each parameter in the function
 		int fIndex = 0;
-		for (auto key : function.Parameters)
+		for (auto pair : function.Parameters)
 		{
 			FString PCType = TEXT("");
-			UClass* innerClass = nullptr;
+			UObject* innerObject = nullptr;
 			TCHAR* funcName = nullptr;
+			bool castRequired = false;
 
 			// What parameter type is it?
-			switch (key.Value)
+			switch (pair.Value.Type)
 			{
 			case ParameterTypeTranslation::ParametertypeFloat:
 				PCType = K2Schema->PC_Float;
@@ -326,9 +327,15 @@ namespace Klawr {
 				PCType = K2Schema->PC_String;
 				funcName = L"AddString";
 				break;
+			case ParameterTypeTranslation::ParametertypeEnum:
+				PCType = K2Schema->PC_Byte;
+				innerObject = pair.Value.innerEnum;
+				funcName = L"AddInt";
+				castRequired = true;
+				break;
 			case ParameterTypeTranslation::ParametertypeObject:
 				PCType = K2Schema->PC_Object; 
-				innerClass = function.parameterClasses[fIndex];
+				innerObject = pair.Value.innerClass;
 				funcName = L"AddObject";
 				break;
 			}
@@ -337,8 +344,14 @@ namespace Klawr {
 			if (!PCType.IsEmpty())
 			{
 				// Create an output pin on the entry node for it
-				FString paramName = key.Key;
-				UEdGraphPin *entryPin = entryNode->CreatePin(EGPD_Output, *PCType, TEXT(""), innerClass, false, false, key.Key);
+				FString paramName = pair.Key;
+				UEdGraphPin *entryPin = entryNode->CreatePin(EGPD_Output, *PCType, TEXT(""), innerObject, false, false, paramName);
+
+				// Add a cast if required
+				if (castRequired)
+				{
+
+				}
 
 				// Call argArray->Add*
 				UK2Node_CallFunction* addArg = SpawnIntermediateNode<UK2Node_CallFunction>(nullptr, scriptFunctionGraph);
@@ -361,8 +374,9 @@ namespace Klawr {
 		// Work out return type
 		TCHAR* rawFuncName = nullptr;
 		FString PCReturnType = TEXT("");
-		UClass* returnInnerClass = nullptr;
-		switch (function.ResultType)
+		UObject* returnInnerObject = nullptr;
+		bool castRequired = false;
+		switch (function.Result.Type)
 		{
 		case ParameterTypeTranslation::ParametertypeFloat:
 			PCReturnType = K2Schema->PC_Float;
@@ -380,10 +394,16 @@ namespace Klawr {
 			PCReturnType = K2Schema->PC_String;
 			rawFuncName = L"CallCSFunctionString";
 			break;
+		case ParameterTypeTranslation::ParametertypeEnum:
+			PCReturnType = K2Schema->PC_Byte;
+			returnInnerObject = function.Result.innerEnum;
+			rawFuncName = L"CallCSFunctionInt";
+			castRequired = true;
+			break;
 		case ParameterTypeTranslation::ParametertypeObject:
 			PCReturnType = K2Schema->PC_Object;
+			returnInnerObject = function.Result.innerClass;
 			rawFuncName = L"CallCSFunctionObject";
-			returnInnerClass = function.ResultClass;
 			break;
 		default:
 			rawFuncName = L"CallCSFunctionVoid";
@@ -409,8 +429,14 @@ namespace Klawr {
 		// Did we find a valid return pin type?
 		if (!PCReturnType.IsEmpty())
 		{
+			// Add a cast if required
+			if (castRequired)
+			{
+
+			}
+
 			// Create an input pin on the exit node for it
-			UEdGraphPin *exitPin = exitNode->CreatePin(EGPD_Input, *PCReturnType, TEXT(""), returnInnerClass, false, false, L"result");
+			UEdGraphPin *exitPin = exitNode->CreatePin(EGPD_Input, *PCReturnType, TEXT(""), returnInnerObject, false, false, L"result");
 			callFunction->GetReturnValuePin()->MakeLinkTo(exitPin);
 		}
 

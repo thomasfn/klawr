@@ -742,7 +742,12 @@ namespace Klawr.ClrHost.Managed{
                 }
 
                 // Perform call
-                return (T)mi.Invoke(_scriptComponents[instanceID].Instance, args);
+                object returnObj = mi.Invoke(_scriptComponents[instanceID].Instance, args);
+                if (returnObj != null && returnObj.GetType().IsEnum)
+                {
+                    returnObj = Convert.ToInt32(returnObj);
+                }
+                return (T)returnObj;
             }
             catch (Exception ee)
             {

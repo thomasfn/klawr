@@ -164,31 +164,34 @@ void UKlawrBlueprintGeneratedClass::GetScriptDefinedFunctions(TArray<FScriptFunc
 			for (auto CLRMethod : CLRClass.MethodInfos)
 			{
 				FScriptFunction newFunction(*CLRMethod.Name);
-				newFunction.ResultType = CLRMethod.ReturnType;
-				newFunction.ResultClass = NULL;
-				if (CLRMethod.ReturnType == ParameterTypeTranslation::ParametertypeObject)
+				FScriptFunctionParam fresult(CLRMethod.ReturnType);
+				switch (CLRMethod.ReturnType)
 				{
-					newFunction.ResultClass = FindObject<UClass>(ANY_PACKAGE, *CLRMethod.ClassName);
-					//UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObject as return value is not supported yet. Please use local properties to pass UObjects into/from c# space. (Function '%s' in class '%s')"),
-						//*CLRMethod.Name, *CLRClass.Name);
+					case ParameterTypeTranslation::ParametertypeObject:
+						fresult.innerClass = FindObject<UClass>(ANY_PACKAGE, *CLRMethod.ClassName);
+						break;
+					case ParameterTypeTranslation::ParametertypeEnum:
+						fresult.innerEnum = FindObject<UEnum>(ANY_PACKAGE, *CLRMethod.ClassName);
+						break;
 				}
+				newFunction.Result = fresult;
 				for (auto CLRParameter : CLRMethod.Parameters)
 				{
-					newFunction.Parameters.Add(CLRParameter.Name, CLRParameter.TypeId);
-					if (CLRParameter.TypeId == ParameterTypeTranslation::ParametertypeObject)
+					FScriptFunctionParam fparam(CLRParameter.TypeId);
+					switch (CLRParameter.TypeId)
 					{
-						//UE_LOG(LogKlawrRuntimePlugin, Error, TEXT("UObjects as parameters are not supported yet. Please use local properties to pass UObjects into c# space. (Parameter '%s' of function '%s' in class '%s')"),
-							//*CLRParameter.Name, *CLRMethod.Name, *CLRClass.Name);
-
-						newFunction.parameterClasses.Add(FindObject<UClass>(ANY_PACKAGE, *CLRParameter.ClassName));
+						case ParameterTypeTranslation::ParametertypeObject:
+							fparam.innerClass = FindObject<UClass>(ANY_PACKAGE, *CLRParameter.ClassName);
+							break;
+						case ParameterTypeTranslation::ParametertypeEnum:
+							fparam.innerEnum = FindObject<UEnum>(ANY_PACKAGE, *CLRParameter.ClassName);
+							break;
 					}
-					else
-					{
-						newFunction.parameterClasses.Add(NULL);
-					}
+					newFunction.Parameters.Add(CLRParameter.Name, fparam);
 				}
 				OutFunctions.Add(newFunction);
 			}
+			break;
 		}
 	}
 }
